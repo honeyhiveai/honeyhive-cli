@@ -1,0 +1,17 @@
+{
+  "version": "2.0.0-rc.1",
+  "name": "@honeyhive/cli",
+  "type": "module",
+  "description": "HoneyHive CLI",
+  "main": "dist/index.js",
+  "bin": {
+    "honeyhive": "dist/index.js"
+  },
+  "dependencies": {
+    "@honeyhive/api-client": "2.0.0-rc.6",
+    "commander": "^13.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
