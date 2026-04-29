@@ -1,14 +1,19 @@
 {
-  "version": "2.0.0-rc.1",
+  "version": "2.0.0-rc.2",
   "name": "@honeyhive/cli",
   "type": "module",
   "description": "HoneyHive CLI",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/honeyhiveai/honeyhive-cli.git"
+  },
+  "homepage": "https://honeyhiveai.github.io/honeyhive-cli/",
   "main": "dist/index.js",
   "bin": {
     "honeyhive": "dist/index.js"
   },
   "dependencies": {
-    "@honeyhive/api-client": "2.0.0-rc.6",
+    "@honeyhive/api-client": "2.0.0-rc.7",
     "commander": "^13.1.0"
   },
   "publishConfig": {

@@ -1,0 +1,273 @@
+name: Sync TypeScript CLI Release to Docs
+
+on:
+  # Listens to the Publish workflow completing rather than the `release` event.
+  # `release: [published]` does NOT fire when the release is created with the
+  # default GITHUB_TOKEN (as publish.yaml does), so that trigger would be a
+  # silent no-op on real publishes. `workflow_run` is not subject to the same
+  # restriction and fires regardless of how the source workflow was started.
+  # Note: the `workflows: ["Publish"]` matcher is repo-scoped, so this listener
+  # and the SDK's docs-sync listener (in honeyhiveai/typescript-api-client) do
+  # not interact even though both watch a workflow named "Publish".
+  workflow_run:
+    workflows: ["Publish"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to sync (e.g., v2.0.0-rc.3). Defaults to the version in package.json on main.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency: sync-ts-cli-changelog-to-docs
+
+jobs:
+  sync-changelog:
+    # workflow_run fires for every completion (success, failure, cancelled).
+    # Only sync on success. Manual dispatches always run.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Pin the checkout to the exact commit the upstream Publish run executed
+      # against. Without ref:, checkout@v6 resolves to the default branch tip
+      # at the moment this workflow starts, which races any commits that land
+      # on main between the upstream run completing and this run starting —
+      # and would read the wrong package.json/CHANGELOG.md.
+      # Falls back to github.ref for workflow_dispatch (no workflow_run context).
+      - name: Checkout honeyhive-cli
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+
+      - name: Resolve release version
+        id: resolve-version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${INPUT_VERSION}" ]]; then
+            VERSION="${INPUT_VERSION}"
+          else
+            # publish.yaml guarantees main == v{package.json version}, so
+            # reading package.json here matches what just got released.
+            VERSION=$(jq -r '.version' package.json)
+          fi
+          # Normalize to a v-prefixed tag (matches publish.yaml's tag naming)
+          # so branch/PR/commit references are consistent whether the version
+          # came from the input or from package.json.
+          case "$VERSION" in
+            v*) ;;
+            *) VERSION="v${VERSION}" ;;
+          esac
+          # Fail loudly if the resolved version isn't in CHANGELOG.md. Without
+          # this check, Claude's prompt would quietly fall back to "use latest
+          # entry," producing a PR labelled with the requested version but
+          # containing content from a different release.
+          BARE_VERSION="${VERSION#v}"
+          # -F (fixed-string) sidesteps regex escaping entirely, which matters
+          # if the version ever includes SemVer build metadata (e.g. +build.1)
+          # where + would be a regex metacharacter under -E.
+          if ! grep -qF -- "## [${BARE_VERSION}]" CHANGELOG.md; then
+            echo "::error::Version ${VERSION} has no '## [${BARE_VERSION}]' entry in CHANGELOG.md. Check the version input or regenerate the changelog."
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Resolved release version: ${VERSION}"
+
+      # Decide whether to run the docs sync. Emits a single `should_sync` output
+      # so every downstream step shares one gate:
+      #   - workflow_dispatch: always sync (manual invocation is trusted).
+      #   - workflow_run: sync only if a GitHub Release for v${VERSION} exists
+      #     (the authoritative signal of a real publish vs. a dry run) AND the
+      #     release tag points at the exact commit the upstream Publish run
+      #     executed against. A tag/SHA mismatch is anomalous (tag moved or
+      #     recreated out-of-band) and fails hard so the Slack-on-failure
+      #     step fires instead of silently skipping.
+      - name: Verify release exists (skip dry runs)
+        id: verify-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.resolve-version.outputs.version }}
+          UPSTREAM_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_sync=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::workflow_dispatch — proceeding with docs sync."
+            exit 0
+          fi
+          if ! gh release view "${VERSION}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No GitHub Release for ${VERSION}; upstream was a dry run. Skipping docs sync."
+            exit 0
+          fi
+          # Release exists — verify its tag matches the upstream run's commit.
+          # checkout@v6 doesn't fetch tags by default.
+          git fetch --tags --force origin
+          TAG_SHA=$(git rev-parse "refs/tags/${VERSION}^{commit}")
+          if [[ "${TAG_SHA}" != "${UPSTREAM_SHA}" ]]; then
+            echo "::error::Tag ${VERSION} points at ${TAG_SHA} but the upstream Publish run was against ${UPSTREAM_SHA}. The tag may have been moved or recreated. Refusing to sync."
+            exit 1
+          fi
+          echo "should_sync=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::GitHub Release ${VERSION} exists and tag SHA matches upstream run; proceeding with docs sync."
+
+      - name: Generate Forager token for docs repo
+        id: app-token
+        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          app-id: ${{ vars.GH_APP_FORAGER_APP_ID }}
+          private-key: ${{ secrets.GH_APP_FORAGER_PRIVATE_KEY }}
+          owner: honeyhiveai
+          repositories: honeyhive-ai-docs
+
+      - name: Checkout honeyhive-ai-docs
+        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: honeyhiveai/honeyhive-ai-docs
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+          path: docs-repo
+
+      - name: Sync CLI release to product changelog
+        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
+        # Bound the step below the job-level 10m so a hung Claude run still
+        # leaves ~2m for change detection, PR creation, and Slack-on-failure.
+        timeout-minutes: 8
+        uses: anthropics/claude-code-action@5d5c10a4f389689f992ea10bb14dcb6fcc83146d # v1.0.102
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          display_report: true
+          allowed_bots: "github-actions"
+          prompt: |
+            A new TypeScript CLI release was just published. Determine if it has notable user-facing changes worth adding to the product changelog.
+
+            Release version: ${{ steps.resolve-version.outputs.version }}
+
+            ## Files
+
+            - **Source**: `CHANGELOG.md` (in the current directory) — the CLI changelog
+            - **Target**: `docs-repo/v2/changelog/product.mdx` — the Mintlify docs product changelog page
+
+            ## Context
+
+            The product changelog is read by all HoneyHive users, not just CLI users. It includes Core Platform (UI, backend), SDK, and CLI sections. We only want to include CLI changes that are meaningful product experience improvements — not every patch release.
+
+            **Include** (these matter to users):
+            - New CLI commands, subcommands, or flags
+            - Ergonomics improvements that make the CLI easier to use
+            - Bug fixes that users would have hit in normal usage
+            - Breaking changes or migration requirements
+
+            **Exclude** (too noisy for product changelog):
+            - CI/CD, test, or documentation-only changes
+            - Internal refactors with no user-visible effect
+            - Debug logging additions
+            - Dependency bumps
+            - Dev tooling changes
+
+            If the release has NO notable user-facing changes, do NOT modify product.mdx. Output "No user-facing changes to sync" and stop.
+
+            ## Instructions
+
+            1. Read `CHANGELOG.md` and find the entry for the latest release (or the version specified above).
+            2. Read `docs-repo/v2/changelog/product.mdx`. The target file uses Mintlify `<Update label="...">` components, most-recent first. Example (abbreviated, placeholders — do NOT copy these dates/versions verbatim):
+               ```
+               <Update label="Month Xth, Year">
+                   ## TypeScript CLI
+
+                   ### vX.Y.Z
+                   - Short bullet describing what users can now do
+
+               </Update>
+               ```
+               **Match the label format the existing file uses** — recent entries use day-specific labels like `"April 16th, 2026"` rather than month-only `"April 2026"`. Use the actual release date from CHANGELOG.md for the new entry, not the placeholder.
+            3. **Idempotency check:** if a `### vX.Y.Z` heading for this exact release version already exists anywhere in `product.mdx` under a `## TypeScript CLI` section, do NOT modify the file. Output "No changes — version already synced" and stop.
+            4. Otherwise, add a new `### vX.Y.Z` entry:
+               - Determine the date for this release from the `## [X.Y.Z] - YYYY-MM-DD` line in CHANGELOG.md and format it to match the file's existing label style (e.g. `"April 16th, 2026"`).
+               - If an `<Update>` block for that exact date already exists:
+                 - Add a `## TypeScript CLI` section if one doesn't exist in that block, or add a new `### vX.Y.Z` heading under the existing `## TypeScript CLI` section
+                 - Do NOT touch any `## Core Platform`, `## Python SDK`, `## TypeScript SDK`, `## TypeScript API SDK`, or other non-TypeScript-CLI sections in that block
+               - If no `<Update>` block exists for that date:
+                 - Create a new `<Update label="Month Xth, Year">` block with a `## TypeScript CLI` section
+                 - Insert it in chronological order (most recent at top, after frontmatter)
+               - Indent content inside `<Update>` blocks with 4 spaces, matching the existing style
+               - Version headings use the `v` prefix (e.g. `### v2.0.0-rc.3`), even though the source CHANGELOG.md header is `## [2.0.0-rc.3] - YYYY-MM-DD` without the `v`
+            5. Preserve the frontmatter exactly as-is.
+            6. Preserve ALL existing content unchanged — only add new TypeScript CLI entries.
+
+            ## Writing Style
+
+            - Concise, clear, active voice, present tense
+            - 1-2 bullet points per feature, focused on what the user can now do
+            - Include command names and flag names when relevant (e.g., `honeyhive datasets pull`, `--workspace`)
+            - Avoid em dashes, curly quotes, and words like "delve", "leverage", "robust", "seamless"
+            - Keep pre-release suffixes as-is (e.g., `v2.0.0-rc.3` stays as-is since we're in RC phase)
+            - Write to `docs-repo/v2/changelog/product.mdx`
+
+          claude_args: "--model claude-opus-4-7 --allowedTools Read Edit Write 'Bash(cat:*)' 'Bash(ls:*)' 'Bash(head:*)' 'Bash(tail:*)' 'Bash(grep:*)'"
+
+      - name: Check for docs changes
+        id: changes
+        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
+        working-directory: docs-repo
+        run: |
+          set -euo pipefail
+          # Detect both tracked-file diffs and new/untracked files so we don't
+          # silently skip PR creation when the target path moves (as happened
+          # to the platform docs-sync when beta/ was renamed to v2/).
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request on docs repo
+        if: ${{ steps.changes.outputs.has_changes == 'true' && steps.verify-release.outputs.should_sync == 'true' }}
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          path: docs-repo
+          base: main
+          commit-message: "docs: sync TypeScript CLI ${{ steps.resolve-version.outputs.version }} to product changelog"
+          branch: changelog/sync-ts-cli-${{ steps.resolve-version.outputs.version }}
+          delete-branch: true
+          title: "docs: sync TypeScript CLI ${{ steps.resolve-version.outputs.version }} to product changelog"
+          body: |
+            ## Automated CLI Changelog Sync
+
+            This PR was automatically generated when a new TypeScript CLI release was published.
+
+            It adds notable user-facing changes from the release to the `## TypeScript CLI` section in `v2/changelog/product.mdx`.
+
+            Please review the new entries for accuracy and tone before merging.
+          labels: documentation,automated
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@af78098f536edbc4de71162a307590698245be95 # v3.0.1
+        with:
+          webhook: ${{ secrets.SLACK_CI_FAILURE_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "TypeScript CLI changelog sync to docs failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*TypeScript CLI Changelog Sync to Docs Failed*\n\nThe automated sync from `${{ github.event.repository.name }}` release to `honeyhive-ai-docs` product changelog failed.\n\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Failed Run>"
+                  }
+                }
+              ]
+            }

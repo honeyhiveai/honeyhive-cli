@@ -1,3 +1,3 @@
 # HoneyHive CLI
 
-Documentation for the HoneHive CLI coming soon!
+Documentation for the HoneyHive CLI coming soon!
