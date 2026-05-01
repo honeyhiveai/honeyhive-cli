@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "name": "@honeyhive/cli",
   "type": "module",
   "description": "HoneyHive CLI",

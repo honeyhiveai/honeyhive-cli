@@ -1,3 +1,6 @@
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { defineConfig } from 'vitepress';
 
 import { referenceSidebar } from '../reference/.sidebar.js';
@@ -19,6 +22,13 @@ export default defineConfig({
   // Override VitePress's default outDir (docs-src/.vitepress/dist) so the build
   // artifact lands at the package root in docs/. Resolved from srcDir.
   outDir: '../docs',
+
+  // GitHub Pages serves /docs from main via "Deploy from a branch", which runs
+  // Jekyll over the output and breaks VitePress's asset paths. .nojekyll opts
+  // out. TypeDoc emits this for api-client automatically; VitePress doesn't.
+  buildEnd(siteConfig) {
+    writeFileSync(join(siteConfig.outDir, '.nojekyll'), '');
+  },
 
   themeConfig: {
     nav: [
