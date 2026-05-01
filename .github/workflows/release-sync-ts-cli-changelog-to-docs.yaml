@@ -1,17 +1,13 @@
 name: Sync TypeScript CLI Release to Docs
 
 on:
-  # Listens to the Publish workflow completing rather than the `release` event.
-  # `release: [published]` does NOT fire when the release is created with the
-  # default GITHUB_TOKEN (as publish.yaml does), so that trigger would be a
-  # silent no-op on real publishes. `workflow_run` is not subject to the same
-  # restriction and fires regardless of how the source workflow was started.
-  # Note: the `workflows: ["Publish"]` matcher is repo-scoped, so this listener
-  # and the SDK's docs-sync listener (in honeyhiveai/typescript-api-client) do
-  # not interact even though both watch a workflow named "Publish".
-  workflow_run:
-    workflows: ["Publish"]
-    types: [completed]
+  # Listens for the Release / TypeScript CLI workflow's `gh release create`
+  # call. `release: [published]` fires reliably here because the upstream
+  # release is created via a Propolis-app token, not the default GITHUB_TOKEN
+  # (which would suppress the event). The `workflows: ["Publish"]` workflow_run
+  # listener this replaces is gone now that publish.yaml is gone.
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -26,41 +22,44 @@ concurrency: sync-ts-cli-changelog-to-docs
 
 jobs:
   sync-changelog:
-    # workflow_run fires for every completion (success, failure, cancelled).
-    # Only sync on success. Manual dispatches always run.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      # Pin the checkout to the exact commit the upstream Publish run executed
-      # against. Without ref:, checkout@v6 resolves to the default branch tip
-      # at the moment this workflow starts, which races any commits that land
-      # on main between the upstream run completing and this run starting —
-      # and would read the wrong package.json/CHANGELOG.md.
-      # Falls back to github.ref for workflow_dispatch (no workflow_run context).
+      # Pin the checkout to the exact tag the release event references (or to
+      # the dispatcher's chosen ref for workflow_dispatch). Without an
+      # explicit ref, checkout@v6 would resolve to default-branch tip and
+      # race any commits landing on main between the release event firing
+      # and this run starting.
       - name: Checkout honeyhive-cli
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          ref: ${{ github.event.release.tag_name || github.ref }}
 
       - name: Resolve release version
         id: resolve-version
         shell: bash
         env:
+          # release-event path: tag_name (e.g. "v2.0.0-rc.3").
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          # workflow_dispatch path: optional explicit version input.
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [[ -n "${INPUT_VERSION}" ]]; then
+          if [[ -n "${RELEASE_TAG}" ]]; then
+            VERSION="${RELEASE_TAG}"
+          elif [[ -n "${INPUT_VERSION}" ]]; then
             VERSION="${INPUT_VERSION}"
           else
-            # publish.yaml guarantees main == v{package.json version}, so
-            # reading package.json here matches what just got released.
+            # workflow_dispatch with no input — read from package.json on
+            # whichever ref was checked out. The release tooling guarantees
+            # main HEAD == v{package.json version}, so this matches the
+            # latest released version when run against main.
             VERSION=$(jq -r '.version' package.json)
           fi
-          # Normalize to a v-prefixed tag (matches publish.yaml's tag naming)
-          # so branch/PR/commit references are consistent whether the version
-          # came from the input or from package.json.
+          # Normalize to a v-prefixed tag so branch/PR/commit references are
+          # consistent whether the version came from the release event, the
+          # input, or package.json.
           case "$VERSION" in
             v*) ;;
             *) VERSION="v${VERSION}" ;;
@@ -80,47 +79,8 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "::notice::Resolved release version: ${VERSION}"
 
-      # Decide whether to run the docs sync. Emits a single `should_sync` output
-      # so every downstream step shares one gate:
-      #   - workflow_dispatch: always sync (manual invocation is trusted).
-      #   - workflow_run: sync only if a GitHub Release for v${VERSION} exists
-      #     (the authoritative signal of a real publish vs. a dry run) AND the
-      #     release tag points at the exact commit the upstream Publish run
-      #     executed against. A tag/SHA mismatch is anomalous (tag moved or
-      #     recreated out-of-band) and fails hard so the Slack-on-failure
-      #     step fires instead of silently skipping.
-      - name: Verify release exists (skip dry runs)
-        id: verify-release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.resolve-version.outputs.version }}
-          UPSTREAM_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "should_sync=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::workflow_dispatch — proceeding with docs sync."
-            exit 0
-          fi
-          if ! gh release view "${VERSION}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "should_sync=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No GitHub Release for ${VERSION}; upstream was a dry run. Skipping docs sync."
-            exit 0
-          fi
-          # Release exists — verify its tag matches the upstream run's commit.
-          # checkout@v6 doesn't fetch tags by default.
-          git fetch --tags --force origin
-          TAG_SHA=$(git rev-parse "refs/tags/${VERSION}^{commit}")
-          if [[ "${TAG_SHA}" != "${UPSTREAM_SHA}" ]]; then
-            echo "::error::Tag ${VERSION} points at ${TAG_SHA} but the upstream Publish run was against ${UPSTREAM_SHA}. The tag may have been moved or recreated. Refusing to sync."
-            exit 1
-          fi
-          echo "should_sync=true" >> "$GITHUB_OUTPUT"
-          echo "::notice::GitHub Release ${VERSION} exists and tag SHA matches upstream run; proceeding with docs sync."
-
       - name: Generate Forager token for docs repo
         id: app-token
-        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
           app-id: ${{ vars.GH_APP_FORAGER_APP_ID }}
@@ -129,7 +89,6 @@ jobs:
           repositories: honeyhive-ai-docs
 
       - name: Checkout honeyhive-ai-docs
-        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: honeyhiveai/honeyhive-ai-docs
@@ -138,7 +97,6 @@ jobs:
           path: docs-repo
 
       - name: Sync CLI release to product changelog
-        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
         # Bound the step below the job-level 10m so a hung Claude run still
         # leaves ~2m for change detection, PR creation, and Slack-on-failure.
         timeout-minutes: 8
@@ -218,7 +176,6 @@ jobs:
 
       - name: Check for docs changes
         id: changes
-        if: ${{ steps.verify-release.outputs.should_sync == 'true' }}
         working-directory: docs-repo
         run: |
           set -euo pipefail
@@ -232,7 +189,7 @@ jobs:
           fi
 
       - name: Create Pull Request on docs repo
-        if: ${{ steps.changes.outputs.has_changes == 'true' && steps.verify-release.outputs.should_sync == 'true' }}
+        if: ${{ steps.changes.outputs.has_changes == 'true' }}
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ steps.app-token.outputs.token }}

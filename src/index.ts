@@ -1,22 +1,14 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
 import { program } from 'commander';
 
 import { registerCommands } from './generated/commands/index.js';
-
-const { version } = JSON.parse(
-  readFileSync(resolve(import.meta.dirname, '../package.json'), 'utf-8'),
-) as {
-  version: string;
-};
+import { CLI_VERSION } from './generated/version.js';
 
 program
   .name('honeyhive')
   .description('HoneyHive CLI')
-  .version(version)
+  .version(CLI_VERSION)
   .option('--api-key <key>', 'API key (overrides HH_API_KEY env var)')
   .option('--base-url <url>', 'Base URL (overrides HH_API_URL env var)');
 

@@ -1,8 +1,6 @@
-## [2.0.0-rc.2] - 2026-04-29
+## [Unreleased]
 
-Internal improvements only.
-
-## [2.0.0-rc.1] - 2026-04-28
+## [1.0.0-rc.1] - 2026-04-30
 
 ### Added
 - Initial release

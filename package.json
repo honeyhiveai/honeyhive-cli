@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0-rc.2",
+  "version": "1.0.0-rc.1",
   "name": "@honeyhive/cli",
   "type": "module",
   "description": "HoneyHive CLI",
@@ -13,7 +13,7 @@
     "honeyhive": "dist/index.js"
   },
   "dependencies": {
-    "@honeyhive/api-client": "2.0.0-rc.7",
+    "@honeyhive/api-client": "1.0.0-rc.1",
     "commander": "^13.1.0"
   },
   "publishConfig": {
