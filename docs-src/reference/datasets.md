@@ -48,24 +48,6 @@ honeyhive datasets create [options]
 | `--description` | string | no | Description of the dataset |
 | `--name` | string | no | Name of the dataset |
 
-## `delete` {#delete}
-
-Delete a dataset
-
-Permanently delete a dataset by its unique identifier.
-
-### Usage
-
-```sh
-honeyhive datasets delete [options]
-```
-
-### Options
-
-| Flag | Type | Required | Description |
-|---|---|---|---|
-| `--dataset_id` | string | yes | The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` |
-
 ## `update` {#update}
 
 Update a dataset
@@ -86,6 +68,24 @@ honeyhive datasets update [options]
 | `--datapoints` | json | no | Updated list of datapoint IDs |
 | `--description` | string | no | New dataset description |
 | `--name` | string | no | New dataset name |
+
+## `delete` {#delete}
+
+Delete a dataset
+
+Permanently delete a dataset by its unique identifier.
+
+### Usage
+
+```sh
+honeyhive datasets delete [options]
+```
+
+### Options
+
+| Flag | Type | Required | Description |
+|---|---|---|---|
+| `--dataset_id` | string | yes | The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` |
 
 ## `add-datapoints` {#add-datapoints}
 

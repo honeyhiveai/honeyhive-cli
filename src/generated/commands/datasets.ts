@@ -58,31 +58,6 @@ export function datasetsCommand(): Command {
     });
 
   cmd
-    .command('delete')
-    .description('Delete a dataset')
-    .requiredOption(
-      '--dataset_id <value>',
-      'The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` (required)',
-    )
-    .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const client = createClient(command);
-        const result = await client.datasets.delete({
-          query: {
-            dataset_id: opts.dataset_id,
-          },
-        } as Parameters<typeof client.datasets.delete>[0]);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
-      }
-    });
-
-  cmd
     .command('update')
     .description('Update a dataset')
     .requiredOption(
@@ -105,6 +80,31 @@ export function datasetsCommand(): Command {
             ...(opts.datapoints !== undefined && { datapoints: parseJson(opts.datapoints) }),
           },
         } as Parameters<typeof client.datasets.update>[0]);
+        if (result !== undefined) {
+          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+        }
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(message);
+        process.exit(1);
+      }
+    });
+
+  cmd
+    .command('delete')
+    .description('Delete a dataset')
+    .requiredOption(
+      '--dataset_id <value>',
+      'The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` (required)',
+    )
+    .action(async (opts: Record<string, unknown>, command: Command) => {
+      try {
+        const client = createClient(command);
+        const result = await client.datasets.delete({
+          path: {
+            dataset_id: opts.dataset_id,
+          },
+        } as Parameters<typeof client.datasets.delete>[0]);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }

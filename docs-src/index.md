@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: HoneyHive CLI
-  text: Hello World
-  tagline: Command-line interface for the HoneyHive platform.
+  text: AI Observability and Evaluation
+  tagline: Manage HoneyHive sessions, traces, datasets, and evaluations from your terminal. Built for scripting, automation, and CI.
   actions:
     - theme: brand
       text: Get Started
@@ -14,10 +14,10 @@ hero:
       link: https://github.com/honeyhiveai/honeyhive-cli
 
 features:
-  - title: Generated from OpenAPI
-    details: Commands stay in lockstep with the HoneyHive REST API via the shared SDK generator.
-  - title: TypeScript-first
-    details: Strict TS, ESM, and Node 22+. Built for scripts and humans alike.
   - title: Workflow-friendly
     details: Composable commands designed for CI, automation, and local development.
+  - title: Single binary, no runtime
+    details: Install once via Homebrew or the Linux script. No Node, no Python, no virtualenv.
+  - title: Always in sync with the API
+    details: Subcommands are generated from the same OpenAPI spec the platform serves, so every endpoint is covered the day it ships.
 ---
