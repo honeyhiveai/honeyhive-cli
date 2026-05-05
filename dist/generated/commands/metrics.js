@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command, Option } from 'commander';
-import { createClient, parseBoolean, parseJson, parseNumber } from './utils.js';
+import { createClient, parseJson, parseNumber } from './utils.js';
 export function metricsCommand() {
     const cmd = new Command('metrics').description('Metrics commands');
     cmd
@@ -36,21 +36,23 @@ export function metricsCommand() {
         .makeOptionMandatory())
         .requiredOption('--criteria <value>', 'criteria (required)')
         .option('--description <value>', 'description')
-        .addOption(new Option('--return_type <value>', 'return_type').choices([
+        .addOption(new Option('--return-type <value>', 'return_type').choices([
         'float',
         'boolean',
         'string',
         'categorical',
     ]))
-        .option('--enabled_in_prod <value>', 'enabled_in_prod')
-        .option('--needs_ground_truth <value>', 'needs_ground_truth')
-        .option('--sampling_percentage <value>', 'sampling_percentage')
-        .option('--model_provider <value>', 'model_provider')
-        .option('--model_name <value>', 'model_name')
+        .option('--enabled-in-prod', 'enabled_in_prod')
+        .option('--no-enabled-in-prod', 'enabled_in_prod')
+        .option('--needs-ground-truth', 'needs_ground_truth')
+        .option('--no-needs-ground-truth', 'needs_ground_truth')
+        .option('--sampling-percentage <value>', 'sampling_percentage')
+        .option('--model-provider <value>', 'model_provider')
+        .option('--model-name <value>', 'model_name')
         .option('--scale <value>', 'scale')
         .option('--threshold <json>', 'threshold')
         .option('--categories <json>', 'categories')
-        .option('--child_metrics <json>', 'child_metrics')
+        .option('--child-metrics <json>', 'child_metrics')
         .option('--filters <json>', 'filters')
         .action(async (opts, command) => {
         try {
@@ -61,24 +63,20 @@ export function metricsCommand() {
                     type: opts.type,
                     criteria: opts.criteria,
                     ...(opts.description !== undefined && { description: opts.description }),
-                    ...(opts.return_type !== undefined && { return_type: opts.return_type }),
-                    ...(opts.enabled_in_prod !== undefined && {
-                        enabled_in_prod: parseBoolean(opts.enabled_in_prod),
+                    ...(opts.returnType !== undefined && { return_type: opts.returnType }),
+                    ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
+                    ...(opts.needsGroundTruth !== undefined && {
+                        needs_ground_truth: opts.needsGroundTruth,
                     }),
-                    ...(opts.needs_ground_truth !== undefined && {
-                        needs_ground_truth: parseBoolean(opts.needs_ground_truth),
+                    ...(opts.samplingPercentage !== undefined && {
+                        sampling_percentage: parseNumber(opts.samplingPercentage),
                     }),
-                    ...(opts.sampling_percentage !== undefined && {
-                        sampling_percentage: parseNumber(opts.sampling_percentage),
-                    }),
-                    ...(opts.model_provider !== undefined && { model_provider: opts.model_provider }),
-                    ...(opts.model_name !== undefined && { model_name: opts.model_name }),
+                    ...(opts.modelProvider !== undefined && { model_provider: opts.modelProvider }),
+                    ...(opts.modelName !== undefined && { model_name: opts.modelName }),
                     ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
                     ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
                     ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
-                    ...(opts.child_metrics !== undefined && {
-                        child_metrics: parseJson(opts.child_metrics),
-                    }),
+                    ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
                     ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
                 },
             });
@@ -95,56 +93,56 @@ export function metricsCommand() {
     cmd
         .command('update')
         .description('Update an existing metric')
-        .requiredOption('--id <value>', 'id (required)')
+        .requiredOption('--metric-id <value>', 'The unique identifier of the metric to update (required)')
         .option('--name <value>', 'name')
         .addOption(new Option('--type <value>', 'type').choices(['PYTHON', 'LLM', 'HUMAN', 'COMPOSITE']))
         .option('--criteria <value>', 'criteria')
         .option('--description <value>', 'description')
-        .addOption(new Option('--return_type <value>', 'return_type').choices([
+        .addOption(new Option('--return-type <value>', 'return_type').choices([
         'float',
         'boolean',
         'string',
         'categorical',
     ]))
-        .option('--enabled_in_prod <value>', 'enabled_in_prod')
-        .option('--needs_ground_truth <value>', 'needs_ground_truth')
-        .option('--sampling_percentage <value>', 'sampling_percentage')
-        .option('--model_provider <value>', 'model_provider')
-        .option('--model_name <value>', 'model_name')
+        .option('--enabled-in-prod', 'enabled_in_prod')
+        .option('--no-enabled-in-prod', 'enabled_in_prod')
+        .option('--needs-ground-truth', 'needs_ground_truth')
+        .option('--no-needs-ground-truth', 'needs_ground_truth')
+        .option('--sampling-percentage <value>', 'sampling_percentage')
+        .option('--model-provider <value>', 'model_provider')
+        .option('--model-name <value>', 'model_name')
         .option('--scale <value>', 'scale')
         .option('--threshold <json>', 'threshold')
         .option('--categories <json>', 'categories')
-        .option('--child_metrics <json>', 'child_metrics')
+        .option('--child-metrics <json>', 'child_metrics')
         .option('--filters <json>', 'filters')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
             const result = await client.metrics.update({
+                path: {
+                    metric_id: opts.metricId,
+                },
                 body: {
                     ...(opts.name !== undefined && { name: opts.name }),
                     ...(opts.type !== undefined && { type: opts.type }),
                     ...(opts.criteria !== undefined && { criteria: opts.criteria }),
                     ...(opts.description !== undefined && { description: opts.description }),
-                    ...(opts.return_type !== undefined && { return_type: opts.return_type }),
-                    ...(opts.enabled_in_prod !== undefined && {
-                        enabled_in_prod: parseBoolean(opts.enabled_in_prod),
+                    ...(opts.returnType !== undefined && { return_type: opts.returnType }),
+                    ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
+                    ...(opts.needsGroundTruth !== undefined && {
+                        needs_ground_truth: opts.needsGroundTruth,
                     }),
-                    ...(opts.needs_ground_truth !== undefined && {
-                        needs_ground_truth: parseBoolean(opts.needs_ground_truth),
+                    ...(opts.samplingPercentage !== undefined && {
+                        sampling_percentage: parseNumber(opts.samplingPercentage),
                     }),
-                    ...(opts.sampling_percentage !== undefined && {
-                        sampling_percentage: parseNumber(opts.sampling_percentage),
-                    }),
-                    ...(opts.model_provider !== undefined && { model_provider: opts.model_provider }),
-                    ...(opts.model_name !== undefined && { model_name: opts.model_name }),
+                    ...(opts.modelProvider !== undefined && { model_provider: opts.modelProvider }),
+                    ...(opts.modelName !== undefined && { model_name: opts.modelName }),
                     ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
                     ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
                     ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
-                    ...(opts.child_metrics !== undefined && {
-                        child_metrics: parseJson(opts.child_metrics),
-                    }),
+                    ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
                     ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-                    id: opts.id,
                 },
             });
             if (result !== undefined) {
@@ -160,13 +158,13 @@ export function metricsCommand() {
     cmd
         .command('delete')
         .description('Delete a metric')
-        .requiredOption('--metric_id <value>', 'metric_id (required)')
+        .requiredOption('--metric-id <value>', 'The unique identifier of the metric to delete (required)')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
             const result = await client.metrics.delete({
-                query: {
-                    metric_id: opts.metric_id,
+                path: {
+                    metric_id: opts.metricId,
                 },
             });
             if (result !== undefined) {

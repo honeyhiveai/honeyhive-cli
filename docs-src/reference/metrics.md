@@ -48,15 +48,15 @@ honeyhive metrics create [options]
 | `--name` | string | yes | name |
 | `--type` | string | yes | type Allowed: `PYTHON`, `LLM`, `HUMAN`, `COMPOSITE`. |
 | `--categories` | json | no | categories |
-| `--child_metrics` | json | no | child_metrics |
+| `--child-metrics` | json | no | child_metrics |
 | `--description` | string | no | description |
-| `--enabled_in_prod` | boolean | no | enabled_in_prod |
+| `--enabled-in-prod` / `--no-enabled-in-prod` | boolean | no | enabled_in_prod |
 | `--filters` | json | no | filters |
-| `--model_name` | string | no | model_name |
-| `--model_provider` | string | no | model_provider |
-| `--needs_ground_truth` | boolean | no | needs_ground_truth |
-| `--return_type` | string | no | return_type Allowed: `float`, `boolean`, `string`, `categorical`. |
-| `--sampling_percentage` | number | no | sampling_percentage |
+| `--model-name` | string | no | model_name |
+| `--model-provider` | string | no | model_provider |
+| `--needs-ground-truth` / `--no-needs-ground-truth` | boolean | no | needs_ground_truth |
+| `--return-type` | string | no | return_type Allowed: `float`, `boolean`, `string`, `categorical`. |
+| `--sampling-percentage` | number | no | sampling_percentage |
 | `--scale` | number | no | scale |
 | `--threshold` | json | no | threshold |
 
@@ -64,7 +64,7 @@ honeyhive metrics create [options]
 
 Update an existing metric
 
-Edit a metric
+Update a metric's editable fields. Only fields included in the request body are modified.
 
 ### Usage
 
@@ -76,19 +76,19 @@ honeyhive metrics update [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--id` | string | yes | id |
+| `--metric-id` | string | yes | The unique identifier of the metric to update |
 | `--categories` | json | no | categories |
-| `--child_metrics` | json | no | child_metrics |
+| `--child-metrics` | json | no | child_metrics |
 | `--criteria` | string | no | criteria |
 | `--description` | string | no | description |
-| `--enabled_in_prod` | boolean | no | enabled_in_prod |
+| `--enabled-in-prod` / `--no-enabled-in-prod` | boolean | no | enabled_in_prod |
 | `--filters` | json | no | filters |
-| `--model_name` | string | no | model_name |
-| `--model_provider` | string | no | model_provider |
+| `--model-name` | string | no | model_name |
+| `--model-provider` | string | no | model_provider |
 | `--name` | string | no | name |
-| `--needs_ground_truth` | boolean | no | needs_ground_truth |
-| `--return_type` | string | no | return_type Allowed: `float`, `boolean`, `string`, `categorical`. |
-| `--sampling_percentage` | number | no | sampling_percentage |
+| `--needs-ground-truth` / `--no-needs-ground-truth` | boolean | no | needs_ground_truth |
+| `--return-type` | string | no | return_type Allowed: `float`, `boolean`, `string`, `categorical`. |
+| `--sampling-percentage` | number | no | sampling_percentage |
 | `--scale` | number | no | scale |
 | `--threshold` | json | no | threshold |
 | `--type` | string | no | type Allowed: `PYTHON`, `LLM`, `HUMAN`, `COMPOSITE`. |
@@ -97,7 +97,7 @@ honeyhive metrics update [options]
 
 Delete a metric
 
-Remove a metric
+Remove a metric by id.
 
 ### Usage
 
@@ -109,7 +109,7 @@ honeyhive metrics delete [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--metric_id` | string | yes | metric_id |
+| `--metric-id` | string | yes | The unique identifier of the metric to delete |
 
 ## `run` {#run}
 

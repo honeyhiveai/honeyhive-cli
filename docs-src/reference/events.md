@@ -13,9 +13,9 @@ Read and write trace events — the spans that capture every step of an AI appli
 
 Create a new event
 
-Create a new event (span) within a session trace. The request body wraps the event object under the `event` key.
+Create a new event (span) within a session trace. The request body is a bare event object (no `event` wrapper).
 
-**Required properties** within the event object:
+**Required properties:**
 - `event_type` (string) — Must be one of: `chain`, `model`, `tool`, `session`.
 - `inputs` (object) — Input data for the event.
 **Auto-generated properties** (provided by the server when omitted):
@@ -48,7 +48,25 @@ honeyhive events create [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--event` | json | yes | Full event object for legacy event creation endpoints |
+| `--event-type` | string | yes | Type of event (model, tool, chain, or session) Allowed: `model`, `tool`, `chain`, `session`. |
+| `--inputs` | json | yes | Input data for the event |
+| `--children-ids` | json | no | Child event IDs in the trace hierarchy |
+| `--config` | json | no | Configuration used for this event |
+| `--duration` | number | no | Event duration in milliseconds |
+| `--end-time` | number | no | Event end time as Unix milliseconds |
+| `--error` | string | no | Error message if the event failed |
+| `--event-id` | string | no | Unique event identifier |
+| `--event-name` | string | no | Name of the event |
+| `--feedback` | json | no | Feedback data associated with the event |
+| `--metadata` | json | no | Arbitrary metadata for the event |
+| `--metrics` | json | no | Metric values computed for the event |
+| `--outputs` | json | no | Output data from the event |
+| `--parent-id` | string | no | Parent event ID in the trace hierarchy |
+| `--project-id` | string | no | Project ID |
+| `--session-id` | string | no | Session this event belongs to |
+| `--source` | string | no | Source of the event (e.g., sdk-python) |
+| `--start-time` | number | no | Event start time as Unix milliseconds |
+| `--user-properties` | json | no | User properties associated with the event |
 
 ### Example response
 
@@ -63,7 +81,7 @@ honeyhive events create [options]
 
 Update an event
 
-Update fields on an existing event. Only the provided fields are modified; omitted fields are left unchanged. The event_id field is required to identify the event to update.
+Update fields on an existing event. Only the provided fields are modified; omitted fields are left unchanged. Extra fields not listed below are accepted by the server but silently ignored.
 
 ### Usage
 
@@ -75,22 +93,21 @@ honeyhive events update [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--event_id` | string | yes | Event ID to update |
-| `--children_ids` | json | no | IDs of child events to set (must be non-empty; an empty array is ignored) |
+| `--event-id` | string | yes | The unique identifier of the event to update |
+| `--children-ids` | json | no | IDs of child events to set (must be non-empty; an empty array is ignored) |
 | `--config` | json | no | Configuration fields to merge into the event |
 | `--duration` | number | no | Event duration in milliseconds |
-| `--end_time` | number | no | Unix timestamp in milliseconds for event end |
+| `--end-time` | number | no | Unix timestamp in milliseconds for event end |
 | `--feedback` | json | no | Feedback fields to merge into the event |
 | `--metadata` | json | no | Metadata fields to merge into the event |
 | `--metrics` | json | no | Metric values to merge into the event |
 | `--outputs` | json | no | Output data to replace on the event (accepts objects, strings, arrays, or scalars) |
-| `--user_properties` | json | no | User properties to merge into the event |
+| `--user-properties` | json | no | User properties to merge into the event |
 
 ### Example request
 
 ```json
 {
-  "event_id": "7f22137a-6911-4ed3-bc36-110f1dde6b66",
   "metadata": {
     "cost": 0.00008,
     "completion_tokens": 23,
@@ -138,45 +155,32 @@ honeyhive events search [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--dateRange` | json | no | dateRange |
-| `--evaluation_id` | string | no | Filter by evaluation/experiment run ID |
+| `--date-range` | json | no | dateRange |
+| `--evaluation-id` | string | no | Filter by evaluation/experiment run ID |
 | `--filters` | json | no | filters |
-| `--ignore_order` | boolean | no | If true, skip result ordering for faster queries |
-| `--limit` | number | no | Limit number of results (default 1000, max 7500) |
+| `--ignore-order` / `--no-ignore-order` | boolean | no | Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC. |
+| `--limit` | number | no | Limit number of results (default 1000, max 1000) |
 | `--page` | number | no | Page number of results (default 1) |
-
-## `create-model` {#create-model}
-
-Create a new model event
-
-Create a model event. The event_type is automatically set to 'model'. Please refer to our instrumentation guide for detailed information.
-
-### Usage
-
-```sh
-honeyhive events create-model [options]
-```
-
-### Options
-
-| Flag | Type | Required | Description |
-|---|---|---|---|
-| `--model_event` | json | yes | Model event object with model-specific fields and legacy aliases |
-
-### Example response
-
-```json
-{
-  "event_id": "7f22137a-6911-4ed3-bc36-110f1dde6b66",
-  "success": true
-}
-```
 
 ## `create-batch` {#create-batch}
 
 Create a batch of events
 
-Create multiple events in a single request. When single_session is true, all events share the same session. Please refer to our instrumentation guide for detailed information.
+Create multiple events in a single request. When `single_session` is true, all events share the same session created from `session_properties`.
+
+**Required properties:**
+- `events` (array of event objects) — Each event must include
+  `event_type` (one of `chain`, `model`, `tool`, `session`) and `inputs`.
+
+**Optional properties:**
+- `single_session` (boolean) — If true, all events share a single session
+  created from `session_properties`. Defaults to false.
+
+- `session_properties` (object) — Session metadata used when
+  `single_session` is true. May include `session_name`, `start_time`,
+  `metadata`.
+
+Unknown top-level fields and per-event fields are rejected at the SDK boundary; the legacy aliases `is_single_session`, `session`, and per-event `project` are no longer accepted.
 
 ### Usage
 
@@ -189,10 +193,8 @@ honeyhive events create-batch [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--events` | json | yes | Array of events to create |
-| `--is_single_session` | boolean | no | Legacy field name for single_session (backward compatibility) |
-| `--session` | json | no | Session properties for batch event creation |
-| `--session_properties` | json | no | Session properties for batch event creation |
-| `--single_session` | boolean | no | If true, all events share the same session |
+| `--session-properties` | json | no | Session properties for batch event creation |
+| `--single-session` / `--no-single-session` | boolean | no | If true, all events share the same session |
 
 ### Example response
 
@@ -206,56 +208,3 @@ honeyhive events create-batch [options]
   "success": true
 }
 ```
-
-## `create-model-batch` {#create-model-batch}
-
-Create a batch of model events
-
-Create multiple model events in a single request. The event_type is automatically set to 'model' for all events. When single_session is true, all events share the same session. Please refer to our instrumentation guide for detailed information.
-
-### Usage
-
-```sh
-honeyhive events create-model-batch [options]
-```
-
-### Options
-
-| Flag | Type | Required | Description |
-|---|---|---|---|
-| `--model_events` | json | yes | Array of model events to create |
-| `--is_single_session` | boolean | no | Legacy field name for single_session (backward compatibility) |
-| `--session` | json | no | Session properties for batch event creation |
-| `--session_properties` | json | no | Session properties for batch event creation |
-| `--single_session` | boolean | no | If true, all events share the same session |
-
-### Example response
-
-```json
-{
-  "event_ids": [
-    "7f22137a-6911-4ed3-bc36-110f1dde6b66",
-    "7f22137a-6911-4ed3-bc36-110f1dde6b67"
-  ],
-  "success": true
-}
-```
-
-## `get-events-schema` {#get-events-schema}
-
-Get events schema
-
-Retrieve the schema and metadata for experiment events
-
-### Usage
-
-```sh
-honeyhive events get-events-schema [options]
-```
-
-### Options
-
-| Flag | Type | Required | Description |
-|---|---|---|---|
-| `--dateRange` | json | no | Filter by date range |
-| `--evaluation_id` | string | no | Filter by evaluation/run ID |

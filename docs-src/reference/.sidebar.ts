@@ -5,14 +5,12 @@ export const referenceSidebar = [
     text: 'Reference',
     items: [
       { text: 'Overview', link: '/reference/' },
-      { text: 'Configurations', link: '/reference/configurations' },
       { text: 'Datapoints', link: '/reference/datapoints' },
       { text: 'Datasets', link: '/reference/datasets' },
       { text: 'Events', link: '/reference/events' },
       { text: 'Experiments', link: '/reference/experiments' },
       { text: 'Metrics', link: '/reference/metrics' },
       { text: 'Queues', link: '/reference/queues' },
-      { text: 'Sessions', link: '/reference/sessions' },
     ],
   },
 ];

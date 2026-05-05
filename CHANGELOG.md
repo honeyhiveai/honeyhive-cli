@@ -1,5 +1,20 @@
 ## [Unreleased]
 
+## [1.0.0-rc.4] - 2026-05-05
+
+### Added
+- `experiments get-run-schema` and `experiments get-runs-schema` commands for fetching run-scoped event schemas.
+
+### Changed
+- All command flags now use `--kebab-case` instead of `--camelCase` (e.g. `--projectId` → `--project-id`). Update any scripts that pass camelCase flags.
+- Boolean flags now use the canonical `--flag` / `--no-flag` form instead of `--flag true` / `--flag false` (e.g. `--enabled` and `--no-enabled`).
+- `events search`: maximum `--limit` reduced from 7500 to 1000, and `--ignore-order` is now a deprecated no-op (results are always ordered by `start_time` descending) to keep pagination consistent.
+- `events create`, `events update`, `events create-batch`, `metrics create`, `metrics update`, `metrics delete`, `metrics run`, `experiments compare-runs`, and `experiments compare-run-events` now target the new canonical endpoints.
+
+### Removed
+- `sessions` and `configurations` top-level command groups.
+- `events create-model`, `events create-model-batch`, `events get-events-schema`, and `experiments get-result` subcommands. Use `experiments get-run-schema` / `experiments get-runs-schema` in place of `events get-events-schema`.
+
 ## [1.0.0-rc.3] - 2026-05-02
 
 ### Added

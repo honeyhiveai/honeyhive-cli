@@ -10,14 +10,14 @@ export function datasetsCommand(): Command {
   cmd
     .command('list')
     .description('Get datasets')
-    .option('--dataset_id <value>', 'Unique dataset ID for filtering specific dataset')
+    .option('--dataset-id <value>', 'Unique dataset ID for filtering specific dataset')
     .option('--name <value>', 'Dataset name to filter by')
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
         const result = await client.datasets.list({
           query: {
-            ...(opts.dataset_id !== undefined && { dataset_id: opts.dataset_id }),
+            ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
             ...(opts.name !== undefined && { name: opts.name }),
           },
         } as Parameters<typeof client.datasets.list>[0]);
@@ -61,7 +61,7 @@ export function datasetsCommand(): Command {
     .command('update')
     .description('Update a dataset')
     .requiredOption(
-      '--dataset_id <value>',
+      '--dataset-id <value>',
       'The unique identifier of the dataset to update like `663876ec4611c47f4970f0c3` (required)',
     )
     .option('--name <value>', 'New dataset name')
@@ -72,7 +72,7 @@ export function datasetsCommand(): Command {
         const client = createClient(command);
         const result = await client.datasets.update({
           path: {
-            dataset_id: opts.dataset_id,
+            dataset_id: opts.datasetId,
           },
           body: {
             ...(opts.name !== undefined && { name: opts.name }),
@@ -94,7 +94,7 @@ export function datasetsCommand(): Command {
     .command('delete')
     .description('Delete a dataset')
     .requiredOption(
-      '--dataset_id <value>',
+      '--dataset-id <value>',
       'The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` (required)',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
@@ -102,7 +102,7 @@ export function datasetsCommand(): Command {
         const client = createClient(command);
         const result = await client.datasets.delete({
           path: {
-            dataset_id: opts.dataset_id,
+            dataset_id: opts.datasetId,
           },
         } as Parameters<typeof client.datasets.delete>[0]);
         if (result !== undefined) {
@@ -119,7 +119,7 @@ export function datasetsCommand(): Command {
     .command('add-datapoints')
     .description('Add datapoints to a dataset')
     .requiredOption(
-      '--dataset_id <value>',
+      '--dataset-id <value>',
       'The unique identifier of the dataset to add datapoints to like  `663876ec4611c47f4970f0c3` (required)',
     )
     .requiredOption('--data <json>', 'Array of datapoint data objects to add (required)')
@@ -129,7 +129,7 @@ export function datasetsCommand(): Command {
         const client = createClient(command);
         const result = await client.datasets.addDatapoints({
           path: {
-            dataset_id: opts.dataset_id,
+            dataset_id: opts.datasetId,
           },
           body: {
             data: parseJson(opts.data),
@@ -149,9 +149,9 @@ export function datasetsCommand(): Command {
   cmd
     .command('remove-datapoint')
     .description('Remove a datapoint from a dataset')
-    .requiredOption('--dataset_id <value>', 'The unique identifier of the dataset (required)')
+    .requiredOption('--dataset-id <value>', 'The unique identifier of the dataset (required)')
     .requiredOption(
-      '--datapoint_id <value>',
+      '--datapoint-id <value>',
       'The unique identifier of the datapoint to remove (required)',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
@@ -159,8 +159,8 @@ export function datasetsCommand(): Command {
         const client = createClient(command);
         const result = await client.datasets.removeDatapoint({
           path: {
-            dataset_id: opts.dataset_id,
-            datapoint_id: opts.datapoint_id,
+            dataset_id: opts.datasetId,
+            datapoint_id: opts.datapointId,
           },
         } as Parameters<typeof client.datasets.removeDatapoint>[0]);
         if (result !== undefined) {

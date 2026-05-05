@@ -25,8 +25,8 @@ honeyhive datapoints list [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--datapoint_ids` | json | no | List of datapoint ids to fetch |
-| `--dataset_name` | string | no | Name of the dataset to get datapoints from |
+| `--datapoint-ids` | json | no | List of datapoint ids to fetch |
+| `--dataset-name` | string | no | Name of the dataset to get datapoints from |
 
 ## `create` {#create}
 
@@ -44,11 +44,11 @@ honeyhive datapoints create [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--ground_truth` | json | no | ground_truth |
+| `--ground-truth` | json | no | ground_truth |
 | `--history` | json | no | history |
 | `--inputs` | json | no | inputs |
-| `--linked_datasets` | json | no | linked_datasets |
-| `--linked_event` | string | no | linked_event |
+| `--linked-datasets` | json | no | linked_datasets |
+| `--linked-event` | string | no | linked_event |
 | `--metadata` | json | no | metadata |
 
 ## `create-batch` {#create-batch}
@@ -67,13 +67,13 @@ honeyhive datapoints create-batch [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--checkState` | json | no | checkState |
-| `--dataset_id` | string | no | dataset_id |
-| `--dateRange` | json | no | dateRange |
+| `--check-state` | json | no | checkState |
+| `--dataset-id` | string | no | dataset_id |
+| `--date-range` | json | no | dateRange |
 | `--events` | json | no | events |
 | `--filters` | json | no | filters |
 | `--mapping` | json | no | mapping |
-| `--selectAll` | boolean | no | selectAll |
+| `--select-all` / `--no-select-all` | boolean | no | selectAll |
 
 ## `get` {#get}
 
@@ -91,7 +91,7 @@ honeyhive datapoints get [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--datapoint_id` | string | yes | Datapoint ID like `65c13dbbd65fb876b7886cdb` |
+| `--datapoint-id` | string | yes | Datapoint ID like `65c13dbbd65fb876b7886cdb` |
 
 ## `update` {#update}
 
@@ -109,12 +109,12 @@ honeyhive datapoints update [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--datapoint_id` | string | yes | ID of datapoint to update |
-| `--ground_truth` | json | no | ground_truth |
+| `--datapoint-id` | string | yes | ID of datapoint to update |
+| `--ground-truth` | json | no | ground_truth |
 | `--history` | json | no | history |
 | `--inputs` | json | no | inputs |
-| `--linked_datasets` | json | no | linked_datasets |
-| `--linked_event` | string | no | linked_event |
+| `--linked-datasets` | json | no | linked_datasets |
+| `--linked-event` | string | no | linked_event |
 | `--metadata` | json | no | metadata |
 
 ## `delete` {#delete}
@@ -133,4 +133,4 @@ honeyhive datapoints delete [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--datapoint_id` | string | yes | Datapoint ID like `65c13dbbd65fb876b7886cdb` |
+| `--datapoint-id` | string | yes | Datapoint ID like `65c13dbbd65fb876b7886cdb` |

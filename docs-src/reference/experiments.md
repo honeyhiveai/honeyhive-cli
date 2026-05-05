@@ -25,14 +25,14 @@ honeyhive experiments list-runs [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--dataset_id` | string | no | Filter by dataset ID |
-| `--dateRange` | json | no | Filter by date range |
+| `--dataset-id` | string | no | Filter by dataset ID |
+| `--date-range` | json | no | Filter by date range |
 | `--limit` | number | no | Number of results per page |
 | `--name` | string | no | Filter by run name |
 | `--page` | number | no | Page number for pagination |
-| `--run_ids` | json | no | List of specific run IDs to fetch |
-| `--sort_by` | string | no | Field to sort by Allowed: `created_at`, `updated_at`, `name`, `status`. |
-| `--sort_order` | string | no | Sort order Allowed: `asc`, `desc`. |
+| `--run-ids` | json | no | List of specific run IDs to fetch |
+| `--sort-by` | string | no | Field to sort by Allowed: `created_at`, `updated_at`, `name`, `status`. |
+| `--sort-order` | string | no | Sort order Allowed: `asc`, `desc`. |
 | `--status` | string | no | Filter by run status Allowed: `pending`, `completed`, `failed`, `cancelled`, `running`. |
 
 ## `create-run` {#create-run}
@@ -52,18 +52,36 @@ honeyhive experiments create-run [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--configuration` | json | no | configuration |
-| `--datapoint_ids` | json | no | datapoint_ids |
-| `--dataset_id` | string | no | dataset_id |
+| `--datapoint-ids` | json | no | datapoint_ids |
+| `--dataset-id` | string | no | dataset_id |
 | `--description` | string | no | description |
 | `--evaluators` | json | no | evaluators |
-| `--event_ids` | json | no | event_ids |
+| `--event-ids` | json | no | event_ids |
 | `--metadata` | json | no | metadata |
 | `--name` | string | no | name |
-| `--passing_ranges` | json | no | passing_ranges |
+| `--passing-ranges` | json | no | passing_ranges |
 | `--results` | json | no | results |
-| `--run_id` | string | no | run_id |
-| `--session_ids` | json | no | session_ids |
+| `--run-id` | string | no | run_id |
+| `--session-ids` | json | no | session_ids |
 | `--status` | string | no | status Allowed: `pending`, `completed`, `failed`, `cancelled`, `running`. |
+
+## `get-runs-schema` {#get-runs-schema}
+
+Get events schema across all experiment runs in a project
+
+Retrieve the aggregated events schema (fields, datasets, mappings) across all experiment runs in the project.
+
+### Usage
+
+```sh
+honeyhive experiments get-runs-schema [options]
+```
+
+### Options
+
+| Flag | Type | Required | Description |
+|---|---|---|---|
+| `--date-range` | json | no | Filter by date range |
 
 ## `get-run` {#get-run}
 
@@ -81,7 +99,7 @@ honeyhive experiments get-run [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--run_id` | string | yes | run_id |
+| `--run-id` | string | yes | run_id |
 
 ## `update-run` {#update-run}
 
@@ -99,17 +117,17 @@ honeyhive experiments update-run [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--run_id` | string | yes | run_id |
+| `--run-id` | string | yes | run_id |
 | `--configuration` | json | no | configuration |
-| `--datapoint_ids` | json | no | datapoint_ids |
+| `--datapoint-ids` | json | no | datapoint_ids |
 | `--description` | string | no | description |
 | `--evaluators` | json | no | evaluators |
-| `--event_ids` | json | no | event_ids |
+| `--event-ids` | json | no | event_ids |
 | `--metadata` | json | no | metadata |
 | `--name` | string | no | name |
-| `--passing_ranges` | json | no | passing_ranges |
+| `--passing-ranges` | json | no | passing_ranges |
 | `--results` | json | no | results |
-| `--session_ids` | json | no | session_ids |
+| `--session-ids` | json | no | session_ids |
 | `--status` | string | no | status Allowed: `pending`, `completed`, `failed`, `cancelled`, `running`. |
 
 ## `delete-run` {#delete-run}
@@ -128,7 +146,26 @@ honeyhive experiments delete-run [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--run_id` | string | yes | run_id |
+| `--run-id` | string | yes | run_id |
+
+## `get-run-schema` {#get-run-schema}
+
+Get events schema for a single experiment run
+
+Retrieve the events schema (fields, datasets, mappings) for a single experiment run.
+
+### Usage
+
+```sh
+honeyhive experiments get-run-schema [options]
+```
+
+### Options
+
+| Flag | Type | Required | Description |
+|---|---|---|---|
+| `--run-id` | string | yes | Experiment run ID (UUIDv4) |
+| `--date-range` | json | no | Filter by date range |
 
 ## `get-run-metrics` {#get-run-metrics}
 
@@ -146,28 +183,8 @@ honeyhive experiments get-run-metrics [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--run_id` | string | yes | Experiment run ID (UUIDv4) |
-| `--dateRange` | string | no | Date range filter as JSON string |
-| `--filters` | json | no | Optional filters to apply (JSON string or array of filter objects) |
-
-## `get-result` {#get-result}
-
-Retrieve experiment result
-
-Compute evaluation summary for an experiment run: pass/fail results, metric aggregations, per-datapoint results, event details, and the experiment run object.
-
-### Usage
-
-```sh
-honeyhive experiments get-result [options]
-```
-
-### Options
-
-| Flag | Type | Required | Description |
-|---|---|---|---|
-| `--run_id` | string | yes | Experiment run ID (UUIDv4) |
-| `--aggregate_function` | string | no | Aggregation function to apply to metrics Allowed: `average`, `min`, `max`, `median`, `p95`, `p99`, `p90`, `sum`, `count`. |
+| `--run-id` | string | yes | Experiment run ID (UUIDv4) |
+| `--date-range` | string | no | Date range filter as JSON string |
 | `--filters` | json | no | Optional filters to apply (JSON string or array of filter objects) |
 
 ## `compare-runs` {#compare-runs}
@@ -186,9 +203,9 @@ honeyhive experiments compare-runs [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--new_run_id` | string | yes | New experiment run ID to compare (UUIDv4) |
-| `--old_run_id` | string | yes | Old experiment run ID to compare against (UUIDv4) |
-| `--aggregate_function` | string | no | Aggregation function to apply to metrics Allowed: `average`, `min`, `max`, `median`, `p95`, `p99`, `p90`, `sum`, `count`. |
+| `--new-run-id` | string | yes | New experiment run ID to compare (UUIDv4) |
+| `--old-run-id` | string | yes | Old experiment run ID to compare against (UUIDv4) |
+| `--aggregate-function` | string | no | Aggregation function to apply to metrics Allowed: `average`, `min`, `max`, `median`, `p95`, `p99`, `p90`, `sum`, `count`. |
 | `--filters` | json | no | Optional filters to apply (JSON string or array of filter objects) |
 
 ## `compare-run-events` {#compare-run-events}
@@ -207,10 +224,10 @@ honeyhive experiments compare-run-events [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--run_id_1` | string | yes | First experiment run ID (UUIDv4) |
-| `--run_id_2` | string | yes | Second experiment run ID (UUIDv4) |
-| `--event_name` | string | no | Filter by event name |
-| `--event_type` | string | no | Filter by event type |
+| `--new-run-id` | string | yes | New experiment run ID (UUIDv4) |
+| `--old-run-id` | string | yes | Old experiment run ID to compare against (UUIDv4) |
+| `--event-name` | string | no | Filter by event name |
+| `--event-type` | string | no | Filter by event type |
 | `--filter` | json | no | Additional filter criteria (JSON string or object) |
 | `--limit` | number | no | Maximum number of results |
 | `--page` | number | no | Page number for pagination |

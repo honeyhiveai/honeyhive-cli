@@ -25,7 +25,7 @@ honeyhive queues list [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--enabled` | boolean | no | Filter by enabled status |
+| `--enabled` / `--no-enabled` | boolean | no | Filter by enabled status |
 
 ## `create` {#create}
 
@@ -45,8 +45,8 @@ honeyhive queues create [options]
 |---|---|---|---|
 | `--name` | string | yes | name |
 | `--description` | string | no | description |
-| `--enabled` | boolean | no | enabled |
-| `--event_ids` | json | no | event_ids |
+| `--enabled` / `--no-enabled` | boolean | no | enabled |
+| `--event-ids` | json | no | event_ids |
 | `--filters` | json | no | filters |
 
 ## `get` {#get}
@@ -65,7 +65,7 @@ honeyhive queues get [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--queue_id` | string | yes | Annotation queue ID |
+| `--queue-id` | string | yes | Annotation queue ID |
 
 ## `update` {#update}
 
@@ -84,13 +84,13 @@ honeyhive queues update [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--id` | string | yes | id |
-| `--queue_id` | string | yes | Annotation queue ID |
-| `--add_event_ids` | json | no | add_event_ids |
+| `--queue-id` | string | yes | Annotation queue ID |
+| `--add-event-ids` | json | no | add_event_ids |
 | `--description` | string | no | description |
-| `--enabled` | boolean | no | enabled |
+| `--enabled` / `--no-enabled` | boolean | no | enabled |
 | `--filters` | json | no | filters |
 | `--name` | string | no | name |
-| `--remove_event_ids` | json | no | remove_event_ids |
+| `--remove-event-ids` | json | no | remove_event_ids |
 
 ## `delete` {#delete}
 
@@ -108,4 +108,4 @@ honeyhive queues delete [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--queue_id` | string | yes | Annotation queue ID |
+| `--queue-id` | string | yes | Annotation queue ID |

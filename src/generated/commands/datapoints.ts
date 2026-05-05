@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 
-import { createClient, parseBoolean, parseJson } from './utils.js';
+import { createClient, parseJson } from './utils.js';
 
 export function datapointsCommand(): Command {
   const cmd = new Command('datapoints').description('Datapoints commands');
@@ -10,17 +10,15 @@ export function datapointsCommand(): Command {
   cmd
     .command('list')
     .description('Retrieve a list of datapoints')
-    .option('--datapoint_ids <json>', 'List of datapoint ids to fetch')
-    .option('--dataset_name <value>', 'Name of the dataset to get datapoints from')
+    .option('--datapoint-ids <json>', 'List of datapoint ids to fetch')
+    .option('--dataset-name <value>', 'Name of the dataset to get datapoints from')
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
         const result = await client.datapoints.list({
           query: {
-            ...(opts.datapoint_ids !== undefined && {
-              datapoint_ids: parseJson(opts.datapoint_ids),
-            }),
-            ...(opts.dataset_name !== undefined && { dataset_name: opts.dataset_name }),
+            ...(opts.datapointIds !== undefined && { datapoint_ids: parseJson(opts.datapointIds) }),
+            ...(opts.datasetName !== undefined && { dataset_name: opts.datasetName }),
           },
         } as Parameters<typeof client.datapoints.list>[0]);
         if (result !== undefined) {
@@ -38,10 +36,10 @@ export function datapointsCommand(): Command {
     .description('Create a new datapoint')
     .option('--inputs <json>', 'inputs')
     .option('--history <json>', 'history')
-    .option('--ground_truth <json>', 'ground_truth')
+    .option('--ground-truth <json>', 'ground_truth')
     .option('--metadata <json>', 'metadata')
-    .option('--linked_event <value>', 'linked_event')
-    .option('--linked_datasets <json>', 'linked_datasets')
+    .option('--linked-event <value>', 'linked_event')
+    .option('--linked-datasets <json>', 'linked_datasets')
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
@@ -49,11 +47,11 @@ export function datapointsCommand(): Command {
           body: {
             ...(opts.inputs !== undefined && { inputs: parseJson(opts.inputs) }),
             ...(opts.history !== undefined && { history: parseJson(opts.history) }),
-            ...(opts.ground_truth !== undefined && { ground_truth: parseJson(opts.ground_truth) }),
+            ...(opts.groundTruth !== undefined && { ground_truth: parseJson(opts.groundTruth) }),
             ...(opts.metadata !== undefined && { metadata: parseJson(opts.metadata) }),
-            ...(opts.linked_event !== undefined && { linked_event: opts.linked_event }),
-            ...(opts.linked_datasets !== undefined && {
-              linked_datasets: parseJson(opts.linked_datasets),
+            ...(opts.linkedEvent !== undefined && { linked_event: opts.linkedEvent }),
+            ...(opts.linkedDatasets !== undefined && {
+              linked_datasets: parseJson(opts.linkedDatasets),
             }),
           },
         } as Parameters<typeof client.datapoints.create>[0]);
@@ -73,10 +71,11 @@ export function datapointsCommand(): Command {
     .option('--events <json>', '(deprecated) events')
     .option('--mapping <json>', '(deprecated) mapping')
     .option('--filters <json>', 'filters')
-    .option('--dateRange <json>', 'dateRange')
-    .option('--checkState <json>', 'checkState')
-    .option('--selectAll <value>', 'selectAll')
-    .option('--dataset_id <value>', 'dataset_id')
+    .option('--date-range <json>', 'dateRange')
+    .option('--check-state <json>', 'checkState')
+    .option('--select-all', 'selectAll')
+    .option('--no-select-all', 'selectAll')
+    .option('--dataset-id <value>', 'dataset_id')
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         if (opts.events !== undefined) {
@@ -97,8 +96,8 @@ export function datapointsCommand(): Command {
             ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
             ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
             ...(opts.checkState !== undefined && { checkState: parseJson(opts.checkState) }),
-            ...(opts.selectAll !== undefined && { selectAll: parseBoolean(opts.selectAll) }),
-            ...(opts.dataset_id !== undefined && { dataset_id: opts.dataset_id }),
+            ...(opts.selectAll !== undefined && { selectAll: opts.selectAll }),
+            ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
           },
         } as Parameters<typeof client.datapoints.createBatch>[0]);
         if (result !== undefined) {
@@ -115,7 +114,7 @@ export function datapointsCommand(): Command {
     .command('get')
     .description('Retrieve a specific datapoint')
     .requiredOption(
-      '--datapoint_id <value>',
+      '--datapoint-id <value>',
       'Datapoint ID like `65c13dbbd65fb876b7886cdb` (required)',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
@@ -123,7 +122,7 @@ export function datapointsCommand(): Command {
         const client = createClient(command);
         const result = await client.datapoints.get({
           path: {
-            datapoint_id: opts.datapoint_id,
+            datapoint_id: opts.datapointId,
           },
         } as Parameters<typeof client.datapoints.get>[0]);
         if (result !== undefined) {
@@ -139,28 +138,28 @@ export function datapointsCommand(): Command {
   cmd
     .command('update')
     .description('Update a specific datapoint')
-    .requiredOption('--datapoint_id <value>', 'ID of datapoint to update (required)')
+    .requiredOption('--datapoint-id <value>', 'ID of datapoint to update (required)')
     .option('--inputs <json>', 'inputs')
     .option('--history <json>', 'history')
-    .option('--ground_truth <json>', 'ground_truth')
+    .option('--ground-truth <json>', 'ground_truth')
     .option('--metadata <json>', 'metadata')
-    .option('--linked_event <value>', 'linked_event')
-    .option('--linked_datasets <json>', 'linked_datasets')
+    .option('--linked-event <value>', 'linked_event')
+    .option('--linked-datasets <json>', 'linked_datasets')
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
         const result = await client.datapoints.update({
           path: {
-            datapoint_id: opts.datapoint_id,
+            datapoint_id: opts.datapointId,
           },
           body: {
             ...(opts.inputs !== undefined && { inputs: parseJson(opts.inputs) }),
             ...(opts.history !== undefined && { history: parseJson(opts.history) }),
-            ...(opts.ground_truth !== undefined && { ground_truth: parseJson(opts.ground_truth) }),
+            ...(opts.groundTruth !== undefined && { ground_truth: parseJson(opts.groundTruth) }),
             ...(opts.metadata !== undefined && { metadata: parseJson(opts.metadata) }),
-            ...(opts.linked_event !== undefined && { linked_event: opts.linked_event }),
-            ...(opts.linked_datasets !== undefined && {
-              linked_datasets: parseJson(opts.linked_datasets),
+            ...(opts.linkedEvent !== undefined && { linked_event: opts.linkedEvent }),
+            ...(opts.linkedDatasets !== undefined && {
+              linked_datasets: parseJson(opts.linkedDatasets),
             }),
           },
         } as Parameters<typeof client.datapoints.update>[0]);
@@ -178,7 +177,7 @@ export function datapointsCommand(): Command {
     .command('delete')
     .description('Delete a specific datapoint')
     .requiredOption(
-      '--datapoint_id <value>',
+      '--datapoint-id <value>',
       'Datapoint ID like `65c13dbbd65fb876b7886cdb` (required)',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
@@ -186,7 +185,7 @@ export function datapointsCommand(): Command {
         const client = createClient(command);
         const result = await client.datapoints.delete({
           path: {
-            datapoint_id: opts.datapoint_id,
+            datapoint_id: opts.datapointId,
           },
         } as Parameters<typeof client.datapoints.delete>[0]);
         if (result !== undefined) {

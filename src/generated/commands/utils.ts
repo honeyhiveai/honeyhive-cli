@@ -45,11 +45,3 @@ export function parseNumber(value: unknown): number {
   }
   return n;
 }
-
-export function parseBoolean(value: unknown): boolean {
-  const s = String(value).toLowerCase();
-  if (s === 'true') return true;
-  if (s === 'false') return false;
-  console.error(`Expected 'true' or 'false', got '${String(value)}'`);
-  process.exit(1);
-}

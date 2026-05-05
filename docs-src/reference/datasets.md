@@ -25,7 +25,7 @@ honeyhive datasets list [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--dataset_id` | string | no | Unique dataset ID for filtering specific dataset |
+| `--dataset-id` | string | no | Unique dataset ID for filtering specific dataset |
 | `--name` | string | no | Dataset name to filter by |
 
 ## `create` {#create}
@@ -64,7 +64,7 @@ honeyhive datasets update [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--dataset_id` | string | yes | The unique identifier of the dataset to update like `663876ec4611c47f4970f0c3` |
+| `--dataset-id` | string | yes | The unique identifier of the dataset to update like `663876ec4611c47f4970f0c3` |
 | `--datapoints` | json | no | Updated list of datapoint IDs |
 | `--description` | string | no | New dataset description |
 | `--name` | string | no | New dataset name |
@@ -85,7 +85,7 @@ honeyhive datasets delete [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--dataset_id` | string | yes | The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` |
+| `--dataset-id` | string | yes | The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` |
 
 ## `add-datapoints` {#add-datapoints}
 
@@ -104,7 +104,7 @@ honeyhive datasets add-datapoints [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--data` | json | yes | Array of datapoint data objects to add |
-| `--dataset_id` | string | yes | The unique identifier of the dataset to add datapoints to like `663876ec4611c47f4970f0c3` |
+| `--dataset-id` | string | yes | The unique identifier of the dataset to add datapoints to like `663876ec4611c47f4970f0c3` |
 | `--mapping` | json | yes | mapping |
 
 ## `remove-datapoint` {#remove-datapoint}
@@ -123,5 +123,5 @@ honeyhive datasets remove-datapoint [options]
 
 | Flag | Type | Required | Description |
 |---|---|---|---|
-| `--datapoint_id` | string | yes | The unique identifier of the datapoint to remove |
-| `--dataset_id` | string | yes | The unique identifier of the dataset |
+| `--datapoint-id` | string | yes | The unique identifier of the datapoint to remove |
+| `--dataset-id` | string | yes | The unique identifier of the dataset |

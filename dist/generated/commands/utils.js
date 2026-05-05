@@ -39,13 +39,4 @@ export function parseNumber(value) {
     }
     return n;
 }
-export function parseBoolean(value) {
-    const s = String(value).toLowerCase();
-    if (s === 'true')
-        return true;
-    if (s === 'false')
-        return false;
-    console.error(`Expected 'true' or 'false', got '${String(value)}'`);
-    process.exit(1);
-}
 //# sourceMappingURL=utils.js.map
