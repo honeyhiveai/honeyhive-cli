@@ -8,8 +8,10 @@ import { eventsCommand } from './events.js';
 import { experimentsCommand } from './experiments.js';
 import { metricsCommand } from './metrics.js';
 import { queuesCommand } from './queues.js';
+import { sessionsCommand } from './sessions.js';
 
 export function registerCommands(program: Command): void {
+  program.addCommand(sessionsCommand());
   program.addCommand(eventsCommand());
   program.addCommand(metricsCommand());
   program.addCommand(datapointsCommand());

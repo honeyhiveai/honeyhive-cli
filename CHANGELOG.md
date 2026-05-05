@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [1.0.0-rc.5] - 2026-05-05
+
+### Added
+- `sessions create` command for starting a new session against the migrated session start endpoint. All fields are optional; the server fills in defaults (e.g. generates a UUID `session_id`, falls back `event_name` to `session_name` then `"unknown"`). Posting twice with the same `--session-id` is idempotent and merges metadata into the existing session.
+
 ## [1.0.0-rc.4] - 2026-05-05
 
 ### Added

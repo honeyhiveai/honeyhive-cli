@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-rc.4",
+  "version": "1.0.0-rc.5",
   "name": "@honeyhive/cli",
   "type": "module",
   "description": "HoneyHive CLI",
@@ -14,7 +14,7 @@
   },
   "//": "This package is published publicly, so its runtime deps cannot use pnpm's `catalog:` protocol. `commander`'s version range here MUST match the one in @hive-kube/server-sdk-generator's package.json — the generator imports Commander at codegen time to derive `opts` attribute names that get baked into this CLI's generated source. See AGENTS.md.",
   "dependencies": {
-    "@honeyhive/api-client": "1.0.0-rc.2",
+    "@honeyhive/api-client": "1.0.0-rc.3",
     "commander": "13.1.0"
   },
   "publishConfig": {

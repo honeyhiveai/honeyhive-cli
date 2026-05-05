@@ -11,6 +11,7 @@ export const referenceSidebar = [
       { text: 'Experiments', link: '/reference/experiments' },
       { text: 'Metrics', link: '/reference/metrics' },
       { text: 'Queues', link: '/reference/queues' },
+      { text: 'Sessions', link: '/reference/sessions' },
     ],
   },
 ];
