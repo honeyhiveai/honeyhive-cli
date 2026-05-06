@@ -10,7 +10,8 @@ program
   .description('HoneyHive CLI')
   .version(CLI_VERSION)
   .option('--api-key <key>', 'API key (overrides HH_API_KEY env var)')
-  .option('--base-url <url>', 'Base URL (overrides HH_API_URL env var)');
+  .option('--base-url <url>', 'Base URL (overrides HH_API_URL env var)')
+  .option('--verbose', 'Log the resolved API URL, masked API key, and CLI version on startup');
 
 registerCommands(program);
 

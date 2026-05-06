@@ -11,6 +11,7 @@ export function createClient(command) {
     return new Client({
         apiKey,
         ...(globalOpts.baseUrl !== undefined && { serverUrl: globalOpts.baseUrl }),
+        ...(globalOpts.verbose !== undefined && { verbose: globalOpts.verbose }),
         _internal_provenance: {
             package: '@honeyhive/cli',
             version: CLI_VERSION,

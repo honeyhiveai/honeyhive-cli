@@ -6,7 +6,11 @@ import { type Command } from 'commander';
 import { CLI_VERSION } from '../version.js';
 
 export function createClient(command: Command): Client {
-  const globalOpts = command.optsWithGlobals<Record<string, string>>();
+  const globalOpts = command.optsWithGlobals<{
+    apiKey?: string;
+    baseUrl?: string;
+    verbose?: boolean;
+  }>();
   const apiKey = globalOpts.apiKey ?? process.env.HH_API_KEY;
   if (!apiKey) {
     console.error('Missing API key: provide --api-key or set the HH_API_KEY environment variable');
@@ -16,6 +20,7 @@ export function createClient(command: Command): Client {
   return new Client({
     apiKey,
     ...(globalOpts.baseUrl !== undefined && { serverUrl: globalOpts.baseUrl }),
+    ...(globalOpts.verbose !== undefined && { verbose: globalOpts.verbose }),
     _internal_provenance: {
       package: '@honeyhive/cli',
       version: CLI_VERSION,

@@ -21,7 +21,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.0.0-rc.5/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.0.0-rc.6/install.sh | sh
 ```
 <!-- install-script-end -->
 
@@ -61,6 +61,19 @@ honeyhive datasets list
 # Or per-invocation:
 honeyhive --base-url https://honeyhive.example.com datasets list
 ```
+
+## Verbose logging
+
+Pass `--verbose` (or set `HH_VERBOSE=true`) to log the resolved API URL, a masked API key, and the CLI version on startup. Useful when debugging "is this hitting prod or staging?" or "did the right `HH_API_KEY` get picked up?".
+
+```sh
+honeyhive --verbose datasets list
+# API URL: https://api.dp1.us.honeyhive.ai
+# API Key: hh_****5Qrg
+# Package: @honeyhive/cli v1.0.0
+```
+
+Output is written to stderr and only fires once per invocation. An explicit `--verbose` flag matches the precedence of the other flags. The masked API key keeps the recognized prefix (`hh_`, `hh_org_`, `hh_ws_`, `hh_cp_`, `hh_dp_`) and the last 4 characters; anything else renders as 8 fixed-width asterisks.
 
 ## Example: Creating and Deleting a Dataset
 

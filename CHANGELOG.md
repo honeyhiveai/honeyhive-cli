@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [1.0.0-rc.6] - 2026-05-06
+
+### Added
+- `--verbose` global flag (also enabled via `HH_VERBOSE=true`) that logs the resolved API URL, masked API key, and CLI version to stderr on startup. Useful for confirming which environment and credentials a command is using without interfering with JSON output on stdout.
+
 ## [1.0.0-rc.5] - 2026-05-05
 
 ### Added
