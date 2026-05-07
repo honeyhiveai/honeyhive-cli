@@ -13,19 +13,28 @@ Read and write trace events — the spans that capture every step of an AI appli
 
 Create a new event
 
-Create a new event (span) within a session trace. The request body is a bare event object (no `event` wrapper).
+Create a new event (span) within a session trace. The request body is a
+bare event object (no `event` wrapper).
+
 
 **Required properties:**
+
 - `event_type` (string) — Must be one of: `chain`, `model`, `tool`, `session`.
 - `inputs` (object) — Input data for the event.
+
 **Auto-generated properties** (provided by the server when omitted):
+
 - `event_id` (string, UUID) — Unique identifier for the event.
 - `session_id` (string, UUID) — Session/trace identifier.
 - `parent_id` (string, UUID) — Parent event ID. Defaults to `session_id`.
+
 **Optional properties with defaults:**
+
 - `event_name` (string) — Name of the event. Defaults to `"unknown"`.
 - `source` (string) — Source of the event (e.g. `sdk-python`). Defaults to `"unknown"`.
+
 **Optional properties:**
+
 - `config` (object) — Configuration data (e.g. model parameters, prompt templates).
 - `outputs` (object) — Output data from the event.
 - `error` (string or null) — Error message if the event failed.
@@ -81,7 +90,9 @@ honeyhive events create [options]
 
 Update an event
 
-Update fields on an existing event. Only the provided fields are modified; omitted fields are left unchanged. Extra fields not listed below are accepted by the server but silently ignored.
+Update fields on an existing event. Only the provided fields are
+modified; omitted fields are left unchanged. Extra fields not listed
+below are accepted by the server but silently ignored.
 
 ### Usage
 
@@ -166,21 +177,26 @@ honeyhive events search [options]
 
 Create a batch of events
 
-Create multiple events in a single request. When `single_session` is true, all events share the same session created from `session_properties`.
+Create multiple events in a single request. When `single_session` is
+true, all events share the same session created from `session_properties`.
+
 
 **Required properties:**
+
 - `events` (array of event objects) — Each event must include
   `event_type` (one of `chain`, `model`, `tool`, `session`) and `inputs`.
 
 **Optional properties:**
+
 - `single_session` (boolean) — If true, all events share a single session
   created from `session_properties`. Defaults to false.
-
 - `session_properties` (object) — Session metadata used when
   `single_session` is true. May include `session_name`, `start_time`,
   `metadata`.
 
-Unknown top-level fields and per-event fields are rejected at the SDK boundary; the legacy aliases `is_single_session`, `session`, and per-event `project` are no longer accepted.
+Unknown top-level fields and per-event fields are rejected at the SDK
+boundary; the legacy aliases `is_single_session`, `session`, and
+per-event `project` are no longer accepted.
 
 ### Usage
 
