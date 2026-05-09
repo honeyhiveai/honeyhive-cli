@@ -21,7 +21,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.0.0-rc.7/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.0.0-rc.8/install.sh | sh
 ```
 <!-- install-script-end -->
 

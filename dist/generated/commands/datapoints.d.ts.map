@@ -1,1 +1,1 @@
-{"version":3,"file":"datapoints.d.ts","sourceRoot":"","sources":["../../../src/generated/commands/datapoints.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAIpC,wBAAgB,iBAAiB,IAAI,OAAO,CA0M3C"}
+{"version":3,"file":"datapoints.d.ts","sourceRoot":"","sources":["../../../src/generated/commands/datapoints.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAUpC,wBAAgB,iBAAiB,IAAI,OAAO,CAgS3C"}

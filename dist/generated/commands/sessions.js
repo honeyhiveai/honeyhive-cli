@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command } from 'commander';
-import { createClient, parseJson, parseNumber } from './utils.js';
+import { assertNoConflictingFlags, createClient, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function sessionsCommand() {
     const cmd = new Command('sessions').description('Sessions commands');
     cmd
@@ -19,11 +19,31 @@ export function sessionsCommand() {
         .option('--metadata <json>', 'Arbitrary metadata for the session')
         .option('--user-properties <json>', 'User properties associated with the session')
         .option('--children-ids <json>', 'IDs of child events in this session')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.sessions.create({
-                body: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--session-id', 'sessionId'],
+                    ['--session-name', 'sessionName'],
+                    ['--event-name', 'eventName'],
+                    ['--source', 'source'],
+                    ['--start-time', 'startTime'],
+                    ['--end-time', 'endTime'],
+                    ['--duration', 'duration'],
+                    ['--config', 'config'],
+                    ['--inputs', 'inputs'],
+                    ['--outputs', 'outputs'],
+                    ['--metadata', 'metadata'],
+                    ['--user-properties', 'userProperties'],
+                    ['--children-ids', 'childrenIds'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                request = {
                     ...(opts.sessionId !== undefined && { session_id: opts.sessionId }),
                     ...(opts.sessionName !== undefined && { session_name: opts.sessionName }),
                     ...(opts.eventName !== undefined && { event_name: opts.eventName }),
@@ -39,8 +59,9 @@ export function sessionsCommand() {
                         user_properties: parseJson(opts.userProperties),
                     }),
                     ...(opts.childrenIds !== undefined && { children_ids: parseJson(opts.childrenIds) }),
-                },
-            });
+                };
+            }
+            const result = await client.sessions.create(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }

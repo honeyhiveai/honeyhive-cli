@@ -2,7 +2,14 @@
 
 import { Command, Option } from 'commander';
 
-import { createClient, parseJson, parseNumber } from './utils.js';
+import {
+  assertNoConflictingFlags,
+  assertRequiredFields,
+  createClient,
+  parseJson,
+  parseNumber,
+  readRequestFile,
+} from '../../utils.js';
 
 export function experimentsCommand(): Command {
   const cmd = new Command('experiments').description('Experiments commands');
@@ -34,11 +41,31 @@ export function experimentsCommand(): Command {
       ]),
     )
     .addOption(new Option('--sort-order <value>', 'Sort order').choices(['asc', 'desc']))
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.listRuns({
-          query: {
+        let request: Parameters<typeof client.experiments.listRuns>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [
+            ['--dataset-id', 'datasetId'],
+            ['--page', 'page'],
+            ['--limit', 'limit'],
+            ['--run-ids', 'runIds'],
+            ['--name', 'name'],
+            ['--status', 'status'],
+            ['--date-range', 'dateRange'],
+            ['--sort-by', 'sortBy'],
+            ['--sort-order', 'sortOrder'],
+          ]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.listRuns
+          >[0];
+        } else {
+          request = {
             ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
             ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
             ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
@@ -48,8 +75,9 @@ export function experimentsCommand(): Command {
             ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
             ...(opts.sortBy !== undefined && { sort_by: opts.sortBy }),
             ...(opts.sortOrder !== undefined && { sort_order: opts.sortOrder }),
-          },
-        } as Parameters<typeof client.experiments.listRuns>[0]);
+          } as Parameters<typeof client.experiments.listRuns>[0];
+        }
+        const result = await client.experiments.listRuns(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -84,11 +112,35 @@ export function experimentsCommand(): Command {
     .option('--session-ids <json>', 'session_ids')
     .option('--datapoint-ids <json>', 'datapoint_ids')
     .option('--passing-ranges <json>', 'passing_ranges')
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.createRun({
-          body: {
+        let request: Parameters<typeof client.experiments.createRun>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [
+            ['--run-id', 'runId'],
+            ['--name', 'name'],
+            ['--description', 'description'],
+            ['--status', 'status'],
+            ['--metadata', 'metadata'],
+            ['--results', 'results'],
+            ['--dataset-id', 'datasetId'],
+            ['--event-ids', 'eventIds'],
+            ['--configuration', 'configuration'],
+            ['--evaluators', 'evaluators'],
+            ['--session-ids', 'sessionIds'],
+            ['--datapoint-ids', 'datapointIds'],
+            ['--passing-ranges', 'passingRanges'],
+          ]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.createRun
+          >[0];
+        } else {
+          request = {
             ...(opts.runId !== undefined && { run_id: opts.runId }),
             ...(opts.name !== undefined && { name: opts.name }),
             ...(opts.description !== undefined && { description: opts.description }),
@@ -106,8 +158,9 @@ export function experimentsCommand(): Command {
             ...(opts.passingRanges !== undefined && {
               passing_ranges: parseJson(opts.passingRanges),
             }),
-          },
-        } as Parameters<typeof client.experiments.createRun>[0]);
+          } as Parameters<typeof client.experiments.createRun>[0];
+        }
+        const result = await client.experiments.createRun(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -122,14 +175,25 @@ export function experimentsCommand(): Command {
     .command('get-runs-schema')
     .description('Get events schema across all experiment runs in a project')
     .option('--date-range <json>', 'Filter by date range')
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.getRunsSchema({
-          query: {
+        let request: Parameters<typeof client.experiments.getRunsSchema>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [['--date-range', 'dateRange']]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.getRunsSchema
+          >[0];
+        } else {
+          request = {
             ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
-          },
-        } as Parameters<typeof client.experiments.getRunsSchema>[0]);
+          } as Parameters<typeof client.experiments.getRunsSchema>[0];
+        }
+        const result = await client.experiments.getRunsSchema(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -143,15 +207,27 @@ export function experimentsCommand(): Command {
   cmd
     .command('get-run')
     .description('Get details of an evaluation run')
-    .requiredOption('--run-id <value>', 'run_id (required)')
+    .option('--run-id <value>', 'run_id (required)')
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.getRun({
-          path: {
+        let request: Parameters<typeof client.experiments.getRun>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [['--run-id', 'runId']]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.getRun
+          >[0];
+        } else {
+          assertRequiredFields(opts, [['--run-id', 'runId']]);
+          request = {
             run_id: opts.runId,
-          },
-        } as Parameters<typeof client.experiments.getRun>[0]);
+          } as Parameters<typeof client.experiments.getRun>[0];
+        }
+        const result = await client.experiments.getRun(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -165,7 +241,7 @@ export function experimentsCommand(): Command {
   cmd
     .command('update-run')
     .description('Update an evaluation run')
-    .requiredOption('--run-id <value>', 'run_id (required)')
+    .option('--run-id <value>', 'run_id (required)')
     .option('--name <value>', 'name')
     .option('--description <value>', 'description')
     .addOption(
@@ -185,14 +261,36 @@ export function experimentsCommand(): Command {
     .option('--session-ids <json>', 'session_ids')
     .option('--datapoint-ids <json>', 'datapoint_ids')
     .option('--passing-ranges <json>', 'passing_ranges')
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.updateRun({
-          path: {
+        let request: Parameters<typeof client.experiments.updateRun>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [
+            ['--run-id', 'runId'],
+            ['--name', 'name'],
+            ['--description', 'description'],
+            ['--status', 'status'],
+            ['--metadata', 'metadata'],
+            ['--results', 'results'],
+            ['--event-ids', 'eventIds'],
+            ['--configuration', 'configuration'],
+            ['--evaluators', 'evaluators'],
+            ['--session-ids', 'sessionIds'],
+            ['--datapoint-ids', 'datapointIds'],
+            ['--passing-ranges', 'passingRanges'],
+          ]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.updateRun
+          >[0];
+        } else {
+          assertRequiredFields(opts, [['--run-id', 'runId']]);
+          request = {
             run_id: opts.runId,
-          },
-          body: {
             ...(opts.name !== undefined && { name: opts.name }),
             ...(opts.description !== undefined && { description: opts.description }),
             ...(opts.status !== undefined && { status: opts.status }),
@@ -208,8 +306,9 @@ export function experimentsCommand(): Command {
             ...(opts.passingRanges !== undefined && {
               passing_ranges: parseJson(opts.passingRanges),
             }),
-          },
-        } as Parameters<typeof client.experiments.updateRun>[0]);
+          } as Parameters<typeof client.experiments.updateRun>[0];
+        }
+        const result = await client.experiments.updateRun(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -223,15 +322,27 @@ export function experimentsCommand(): Command {
   cmd
     .command('delete-run')
     .description('Delete an evaluation run')
-    .requiredOption('--run-id <value>', 'run_id (required)')
+    .option('--run-id <value>', 'run_id (required)')
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.deleteRun({
-          path: {
+        let request: Parameters<typeof client.experiments.deleteRun>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [['--run-id', 'runId']]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.deleteRun
+          >[0];
+        } else {
+          assertRequiredFields(opts, [['--run-id', 'runId']]);
+          request = {
             run_id: opts.runId,
-          },
-        } as Parameters<typeof client.experiments.deleteRun>[0]);
+          } as Parameters<typeof client.experiments.deleteRun>[0];
+        }
+        const result = await client.experiments.deleteRun(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -245,19 +356,32 @@ export function experimentsCommand(): Command {
   cmd
     .command('get-run-schema')
     .description('Get events schema for a single experiment run')
-    .requiredOption('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
+    .option('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
     .option('--date-range <json>', 'Filter by date range')
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.getRunSchema({
-          path: {
+        let request: Parameters<typeof client.experiments.getRunSchema>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [
+            ['--run-id', 'runId'],
+            ['--date-range', 'dateRange'],
+          ]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.getRunSchema
+          >[0];
+        } else {
+          assertRequiredFields(opts, [['--run-id', 'runId']]);
+          request = {
             run_id: opts.runId,
-          },
-          query: {
             ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
-          },
-        } as Parameters<typeof client.experiments.getRunSchema>[0]);
+          } as Parameters<typeof client.experiments.getRunSchema>[0];
+        }
+        const result = await client.experiments.getRunSchema(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -271,24 +395,38 @@ export function experimentsCommand(): Command {
   cmd
     .command('get-run-metrics')
     .description('Get event metrics for an experiment run')
-    .requiredOption('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
+    .option('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
     .option('--date-range <value>', 'Date range filter as JSON string')
     .option(
       '--filters <json>',
       'Optional filters to apply (JSON string or array of filter objects)',
     )
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.getRunMetrics({
-          path: {
+        let request: Parameters<typeof client.experiments.getRunMetrics>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [
+            ['--run-id', 'runId'],
+            ['--date-range', 'dateRange'],
+            ['--filters', 'filters'],
+          ]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.getRunMetrics
+          >[0];
+        } else {
+          assertRequiredFields(opts, [['--run-id', 'runId']]);
+          request = {
             run_id: opts.runId,
-          },
-          query: {
             ...(opts.dateRange !== undefined && { dateRange: opts.dateRange }),
             ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-          },
-        } as Parameters<typeof client.experiments.getRunMetrics>[0]);
+          } as Parameters<typeof client.experiments.getRunMetrics>[0];
+        }
+        const result = await client.experiments.getRunMetrics(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -302,11 +440,8 @@ export function experimentsCommand(): Command {
   cmd
     .command('compare-runs')
     .description('Retrieve experiment comparison')
-    .requiredOption('--new-run-id <value>', 'New experiment run ID to compare (UUIDv4) (required)')
-    .requiredOption(
-      '--old-run-id <value>',
-      'Old experiment run ID to compare against (UUIDv4) (required)',
-    )
+    .option('--new-run-id <value>', 'New experiment run ID to compare (UUIDv4) (required)')
+    .option('--old-run-id <value>', 'Old experiment run ID to compare against (UUIDv4) (required)')
     .addOption(
       new Option(
         '--aggregate-function <value>',
@@ -317,21 +452,39 @@ export function experimentsCommand(): Command {
       '--filters <json>',
       'Optional filters to apply (JSON string or array of filter objects)',
     )
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.compareRuns({
-          path: {
+        let request: Parameters<typeof client.experiments.compareRuns>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [
+            ['--new-run-id', 'newRunId'],
+            ['--old-run-id', 'oldRunId'],
+            ['--aggregate-function', 'aggregateFunction'],
+            ['--filters', 'filters'],
+          ]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.compareRuns
+          >[0];
+        } else {
+          assertRequiredFields(opts, [
+            ['--new-run-id', 'newRunId'],
+            ['--old-run-id', 'oldRunId'],
+          ]);
+          request = {
             new_run_id: opts.newRunId,
             old_run_id: opts.oldRunId,
-          },
-          query: {
             ...(opts.aggregateFunction !== undefined && {
               aggregate_function: opts.aggregateFunction,
             }),
             ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-          },
-        } as Parameters<typeof client.experiments.compareRuns>[0]);
+          } as Parameters<typeof client.experiments.compareRuns>[0];
+        }
+        const result = await client.experiments.compareRuns(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -345,32 +498,50 @@ export function experimentsCommand(): Command {
   cmd
     .command('compare-run-events')
     .description('Compare events between two experiment runs')
-    .requiredOption('--new-run-id <value>', 'New experiment run ID (UUIDv4) (required)')
-    .requiredOption(
-      '--old-run-id <value>',
-      'Old experiment run ID to compare against (UUIDv4) (required)',
-    )
+    .option('--new-run-id <value>', 'New experiment run ID (UUIDv4) (required)')
+    .option('--old-run-id <value>', 'Old experiment run ID to compare against (UUIDv4) (required)')
     .option('--event-name <value>', 'Filter by event name')
     .option('--event-type <value>', 'Filter by event type')
     .option('--filter <json>', 'Additional filter criteria (JSON string or object)')
     .option('--limit <value>', 'Maximum number of results')
     .option('--page <value>', 'Page number for pagination')
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+    )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
         const client = createClient(command);
-        const result = await client.experiments.compareRunEvents({
-          path: {
+        let request: Parameters<typeof client.experiments.compareRunEvents>[0];
+        if (opts.filename !== undefined) {
+          assertNoConflictingFlags(opts, [
+            ['--new-run-id', 'newRunId'],
+            ['--old-run-id', 'oldRunId'],
+            ['--event-name', 'eventName'],
+            ['--event-type', 'eventType'],
+            ['--filter', 'filter'],
+            ['--limit', 'limit'],
+            ['--page', 'page'],
+          ]);
+          request = readRequestFile(opts.filename) as Parameters<
+            typeof client.experiments.compareRunEvents
+          >[0];
+        } else {
+          assertRequiredFields(opts, [
+            ['--new-run-id', 'newRunId'],
+            ['--old-run-id', 'oldRunId'],
+          ]);
+          request = {
             new_run_id: opts.newRunId,
             old_run_id: opts.oldRunId,
-          },
-          query: {
             ...(opts.eventName !== undefined && { event_name: opts.eventName }),
             ...(opts.eventType !== undefined && { event_type: opts.eventType }),
             ...(opts.filter !== undefined && { filter: parseJson(opts.filter) }),
             ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
             ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
-          },
-        } as Parameters<typeof client.experiments.compareRunEvents>[0]);
+          } as Parameters<typeof client.experiments.compareRunEvents>[0];
+        }
+        const result = await client.experiments.compareRunEvents(request);
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }

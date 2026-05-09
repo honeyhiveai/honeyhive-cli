@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command, Option } from 'commander';
-import { createClient, parseJson, parseNumber } from './utils.js';
+import { assertNoConflictingFlags, assertRequiredFields, createClient, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function metricsCommand() {
     const cmd = new Command('metrics').description('Metrics commands');
     cmd
@@ -8,15 +8,25 @@ export function metricsCommand() {
         .description('Get all metrics')
         .option('--type <value>', 'Filter by metric type')
         .option('--id <value>', 'Filter by specific metric ID')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.metrics.list({
-                query: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--type', 'type'],
+                    ['--id', 'id'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                request = {
                     ...(opts.type !== undefined && { type: opts.type }),
                     ...(opts.id !== undefined && { id: opts.id }),
-                },
-            });
+                };
+            }
+            const result = await client.metrics.list(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
@@ -30,11 +40,14 @@ export function metricsCommand() {
     cmd
         .command('create')
         .description('Create a new metric')
-        .requiredOption('--name <value>', 'name (required)')
-        .addOption(new Option('--type <value>', 'type (required)')
-        .choices(['PYTHON', 'LLM', 'HUMAN', 'COMPOSITE'])
-        .makeOptionMandatory())
-        .requiredOption('--criteria <value>', 'criteria (required)')
+        .option('--name <value>', 'name (required)')
+        .addOption(new Option('--type <value>', 'type (required)').choices([
+        'PYTHON',
+        'LLM',
+        'HUMAN',
+        'COMPOSITE',
+    ]))
+        .option('--criteria <value>', 'criteria (required)')
         .option('--description <value>', 'description')
         .addOption(new Option('--return-type <value>', 'return_type').choices([
         'float',
@@ -54,11 +67,40 @@ export function metricsCommand() {
         .option('--categories <json>', 'categories')
         .option('--child-metrics <json>', 'child_metrics')
         .option('--filters <json>', 'filters')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.metrics.create({
-                body: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--name', 'name'],
+                    ['--type', 'type'],
+                    ['--criteria', 'criteria'],
+                    ['--description', 'description'],
+                    ['--return-type', 'returnType'],
+                    ['--enabled-in-prod', 'enabledInProd'],
+                    ['--no-enabled-in-prod', 'enabledInProd'],
+                    ['--needs-ground-truth', 'needsGroundTruth'],
+                    ['--no-needs-ground-truth', 'needsGroundTruth'],
+                    ['--sampling-percentage', 'samplingPercentage'],
+                    ['--model-provider', 'modelProvider'],
+                    ['--model-name', 'modelName'],
+                    ['--scale', 'scale'],
+                    ['--threshold', 'threshold'],
+                    ['--categories', 'categories'],
+                    ['--child-metrics', 'childMetrics'],
+                    ['--filters', 'filters'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [
+                    ['--name', 'name'],
+                    ['--type', 'type'],
+                    ['--criteria', 'criteria'],
+                ]);
+                request = {
                     name: opts.name,
                     type: opts.type,
                     criteria: opts.criteria,
@@ -78,8 +120,9 @@ export function metricsCommand() {
                     ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
                     ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
                     ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-                },
-            });
+                };
+            }
+            const result = await client.metrics.create(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
@@ -93,7 +136,7 @@ export function metricsCommand() {
     cmd
         .command('update')
         .description('Update an existing metric')
-        .requiredOption('--metric-id <value>', 'The unique identifier of the metric to update (required)')
+        .option('--metric-id <value>', 'The unique identifier of the metric to update (required)')
         .option('--name <value>', 'name')
         .addOption(new Option('--type <value>', 'type').choices(['PYTHON', 'LLM', 'HUMAN', 'COMPOSITE']))
         .option('--criteria <value>', 'criteria')
@@ -116,14 +159,38 @@ export function metricsCommand() {
         .option('--categories <json>', 'categories')
         .option('--child-metrics <json>', 'child_metrics')
         .option('--filters <json>', 'filters')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.metrics.update({
-                path: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--metric-id', 'metricId'],
+                    ['--name', 'name'],
+                    ['--type', 'type'],
+                    ['--criteria', 'criteria'],
+                    ['--description', 'description'],
+                    ['--return-type', 'returnType'],
+                    ['--enabled-in-prod', 'enabledInProd'],
+                    ['--no-enabled-in-prod', 'enabledInProd'],
+                    ['--needs-ground-truth', 'needsGroundTruth'],
+                    ['--no-needs-ground-truth', 'needsGroundTruth'],
+                    ['--sampling-percentage', 'samplingPercentage'],
+                    ['--model-provider', 'modelProvider'],
+                    ['--model-name', 'modelName'],
+                    ['--scale', 'scale'],
+                    ['--threshold', 'threshold'],
+                    ['--categories', 'categories'],
+                    ['--child-metrics', 'childMetrics'],
+                    ['--filters', 'filters'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [['--metric-id', 'metricId']]);
+                request = {
                     metric_id: opts.metricId,
-                },
-                body: {
                     ...(opts.name !== undefined && { name: opts.name }),
                     ...(opts.type !== undefined && { type: opts.type }),
                     ...(opts.criteria !== undefined && { criteria: opts.criteria }),
@@ -143,8 +210,9 @@ export function metricsCommand() {
                     ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
                     ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
                     ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-                },
-            });
+                };
+            }
+            const result = await client.metrics.update(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
@@ -158,15 +226,23 @@ export function metricsCommand() {
     cmd
         .command('delete')
         .description('Delete a metric')
-        .requiredOption('--metric-id <value>', 'The unique identifier of the metric to delete (required)')
+        .option('--metric-id <value>', 'The unique identifier of the metric to delete (required)')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.metrics.delete({
-                path: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [['--metric-id', 'metricId']]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [['--metric-id', 'metricId']]);
+                request = {
                     metric_id: opts.metricId,
-                },
-            });
+                };
+            }
+            const result = await client.metrics.delete(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
@@ -180,17 +256,31 @@ export function metricsCommand() {
     cmd
         .command('run')
         .description('Run a metric evaluation')
-        .requiredOption('--metric <json>', 'metric (required)')
-        .requiredOption('--event <json>', 'event (required)')
+        .option('--metric <json>', 'metric (required)')
+        .option('--event <json>', 'event (required)')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.metrics.run({
-                body: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--metric', 'metric'],
+                    ['--event', 'event'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [
+                    ['--metric', 'metric'],
+                    ['--event', 'event'],
+                ]);
+                request = {
                     metric: parseJson(opts.metric),
                     event: parseJson(opts.event),
-                },
-            });
+                };
+            }
+            const result = await client.metrics.run(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }

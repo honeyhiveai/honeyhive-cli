@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [1.0.0-rc.8] - 2026-05-09
+
+### Added
+- `--filename` / `-f` flag on commands that accept a request body, for loading arguments from a `.json`, `.jsonc`, `.yaml`, or `.yml` file instead of passing each field as a separate flag (e.g. `hh datapoints create -f ./datapoint.yaml`). Mutually exclusive with the per-field flags on the same command; using both prints an error and exits non-zero. The file contents are passed through to the API unchanged, so payload-shape errors are reported by the server's schema validator.
+
 ## [1.0.0-rc.7] - 2026-05-07
 
 Internal improvements only.

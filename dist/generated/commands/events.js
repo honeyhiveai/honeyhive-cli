@@ -1,15 +1,13 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command, Option } from 'commander';
-import { createClient, parseJson, parseNumber } from './utils.js';
+import { assertNoConflictingFlags, assertRequiredFields, createClient, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function eventsCommand() {
     const cmd = new Command('events').description('Events commands');
     cmd
         .command('create')
         .description('Create a new event')
-        .addOption(new Option('--event-type <value>', 'Type of event (model, tool, chain, or session) (required)')
-        .choices(['model', 'tool', 'chain', 'session'])
-        .makeOptionMandatory())
-        .requiredOption('--inputs <json>', 'Input data for the event (required)')
+        .addOption(new Option('--event-type <value>', 'Type of event (model, tool, chain, or session) (required)').choices(['model', 'tool', 'chain', 'session']))
+        .option('--inputs <json>', 'Input data for the event (required)')
         .option('--project-id <value>', 'Project ID')
         .option('--source <value>', 'Source of the event (e.g., sdk-python)')
         .option('--event-name <value>', 'Name of the event')
@@ -27,11 +25,41 @@ export function eventsCommand() {
         .option('--feedback <json>', 'Feedback data associated with the event')
         .option('--metrics <json>', 'Metric values computed for the event')
         .option('--user-properties <json>', 'User properties associated with the event')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.events.create({
-                body: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--project-id', 'projectId'],
+                    ['--source', 'source'],
+                    ['--event-name', 'eventName'],
+                    ['--event-type', 'eventType'],
+                    ['--event-id', 'eventId'],
+                    ['--session-id', 'sessionId'],
+                    ['--parent-id', 'parentId'],
+                    ['--children-ids', 'childrenIds'],
+                    ['--config', 'config'],
+                    ['--inputs', 'inputs'],
+                    ['--outputs', 'outputs'],
+                    ['--error', 'error'],
+                    ['--start-time', 'startTime'],
+                    ['--end-time', 'endTime'],
+                    ['--duration', 'duration'],
+                    ['--metadata', 'metadata'],
+                    ['--feedback', 'feedback'],
+                    ['--metrics', 'metrics'],
+                    ['--user-properties', 'userProperties'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [
+                    ['--event-type', 'eventType'],
+                    ['--inputs', 'inputs'],
+                ]);
+                request = {
                     ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                     ...(opts.source !== undefined && { source: opts.source }),
                     ...(opts.eventName !== undefined && { event_name: opts.eventName }),
@@ -53,8 +81,9 @@ export function eventsCommand() {
                     ...(opts.userProperties !== undefined && {
                         user_properties: parseJson(opts.userProperties),
                     }),
-                },
-            });
+                };
+            }
+            const result = await client.events.create(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
@@ -77,7 +106,7 @@ Examples:
     cmd
         .command('update')
         .description('Update an event')
-        .requiredOption('--event-id <value>', 'The unique identifier of the event to update (required)')
+        .option('--event-id <value>', 'The unique identifier of the event to update (required)')
         .option('--metadata <json>', 'Metadata fields to merge into the event')
         .option('--feedback <json>', 'Feedback fields to merge into the event')
         .option('--metrics <json>', 'Metric values to merge into the event')
@@ -87,14 +116,30 @@ Examples:
         .option('--duration <value>', 'Event duration in milliseconds')
         .option('--end-time <value>', 'Unix timestamp in milliseconds for event end')
         .option('--children-ids <json>', 'IDs of child events to set (must be non-empty; an empty array is ignored)')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.events.update({
-                path: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--event-id', 'eventId'],
+                    ['--metadata', 'metadata'],
+                    ['--feedback', 'feedback'],
+                    ['--metrics', 'metrics'],
+                    ['--outputs', 'outputs'],
+                    ['--config', 'config'],
+                    ['--user-properties', 'userProperties'],
+                    ['--duration', 'duration'],
+                    ['--end-time', 'endTime'],
+                    ['--children-ids', 'childrenIds'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [['--event-id', 'eventId']]);
+                request = {
                     event_id: opts.eventId,
-                },
-                body: {
                     ...(opts.metadata !== undefined && { metadata: parseJson(opts.metadata) }),
                     ...(opts.feedback !== undefined && { feedback: parseJson(opts.feedback) }),
                     ...(opts.metrics !== undefined && { metrics: parseJson(opts.metrics) }),
@@ -106,8 +151,9 @@ Examples:
                     ...(opts.duration !== undefined && { duration: parseNumber(opts.duration) }),
                     ...(opts.endTime !== undefined && { end_time: parseNumber(opts.endTime) }),
                     ...(opts.childrenIds !== undefined && { children_ids: parseJson(opts.childrenIds) }),
-                },
-            });
+                };
+            }
+            const result = await client.events.update(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
@@ -163,19 +209,34 @@ Examples:
         .option('--ignore-order', 'Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC.')
         .option('--no-ignore-order', 'Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC.')
         .option('--evaluation-id <value>', 'Filter by evaluation/experiment run ID')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.events.search({
-                body: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--filters', 'filters'],
+                    ['--date-range', 'dateRange'],
+                    ['--limit', 'limit'],
+                    ['--page', 'page'],
+                    ['--ignore-order', 'ignoreOrder'],
+                    ['--no-ignore-order', 'ignoreOrder'],
+                    ['--evaluation-id', 'evaluationId'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                request = {
                     ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
                     ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
                     ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
                     ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
                     ...(opts.ignoreOrder !== undefined && { ignore_order: opts.ignoreOrder }),
                     ...(opts.evaluationId !== undefined && { evaluation_id: opts.evaluationId }),
-                },
-            });
+                };
+            }
+            const result = await client.events.search(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
@@ -189,22 +250,35 @@ Examples:
     cmd
         .command('create-batch')
         .description('Create a batch of events')
-        .requiredOption('--events <json>', 'Array of events to create (required)')
+        .option('--events <json>', 'Array of events to create (required)')
         .option('--single-session', 'If true, all events share the same session')
         .option('--no-single-session', 'If true, all events share the same session')
         .option('--session-properties <json>', 'Session properties for batch event creation')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
         .action(async (opts, command) => {
         try {
             const client = createClient(command);
-            const result = await client.events.createBatch({
-                body: {
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoConflictingFlags(opts, [
+                    ['--events', 'events'],
+                    ['--single-session', 'singleSession'],
+                    ['--no-single-session', 'singleSession'],
+                    ['--session-properties', 'sessionProperties'],
+                ]);
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [['--events', 'events']]);
+                request = {
                     events: parseJson(opts.events),
                     ...(opts.singleSession !== undefined && { single_session: opts.singleSession }),
                     ...(opts.sessionProperties !== undefined && {
                         session_properties: parseJson(opts.sessionProperties),
                     }),
-                },
-            });
+                };
+            }
+            const result = await client.events.createBatch(request);
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
             }
