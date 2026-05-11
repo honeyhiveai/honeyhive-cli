@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command, Option } from 'commander';
-import { assertNoConflictingFlags, assertRequiredFields, createClient, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
+import { assertNoOtherFlags, assertRequiredFields, createClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function eventsCommand() {
     const cmd = new Command('events').description('Events commands');
     cmd
@@ -25,33 +25,168 @@ export function eventsCommand() {
         .option('--feedback <json>', 'Feedback data associated with the event')
         .option('--metrics <json>', 'Metric values computed for the event')
         .option('--user-properties <json>', 'User properties associated with the event')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--project-id', 'projectId'],
+                ['--source', 'source'],
+                ['--event-name', 'eventName'],
+                ['--event-type', 'eventType'],
+                ['--event-id', 'eventId'],
+                ['--session-id', 'sessionId'],
+                ['--parent-id', 'parentId'],
+                ['--children-ids', 'childrenIds'],
+                ['--config', 'config'],
+                ['--inputs', 'inputs'],
+                ['--outputs', 'outputs'],
+                ['--error', 'error'],
+                ['--start-time', 'startTime'],
+                ['--end-time', 'endTime'],
+                ['--duration', 'duration'],
+                ['--metadata', 'metadata'],
+                ['--feedback', 'feedback'],
+                ['--metrics', 'metrics'],
+                ['--user-properties', 'userProperties'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Project ID"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source of the event (e.g., sdk-python)"
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Name of the event"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "model",
+        "tool",
+        "chain",
+        "session"
+      ],
+      "description": "Type of event (model, tool, chain, or session)"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Unique event identifier"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Session this event belongs to"
+    },
+    "parent_id": {
+      "type": "string",
+      "description": "Parent event ID in the trace hierarchy"
+    },
+    "children_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Child event IDs in the trace hierarchy"
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Configuration used for this event"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Input data for the event"
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Output data from the event"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Error message if the event failed"
+    },
+    "start_time": {
+      "type": "number",
+      "description": "Event start time as Unix milliseconds"
+    },
+    "end_time": {
+      "type": "number",
+      "description": "Event end time as Unix milliseconds"
+    },
+    "duration": {
+      "type": "number",
+      "description": "Event duration in milliseconds"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Arbitrary metadata for the event"
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Feedback data associated with the event"
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Metric values computed for the event"
+    },
+    "user_properties": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "User properties associated with the event"
+    }
+  },
+  "required": [
+    "event_type",
+    "inputs"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'project-id': 'project_id',
+                source: 'source',
+                'event-name': 'event_name',
+                'event-type': 'event_type',
+                'event-id': 'event_id',
+                'session-id': 'session_id',
+                'parent-id': 'parent_id',
+                'children-ids': 'children_ids',
+                config: 'config',
+                inputs: 'inputs',
+                outputs: 'outputs',
+                error: 'error',
+                'start-time': 'start_time',
+                'end-time': 'end_time',
+                duration: 'duration',
+                metadata: 'metadata',
+                feedback: 'feedback',
+                metrics: 'metrics',
+                'user-properties': 'user_properties',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--project-id', 'projectId'],
-                    ['--source', 'source'],
-                    ['--event-name', 'eventName'],
-                    ['--event-type', 'eventType'],
-                    ['--event-id', 'eventId'],
-                    ['--session-id', 'sessionId'],
-                    ['--parent-id', 'parentId'],
-                    ['--children-ids', 'childrenIds'],
-                    ['--config', 'config'],
-                    ['--inputs', 'inputs'],
-                    ['--outputs', 'outputs'],
-                    ['--error', 'error'],
-                    ['--start-time', 'startTime'],
-                    ['--end-time', 'endTime'],
-                    ['--duration', 'duration'],
-                    ['--metadata', 'metadata'],
-                    ['--feedback', 'feedback'],
-                    ['--metrics', 'metrics'],
-                    ['--user-properties', 'userProperties'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -116,24 +251,101 @@ Examples:
         .option('--duration <value>', 'Event duration in milliseconds')
         .option('--end-time <value>', 'Unix timestamp in milliseconds for event end')
         .option('--children-ids <json>', 'IDs of child events to set (must be non-empty; an empty array is ignored)')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--event-id', 'eventId'],
+                ['--metadata', 'metadata'],
+                ['--feedback', 'feedback'],
+                ['--metrics', 'metrics'],
+                ['--outputs', 'outputs'],
+                ['--config', 'config'],
+                ['--user-properties', 'userProperties'],
+                ['--duration', 'duration'],
+                ['--end-time', 'endTime'],
+                ['--children-ids', 'childrenIds'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "The unique identifier of the event to update"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Metadata fields to merge into the event"
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Feedback fields to merge into the event"
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Metric values to merge into the event"
+    },
+    "outputs": {
+      "description": "Output data to replace on the event (accepts objects, strings, arrays, or scalars)"
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Configuration fields to merge into the event"
+    },
+    "user_properties": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "User properties to merge into the event"
+    },
+    "duration": {
+      "type": "number",
+      "description": "Event duration in milliseconds"
+    },
+    "end_time": {
+      "type": "number",
+      "description": "Unix timestamp in milliseconds for event end"
+    },
+    "children_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of child events to set (must be non-empty; an empty array is ignored)"
+    }
+  },
+  "required": [
+    "event_id"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'event-id': 'event_id',
+                metadata: 'metadata',
+                feedback: 'feedback',
+                metrics: 'metrics',
+                outputs: 'outputs',
+                config: 'config',
+                'user-properties': 'user_properties',
+                duration: 'duration',
+                'end-time': 'end_time',
+                'children-ids': 'children_ids',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--event-id', 'eventId'],
-                    ['--metadata', 'metadata'],
-                    ['--feedback', 'feedback'],
-                    ['--metrics', 'metrics'],
-                    ['--outputs', 'outputs'],
-                    ['--config', 'config'],
-                    ['--user-properties', 'userProperties'],
-                    ['--duration', 'duration'],
-                    ['--end-time', 'endTime'],
-                    ['--children-ids', 'childrenIds'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -209,21 +421,127 @@ Examples:
         .option('--ignore-order', 'Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC.')
         .option('--no-ignore-order', 'Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC.')
         .option('--evaluation-id <value>', 'Filter by evaluation/experiment run ID')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--filters', 'filters'],
+                ['--date-range', 'dateRange'],
+                ['--limit', 'limit'],
+                ['--page', 'page'],
+                ['--ignore-order', 'ignoreOrder'],
+                ['--no-ignore-order', 'ignoreOrder'],
+                ['--evaluation-id', 'evaluationId'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "filters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "exists",
+              "not exists",
+              "is",
+              "is not",
+              "contains",
+              "not contains",
+              "greater than",
+              "less than",
+              "after",
+              "before"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "string",
+              "number",
+              "boolean",
+              "datetime"
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "operator",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "dateRange": {
+      "type": "object",
+      "properties": {
+        "start_time": {
+          "type": "string",
+          "description": "ISO 8601 timestamp for start of date range (inclusive)"
+        },
+        "end_time": {
+          "type": "string",
+          "description": "ISO 8601 timestamp for end of date range (inclusive)"
+        }
+      },
+      "required": [
+        "start_time",
+        "end_time"
+      ],
+      "additionalProperties": false
+    },
+    "limit": {
+      "type": "number",
+      "description": "Limit number of results (default 1000, max 1000)"
+    },
+    "page": {
+      "type": "number",
+      "description": "Page number of results (default 1)"
+    },
+    "ignore_order": {
+      "type": "boolean",
+      "description": "Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC."
+    },
+    "evaluation_id": {
+      "type": "string",
+      "description": "Filter by evaluation/experiment run ID"
+    }
+  },
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                filters: 'filters',
+                'date-range': 'dateRange',
+                limit: 'limit',
+                page: 'page',
+                'ignore-order': 'ignore_order',
+                'evaluation-id': 'evaluation_id',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--filters', 'filters'],
-                    ['--date-range', 'dateRange'],
-                    ['--limit', 'limit'],
-                    ['--page', 'page'],
-                    ['--ignore-order', 'ignoreOrder'],
-                    ['--no-ignore-order', 'ignoreOrder'],
-                    ['--evaluation-id', 'evaluationId'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -254,18 +572,176 @@ Examples:
         .option('--single-session', 'If true, all events share the same session')
         .option('--no-single-session', 'If true, all events share the same session')
         .option('--session-properties <json>', 'Session properties for batch event creation')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--events', 'events'],
+                ['--single-session', 'singleSession'],
+                ['--no-single-session', 'singleSession'],
+                ['--session-properties', 'sessionProperties'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "Project ID"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the event (e.g., sdk-python)"
+          },
+          "event_name": {
+            "type": "string",
+            "description": "Name of the event"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "model",
+              "tool",
+              "chain",
+              "session"
+            ],
+            "description": "Type of event (model, tool, chain, or session)"
+          },
+          "event_id": {
+            "type": "string",
+            "description": "Unique event identifier"
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Session this event belongs to"
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "Parent event ID in the trace hierarchy"
+          },
+          "children_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Child event IDs in the trace hierarchy"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Configuration used for this event"
+          },
+          "inputs": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Input data for the event"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Output data from the event"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Error message if the event failed"
+          },
+          "start_time": {
+            "type": "number",
+            "description": "Event start time as Unix milliseconds"
+          },
+          "end_time": {
+            "type": "number",
+            "description": "Event end time as Unix milliseconds"
+          },
+          "duration": {
+            "type": "number",
+            "description": "Event duration in milliseconds"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Arbitrary metadata for the event"
+          },
+          "feedback": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Feedback data associated with the event"
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Metric values computed for the event"
+          },
+          "user_properties": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "User properties associated with the event"
+          }
+        },
+        "required": [
+          "event_type",
+          "inputs"
+        ],
+        "additionalProperties": false,
+        "description": "Request body for POST /v1/events (bare event object)"
+      },
+      "description": "Array of events to create"
+    },
+    "single_session": {
+      "type": "boolean",
+      "description": "If true, all events share the same session"
+    },
+    "session_properties": {
+      "type": "object",
+      "properties": {
+        "session_name": {
+          "type": "string"
+        },
+        "start_time": {
+          "type": "number",
+          "description": "Session start time as Unix milliseconds"
+        },
+        "user_properties": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "description": "Session properties for batch event creation"
+    }
+  },
+  "required": [
+    "events"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                events: 'events',
+                'single-session': 'single_session',
+                'session-properties': 'session_properties',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--events', 'events'],
-                    ['--single-session', 'singleSession'],
-                    ['--no-single-session', 'singleSession'],
-                    ['--session-properties', 'sessionProperties'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {

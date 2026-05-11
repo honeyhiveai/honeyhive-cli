@@ -125,18 +125,23 @@ export function readRequestFile(value: unknown): unknown {
 }
 
 /**
- * Used by the generated `--filename` branch to enforce mutual exclusion with
- * per-field flags. Each `[flag, optsKey]` pair maps the user-facing kebab
- * flag (e.g. `--ground-truth`) to the camelCase opts key Commander writes
- * under (e.g. `groundTruth`). The error message uses the kebab form so the
- * user can fix the command they typed.
+ * Used by generated branches that take over a command and forbid any other
+ * flag from being combined with them — currently `--filename`,
+ * `--show-file-schema`, and `--show-argument-schema`. Each `[flag, optsKey]`
+ * pair in `otherFlags` maps a user-facing kebab flag (e.g. `--ground-truth`)
+ * to the camelCase opts key Commander writes under (e.g. `groundTruth`).
+ * `context` is the human-readable label of the flag whose branch is running
+ * (e.g. `'--filename'`, `'--show-argument-schema dataset-id'`) and is
+ * inlined into the error message so the user knows which branch rejected the
+ * combination.
  *
- * Exits with code 1 (no return) when any conflicting flag is set, matching
- * the rest of the helpers' error UX.
+ * Exits with code 1 (no return) when any other flag is set, matching the
+ * rest of the helpers' error UX.
  */
-export function assertNoConflictingFlags(
+export function assertNoOtherFlags(
   opts: Record<string, unknown>,
-  fieldFlags: readonly (readonly [flag: string, optsKey: string])[],
+  otherFlags: readonly (readonly [flag: string, optsKey: string])[],
+  context: string,
 ): void {
   // For booleans, both `--<flag>` and `--no-<flag>` resolve to the same opts
   // key, so the codegen passes both forms and we'd otherwise report the same
@@ -146,22 +151,117 @@ export function assertNoConflictingFlags(
   // shouldn't happen in practice — the key is set, so one of the forms must
   // have been typed — but defends against unusual env-var or default-value
   // shapes).
+  //
+  // The `--flag=value` form is not a concern here. Commander rejects equals
+  // form on boolean flags entirely (`--no-foo=true` → "unknown option"), so
+  // booleans only ever arrive as space-separated forms which `argv.has()`
+  // catches. Non-boolean flags have exactly one entry in `otherFlags` per
+  // opts key, so the `matches.find(...)` never has to disambiguate — the
+  // single match is always returned regardless of whether the user wrote
+  // `--name foo` or `--name=foo`.
   const argv = new Set(process.argv);
   const seen = new Set<string>();
   const conflicting: string[] = [];
-  for (const [flag, key] of fieldFlags) {
+  for (const [flag, key] of otherFlags) {
     if (opts[key] === undefined || seen.has(key)) continue;
     seen.add(key);
-    const matches = fieldFlags.filter(([, k]) => k === key);
+    const matches = otherFlags.filter(([, k]) => k === key);
     const typedForm = matches.find(([f]) => argv.has(f))?.[0] ?? flag;
     conflicting.push(typedForm);
   }
   if (conflicting.length > 0) {
     console.error(
-      `--filename cannot be combined with field flags. Conflicting: ${conflicting.join(', ')}`,
+      `${context} cannot be combined with other flags. Conflicting: ${conflicting.join(', ')}`,
     );
     process.exit(1);
   }
+}
+
+/**
+ * Used by generated action bodies to handle the `--show-file-schema` and
+ * `--show-argument-schema` introspection flags. Both are mutually exclusive
+ * with every other command-specific flag and produce pure JSON on stdout —
+ * the contract every command shares, so the runtime logic lives here once
+ * instead of being emitted into each generated action body.
+ *
+ * Inputs:
+ *   - `opts` is Commander's parsed flag bag.
+ *   - `fileSchemaJson` is the pre-serialized JSON Schema string for the
+ *     command's full request object. The full-schema branch writes it
+ *     verbatim; the argument-schema branch parses it to look up a property.
+ *   - `kebabToSpec` maps each kebab CLI flag name (e.g. `'dataset-id'`) to
+ *     its underlying spec property name (e.g. `'dataset_id'`) — needed
+ *     because the user passes the former but the JSON Schema is keyed by
+ *     the latter. The keys are also the only list shown in the unknown-arg
+ *     error message.
+ *   - `otherFlags` is the same `[flag, optsKey]` array that
+ *     `assertNoOtherFlags` uses elsewhere: every per-field flag for this
+ *     command plus `--filename`, with both `--<flag>` and `--no-<flag>`
+ *     halves for booleans.
+ *
+ * Returns `true` if it handled the introspection request (and the caller
+ * should stop further processing); `false` if neither schema flag was set
+ * (caller continues to the regular `--filename` / per-field-flag branches).
+ * Errors exit the process with code 1, matching the rest of the helpers.
+ */
+export function handleSchemaIntrospection(
+  opts: Record<string, unknown>,
+  fileSchemaJson: string,
+  kebabToSpec: Readonly<Record<string, string>>,
+  otherFlags: readonly (readonly [flag: string, optsKey: string])[],
+): boolean {
+  const showFileSchema = opts.showFileSchema === true;
+  const showArgumentSchema =
+    typeof opts.showArgumentSchema === 'string' ? opts.showArgumentSchema : undefined;
+
+  if (showFileSchema && showArgumentSchema !== undefined) {
+    console.error('--show-file-schema and --show-argument-schema are mutually exclusive.');
+    process.exit(1);
+  }
+
+  if (showFileSchema) {
+    assertNoOtherFlags(opts, otherFlags, '--show-file-schema');
+    process.stdout.write(fileSchemaJson + '\n');
+    return true;
+  }
+
+  if (showArgumentSchema !== undefined) {
+    assertNoOtherFlags(opts, otherFlags, `--show-argument-schema ${showArgumentSchema}`);
+    const specName = kebabToSpec[showArgumentSchema];
+    if (specName === undefined) {
+      const valid = Object.keys(kebabToSpec).sort().join(', ');
+      // The leading-dash hint helps when Commander has eagerly consumed
+      // `--name` as the value (very common agent mistake); it's pure noise
+      // when the user typed something else entirely (e.g. `dataset_id` with
+      // an underscore — just as plausible since the file-schema keys are
+      // snake_case). Gate on whether the input actually has leading dashes.
+      const hint = showArgumentSchema.startsWith('-')
+        ? ` Expected the kebab flag name WITHOUT the leading '--' (e.g. 'dataset-id', not '--dataset-id').`
+        : '';
+      console.error(
+        `--show-argument-schema: unknown argument '${showArgumentSchema}'.${hint} Valid names: ${valid}`,
+      );
+      process.exit(1);
+    }
+    const fileSchema = JSON.parse(fileSchemaJson) as { properties?: Record<string, unknown> };
+    const sub = fileSchema.properties?.[specName];
+    if (sub === undefined) {
+      // Codegen invariant: every KEBAB_TO_SPEC value points at a property
+      // of the file schema (see extractCliArgs's guard in cli.ts). A miss
+      // here means a generator regression, not user error — throw rather
+      // than silently writing the literal string "undefined\n" to stdout
+      // and breaking the pure-JSON-stdout contract.
+      throw new Error(
+        `handleSchemaIntrospection: no subschema for spec property '${specName}' ` +
+          `(kebab '${showArgumentSchema}'). KEBAB_TO_SPEC has the entry but the ` +
+          `file schema's properties block does not — this is a codegen bug.`,
+      );
+    }
+    process.stdout.write(JSON.stringify(sub, null, 2) + '\n');
+    return true;
+  }
+
+  return false;
 }
 
 /**

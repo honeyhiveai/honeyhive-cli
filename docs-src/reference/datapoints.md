@@ -9,6 +9,15 @@ outline: deep
 
 Manage individual records inside datasets, including batch creation and mapping to source events.
 
+## Schema introspection {#schema-introspection}
+
+Every command below with arguments supports two read-only flags for tooling and AI agents:
+
+- `--show-file-schema` — print the JSON Schema for the full request object (the format `--filename` accepts).
+- `--show-argument-schema <flag-name>` — print the JSON Schema for one argument's value. Pass the kebab flag name **without** the leading `--` (e.g. `datapoint-ids`, not `--datapoint-ids`).
+
+Both write pure JSON to stdout and never call the API. They cannot be combined with any other command-specific flag.
+
 ## `list` {#list}
 
 Retrieve a list of datapoints
@@ -27,6 +36,8 @@ honeyhive datapoints list [options]
 |---|---|---|---|
 | `--datapoint-ids` | json | no | List of datapoint ids to fetch |
 | `--dataset-name` | string | no | Name of the dataset to get datapoints from |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `create` {#create}
 
@@ -50,6 +61,8 @@ honeyhive datapoints create [options]
 | `--linked-datasets` | json | no | linked_datasets |
 | `--linked-event` | string | no | linked_event |
 | `--metadata` | json | no | metadata |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `create-batch` {#create-batch}
 
@@ -75,6 +88,8 @@ honeyhive datapoints create-batch [options]
 | `--mapping` | json | no | mapping |
 | `--select-all` / `--no-select-all` | boolean | no | selectAll |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `get` {#get}
 
 Retrieve a specific datapoint
@@ -92,6 +107,8 @@ honeyhive datapoints get [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--datapoint-id` | string | yes | Datapoint ID like `65c13dbbd65fb876b7886cdb` |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `update` {#update}
 
@@ -117,6 +134,8 @@ honeyhive datapoints update [options]
 | `--linked-event` | string | no | linked_event |
 | `--metadata` | json | no | metadata |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `delete` {#delete}
 
 Delete a specific datapoint
@@ -134,3 +153,5 @@ honeyhive datapoints delete [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--datapoint-id` | string | yes | Datapoint ID like `65c13dbbd65fb876b7886cdb` |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).

@@ -9,6 +9,15 @@ outline: deep
 
 Define and run evaluators — automated quality checks that score traces against criteria like accuracy, safety, or correctness.
 
+## Schema introspection {#schema-introspection}
+
+Every command below with arguments supports two read-only flags for tooling and AI agents:
+
+- `--show-file-schema` — print the JSON Schema for the full request object (the format `--filename` accepts).
+- `--show-argument-schema <flag-name>` — print the JSON Schema for one argument's value. Pass the kebab flag name **without** the leading `--` (e.g. `type`, not `--type`).
+
+Both write pure JSON to stdout and never call the API. They cannot be combined with any other command-specific flag.
+
 ## `list` {#list}
 
 Get all metrics
@@ -27,6 +36,8 @@ honeyhive metrics list [options]
 |---|---|---|---|
 | `--id` | string | no | Filter by specific metric ID |
 | `--type` | string | no | Filter by metric type |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `create` {#create}
 
@@ -59,6 +70,8 @@ honeyhive metrics create [options]
 | `--sampling-percentage` | number | no | sampling_percentage |
 | `--scale` | number | no | scale |
 | `--threshold` | json | no | threshold |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `update` {#update}
 
@@ -93,6 +106,8 @@ honeyhive metrics update [options]
 | `--threshold` | json | no | threshold |
 | `--type` | string | no | type Allowed: `PYTHON`, `LLM`, `HUMAN`, `COMPOSITE`. |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `delete` {#delete}
 
 Delete a metric
@@ -110,6 +125,8 @@ honeyhive metrics delete [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--metric-id` | string | yes | The unique identifier of the metric to delete |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `run` {#run}
 
@@ -129,3 +146,5 @@ honeyhive metrics run [options]
 |---|---|---|---|
 | `--event` | json | yes | event |
 | `--metric` | json | yes | metric |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).

@@ -9,6 +9,15 @@ outline: deep
 
 Curate collections of datapoints used as test sets for evaluations and experiments.
 
+## Schema introspection {#schema-introspection}
+
+Every command below with arguments supports two read-only flags for tooling and AI agents:
+
+- `--show-file-schema` — print the JSON Schema for the full request object (the format `--filename` accepts).
+- `--show-argument-schema <flag-name>` — print the JSON Schema for one argument's value. Pass the kebab flag name **without** the leading `--` (e.g. `dataset-id`, not `--dataset-id`).
+
+Both write pure JSON to stdout and never call the API. They cannot be combined with any other command-specific flag.
+
 ## `list` {#list}
 
 Get datasets
@@ -27,6 +36,8 @@ honeyhive datasets list [options]
 |---|---|---|---|
 | `--dataset-id` | string | no | Unique dataset ID for filtering specific dataset |
 | `--name` | string | no | Dataset name to filter by |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `create` {#create}
 
@@ -47,6 +58,8 @@ honeyhive datasets create [options]
 | `--datapoints` | json | no | Initial datapoint IDs to include |
 | `--description` | string | no | Description of the dataset |
 | `--name` | string | no | Name of the dataset |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `update` {#update}
 
@@ -69,6 +82,8 @@ honeyhive datasets update [options]
 | `--description` | string | no | New dataset description |
 | `--name` | string | no | New dataset name |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `delete` {#delete}
 
 Delete a dataset
@@ -86,6 +101,8 @@ honeyhive datasets delete [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--dataset-id` | string | yes | The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `add-datapoints` {#add-datapoints}
 
@@ -107,6 +124,8 @@ honeyhive datasets add-datapoints [options]
 | `--dataset-id` | string | yes | The unique identifier of the dataset to add datapoints to like `663876ec4611c47f4970f0c3` |
 | `--mapping` | json | yes | mapping |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `remove-datapoint` {#remove-datapoint}
 
 Remove a datapoint from a dataset
@@ -125,3 +144,5 @@ honeyhive datasets remove-datapoint [options]
 |---|---|---|---|
 | `--datapoint-id` | string | yes | The unique identifier of the datapoint to remove |
 | `--dataset-id` | string | yes | The unique identifier of the dataset |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).

@@ -3,9 +3,10 @@
 import { Command, Option } from 'commander';
 
 import {
-  assertNoConflictingFlags,
+  assertNoOtherFlags,
   assertRequiredFields,
   createClient,
+  handleSchemaIntrospection,
   parseJson,
   parseNumber,
   readRequestFile,
@@ -42,25 +43,137 @@ export function experimentsCommand(): Command {
     )
     .addOption(new Option('--sort-order <value>', 'Sort order').choices(['asc', 'desc']))
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [
+          ['--dataset-id', 'datasetId'],
+          ['--page', 'page'],
+          ['--limit', 'limit'],
+          ['--run-ids', 'runIds'],
+          ['--name', 'name'],
+          ['--status', 'status'],
+          ['--date-range', 'dateRange'],
+          ['--sort-by', 'sortBy'],
+          ['--sort-order', 'sortOrder'],
+        ] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "description": "Filter by dataset ID"
+    },
+    "page": {
+      "type": "number",
+      "description": "Page number for pagination"
+    },
+    "limit": {
+      "type": "number",
+      "description": "Number of results per page"
+    },
+    "run_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of specific run IDs to fetch"
+    },
+    "name": {
+      "type": "string",
+      "description": "Filter by run name"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "failed",
+        "cancelled",
+        "running"
+      ],
+      "description": "Filter by run status"
+    },
+    "dateRange": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$gte": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "$lte": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "description": "Filter by date range"
+    },
+    "sort_by": {
+      "type": "string",
+      "enum": [
+        "created_at",
+        "updated_at",
+        "name",
+        "status"
+      ],
+      "description": "Field to sort by"
+    },
+    "sort_order": {
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "description": "Sort order"
+    }
+  },
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'dataset-id': 'dataset_id',
+          page: 'page',
+          limit: 'limit',
+          'run-ids': 'run_ids',
+          name: 'name',
+          status: 'status',
+          'date-range': 'dateRange',
+          'sort-by': 'sort_by',
+          'sort-order': 'sort_order',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.listRuns>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [
-            ['--dataset-id', 'datasetId'],
-            ['--page', 'page'],
-            ['--limit', 'limit'],
-            ['--run-ids', 'runIds'],
-            ['--name', 'name'],
-            ['--status', 'status'],
-            ['--date-range', 'dateRange'],
-            ['--sort-by', 'sortBy'],
-            ['--sort-order', 'sortOrder'],
-          ]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.listRuns
           >[0];
@@ -113,29 +226,146 @@ export function experimentsCommand(): Command {
     .option('--datapoint-ids <json>', 'datapoint_ids')
     .option('--passing-ranges <json>', 'passing_ranges')
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [
+          ['--run-id', 'runId'],
+          ['--name', 'name'],
+          ['--description', 'description'],
+          ['--status', 'status'],
+          ['--metadata', 'metadata'],
+          ['--results', 'results'],
+          ['--dataset-id', 'datasetId'],
+          ['--event-ids', 'eventIds'],
+          ['--configuration', 'configuration'],
+          ['--evaluators', 'evaluators'],
+          ['--session-ids', 'sessionIds'],
+          ['--datapoint-ids', 'datapointIds'],
+          ['--passing-ranges', 'passingRanges'],
+        ] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "failed",
+        "cancelled",
+        "running"
+      ],
+      "default": "pending"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "dataset_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "evaluators": {
+      "type": "array",
+      "items": {},
+      "default": []
+    },
+    "session_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "datapoint_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "passing_ranges": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'run-id': 'run_id',
+          name: 'name',
+          description: 'description',
+          status: 'status',
+          metadata: 'metadata',
+          results: 'results',
+          'dataset-id': 'dataset_id',
+          'event-ids': 'event_ids',
+          configuration: 'configuration',
+          evaluators: 'evaluators',
+          'session-ids': 'session_ids',
+          'datapoint-ids': 'datapoint_ids',
+          'passing-ranges': 'passing_ranges',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.createRun>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [
-            ['--run-id', 'runId'],
-            ['--name', 'name'],
-            ['--description', 'description'],
-            ['--status', 'status'],
-            ['--metadata', 'metadata'],
-            ['--results', 'results'],
-            ['--dataset-id', 'datasetId'],
-            ['--event-ids', 'eventIds'],
-            ['--configuration', 'configuration'],
-            ['--evaluators', 'evaluators'],
-            ['--session-ids', 'sessionIds'],
-            ['--datapoint-ids', 'datapointIds'],
-            ['--passing-ranges', 'passingRanges'],
-          ]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.createRun
           >[0];
@@ -176,15 +406,67 @@ export function experimentsCommand(): Command {
     .description('Get events schema across all experiment runs in a project')
     .option('--date-range <json>', 'Filter by date range')
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [['--date-range', 'dateRange']] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "dateRange": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$gte": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "$lte": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "description": "Filter by date range"
+    }
+  },
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'date-range': 'dateRange',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.getRunsSchema>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [['--date-range', 'dateRange']]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.getRunsSchema
           >[0];
@@ -209,15 +491,47 @@ export function experimentsCommand(): Command {
     .description('Get details of an evaluation run')
     .option('--run-id <value>', 'run_id (required)')
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [['--run-id', 'runId']] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'run-id': 'run_id',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.getRun>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [['--run-id', 'runId']]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.getRun
           >[0];
@@ -262,28 +576,136 @@ export function experimentsCommand(): Command {
     .option('--datapoint-ids <json>', 'datapoint_ids')
     .option('--passing-ranges <json>', 'passing_ranges')
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [
+          ['--run-id', 'runId'],
+          ['--name', 'name'],
+          ['--description', 'description'],
+          ['--status', 'status'],
+          ['--metadata', 'metadata'],
+          ['--results', 'results'],
+          ['--event-ids', 'eventIds'],
+          ['--configuration', 'configuration'],
+          ['--evaluators', 'evaluators'],
+          ['--session-ids', 'sessionIds'],
+          ['--datapoint-ids', 'datapointIds'],
+          ['--passing-ranges', 'passingRanges'],
+        ] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "failed",
+        "cancelled",
+        "running"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "evaluators": {
+      "type": "array",
+      "items": {}
+    },
+    "session_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "datapoint_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "passing_ranges": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'run-id': 'run_id',
+          name: 'name',
+          description: 'description',
+          status: 'status',
+          metadata: 'metadata',
+          results: 'results',
+          'event-ids': 'event_ids',
+          configuration: 'configuration',
+          evaluators: 'evaluators',
+          'session-ids': 'session_ids',
+          'datapoint-ids': 'datapoint_ids',
+          'passing-ranges': 'passing_ranges',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.updateRun>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [
-            ['--run-id', 'runId'],
-            ['--name', 'name'],
-            ['--description', 'description'],
-            ['--status', 'status'],
-            ['--metadata', 'metadata'],
-            ['--results', 'results'],
-            ['--event-ids', 'eventIds'],
-            ['--configuration', 'configuration'],
-            ['--evaluators', 'evaluators'],
-            ['--session-ids', 'sessionIds'],
-            ['--datapoint-ids', 'datapointIds'],
-            ['--passing-ranges', 'passingRanges'],
-          ]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.updateRun
           >[0];
@@ -324,15 +746,47 @@ export function experimentsCommand(): Command {
     .description('Delete an evaluation run')
     .option('--run-id <value>', 'run_id (required)')
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [['--run-id', 'runId']] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'run-id': 'run_id',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.deleteRun>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [['--run-id', 'runId']]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.deleteRun
           >[0];
@@ -359,18 +813,78 @@ export function experimentsCommand(): Command {
     .option('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
     .option('--date-range <json>', 'Filter by date range')
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [
+          ['--run-id', 'runId'],
+          ['--date-range', 'dateRange'],
+        ] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Experiment run ID (UUIDv4)"
+    },
+    "dateRange": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$gte": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "$lte": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "description": "Filter by date range"
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'run-id': 'run_id',
+          'date-range': 'dateRange',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.getRunSchema>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [
-            ['--run-id', 'runId'],
-            ['--date-range', 'dateRange'],
-          ]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.getRunSchema
           >[0];
@@ -402,19 +916,75 @@ export function experimentsCommand(): Command {
       'Optional filters to apply (JSON string or array of filter objects)',
     )
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [
+          ['--run-id', 'runId'],
+          ['--date-range', 'dateRange'],
+          ['--filters', 'filters'],
+        ] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Experiment run ID (UUIDv4)"
+    },
+    "dateRange": {
+      "type": "string",
+      "description": "Date range filter as JSON string"
+    },
+    "filters": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "not": {}
+            }
+          }
+        }
+      ],
+      "description": "Optional filters to apply (JSON string or array of filter objects)"
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'run-id': 'run_id',
+          'date-range': 'dateRange',
+          filters: 'filters',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.getRunMetrics>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [
-            ['--run-id', 'runId'],
-            ['--date-range', 'dateRange'],
-            ['--filters', 'filters'],
-          ]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.getRunMetrics
           >[0];
@@ -453,20 +1023,93 @@ export function experimentsCommand(): Command {
       'Optional filters to apply (JSON string or array of filter objects)',
     )
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [
+          ['--new-run-id', 'newRunId'],
+          ['--old-run-id', 'oldRunId'],
+          ['--aggregate-function', 'aggregateFunction'],
+          ['--filters', 'filters'],
+        ] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "new_run_id": {
+      "type": "string",
+      "description": "New experiment run ID to compare (UUIDv4)"
+    },
+    "old_run_id": {
+      "type": "string",
+      "description": "Old experiment run ID to compare against (UUIDv4)"
+    },
+    "aggregate_function": {
+      "type": "string",
+      "enum": [
+        "average",
+        "min",
+        "max",
+        "median",
+        "p95",
+        "p99",
+        "p90",
+        "sum",
+        "count"
+      ],
+      "description": "Aggregation function to apply to metrics"
+    },
+    "filters": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "not": {}
+            }
+          }
+        }
+      ],
+      "description": "Optional filters to apply (JSON string or array of filter objects)"
+    }
+  },
+  "required": [
+    "new_run_id",
+    "old_run_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'new-run-id': 'new_run_id',
+          'old-run-id': 'old_run_id',
+          'aggregate-function': 'aggregate_function',
+          filters: 'filters',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.compareRuns>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [
-            ['--new-run-id', 'newRunId'],
-            ['--old-run-id', 'oldRunId'],
-            ['--aggregate-function', 'aggregateFunction'],
-            ['--filters', 'filters'],
-          ]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.compareRuns
           >[0];
@@ -506,23 +1149,97 @@ export function experimentsCommand(): Command {
     .option('--limit <value>', 'Maximum number of results')
     .option('--page <value>', 'Page number for pagination')
     .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
       '-f, --filename <path>',
-      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       try {
+        const FIELD_FLAG_PAIRS = [
+          ['--new-run-id', 'newRunId'],
+          ['--old-run-id', 'oldRunId'],
+          ['--event-name', 'eventName'],
+          ['--event-type', 'eventType'],
+          ['--filter', 'filter'],
+          ['--limit', 'limit'],
+          ['--page', 'page'],
+        ] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "new_run_id": {
+      "type": "string",
+      "description": "New experiment run ID (UUIDv4)"
+    },
+    "old_run_id": {
+      "type": "string",
+      "description": "Old experiment run ID to compare against (UUIDv4)"
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Filter by event name"
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Filter by event type"
+    },
+    "filter": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "not": {}
+          }
+        }
+      ],
+      "description": "Additional filter criteria (JSON string or object)"
+    },
+    "limit": {
+      "type": "number",
+      "description": "Maximum number of results"
+    },
+    "page": {
+      "type": "number",
+      "description": "Page number for pagination"
+    }
+  },
+  "required": [
+    "new_run_id",
+    "old_run_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'new-run-id': 'new_run_id',
+          'old-run-id': 'old_run_id',
+          'event-name': 'event_name',
+          'event-type': 'event_type',
+          filter: 'filter',
+          limit: 'limit',
+          page: 'page',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
         const client = createClient(command);
         let request: Parameters<typeof client.experiments.compareRunEvents>[0];
         if (opts.filename !== undefined) {
-          assertNoConflictingFlags(opts, [
-            ['--new-run-id', 'newRunId'],
-            ['--old-run-id', 'oldRunId'],
-            ['--event-name', 'eventName'],
-            ['--event-type', 'eventType'],
-            ['--filter', 'filter'],
-            ['--limit', 'limit'],
-            ['--page', 'page'],
-          ]);
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
           request = readRequestFile(opts.filename) as Parameters<
             typeof client.experiments.compareRunEvents
           >[0];

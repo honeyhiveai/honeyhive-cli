@@ -9,6 +9,15 @@ outline: deep
 
 Read and write trace events — the spans that capture every step of an AI application's execution.
 
+## Schema introspection {#schema-introspection}
+
+Every command below with arguments supports two read-only flags for tooling and AI agents:
+
+- `--show-file-schema` — print the JSON Schema for the full request object (the format `--filename` accepts).
+- `--show-argument-schema <flag-name>` — print the JSON Schema for one argument's value. Pass the kebab flag name **without** the leading `--` (e.g. `project-id`, not `--project-id`).
+
+Both write pure JSON to stdout and never call the API. They cannot be combined with any other command-specific flag.
+
 ## `create` {#create}
 
 Create a new event
@@ -77,6 +86,8 @@ honeyhive events create [options]
 | `--start-time` | number | no | Event start time as Unix milliseconds |
 | `--user-properties` | json | no | User properties associated with the event |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ### Example response
 
 ```json
@@ -114,6 +125,8 @@ honeyhive events update [options]
 | `--metrics` | json | no | Metric values to merge into the event |
 | `--outputs` | json | no | Output data to replace on the event (accepts objects, strings, arrays, or scalars) |
 | `--user-properties` | json | no | User properties to merge into the event |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ### Example request
 
@@ -173,6 +186,8 @@ honeyhive events search [options]
 | `--limit` | number | no | Limit number of results (default 1000, max 1000) |
 | `--page` | number | no | Page number of results (default 1) |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `create-batch` {#create-batch}
 
 Create a batch of events
@@ -211,6 +226,8 @@ honeyhive events create-batch [options]
 | `--events` | json | yes | Array of events to create |
 | `--session-properties` | json | no | Session properties for batch event creation |
 | `--single-session` / `--no-single-session` | boolean | no | If true, all events share the same session |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ### Example response
 

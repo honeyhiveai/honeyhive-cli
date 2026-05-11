@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command, Option } from 'commander';
-import { assertNoConflictingFlags, assertRequiredFields, createClient, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
+import { assertNoOtherFlags, assertRequiredFields, createClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function metricsCommand() {
     const cmd = new Command('metrics').description('Metrics commands');
     cmd
@@ -8,16 +8,43 @@ export function metricsCommand() {
         .description('Get all metrics')
         .option('--type <value>', 'Filter by metric type')
         .option('--id <value>', 'Filter by specific metric ID')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--type', 'type'],
+                ['--id', 'id'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "Filter by metric type"
+    },
+    "id": {
+      "type": "string",
+      "description": "Filter by specific metric ID"
+    }
+  },
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                type: 'type',
+                id: 'id',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--type', 'type'],
-                    ['--id', 'id'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -67,31 +94,284 @@ export function metricsCommand() {
         .option('--categories <json>', 'categories')
         .option('--child-metrics <json>', 'child_metrics')
         .option('--filters <json>', 'filters')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--name', 'name'],
+                ['--type', 'type'],
+                ['--criteria', 'criteria'],
+                ['--description', 'description'],
+                ['--return-type', 'returnType'],
+                ['--enabled-in-prod', 'enabledInProd'],
+                ['--no-enabled-in-prod', 'enabledInProd'],
+                ['--needs-ground-truth', 'needsGroundTruth'],
+                ['--no-needs-ground-truth', 'needsGroundTruth'],
+                ['--sampling-percentage', 'samplingPercentage'],
+                ['--model-provider', 'modelProvider'],
+                ['--model-name', 'modelName'],
+                ['--scale', 'scale'],
+                ['--threshold', 'threshold'],
+                ['--categories', 'categories'],
+                ['--child-metrics', 'childMetrics'],
+                ['--filters', 'filters'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "PYTHON",
+        "LLM",
+        "HUMAN",
+        "COMPOSITE"
+      ]
+    },
+    "criteria": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "default": true
+    },
+    "return_type": {
+      "type": "string",
+      "enum": [
+        "float",
+        "boolean",
+        "string",
+        "categorical"
+      ],
+      "default": "float"
+    },
+    "enabled_in_prod": {
+      "type": "boolean",
+      "default": false
+    },
+    "needs_ground_truth": {
+      "type": "boolean",
+      "default": false
+    },
+    "sampling_percentage": {
+      "type": "number",
+      "default": 10
+    },
+    "model_provider": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "model_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scale": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "threshold": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "pass_when": {
+              "type": [
+                "boolean",
+                "number"
+              ]
+            },
+            "passing_categories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "categories": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string"
+              },
+              "score": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "category",
+              "score"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "child_metrics": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number"
+              },
+              "scale": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "weight"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "filterArray": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "exists",
+                  "not exists",
+                  "is",
+                  "is not",
+                  "contains",
+                  "not contains",
+                  "greater than",
+                  "less than",
+                  "after",
+                  "before"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "datetime"
+                ]
+              }
+            },
+            "required": [
+              "field",
+              "operator",
+              "value",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "filterArray"
+      ],
+      "additionalProperties": false,
+      "default": {
+        "filterArray": []
+      }
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "criteria"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                name: 'name',
+                type: 'type',
+                criteria: 'criteria',
+                description: 'description',
+                'return-type': 'return_type',
+                'enabled-in-prod': 'enabled_in_prod',
+                'needs-ground-truth': 'needs_ground_truth',
+                'sampling-percentage': 'sampling_percentage',
+                'model-provider': 'model_provider',
+                'model-name': 'model_name',
+                scale: 'scale',
+                threshold: 'threshold',
+                categories: 'categories',
+                'child-metrics': 'child_metrics',
+                filters: 'filters',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--name', 'name'],
-                    ['--type', 'type'],
-                    ['--criteria', 'criteria'],
-                    ['--description', 'description'],
-                    ['--return-type', 'returnType'],
-                    ['--enabled-in-prod', 'enabledInProd'],
-                    ['--no-enabled-in-prod', 'enabledInProd'],
-                    ['--needs-ground-truth', 'needsGroundTruth'],
-                    ['--no-needs-ground-truth', 'needsGroundTruth'],
-                    ['--sampling-percentage', 'samplingPercentage'],
-                    ['--model-provider', 'modelProvider'],
-                    ['--model-name', 'modelName'],
-                    ['--scale', 'scale'],
-                    ['--threshold', 'threshold'],
-                    ['--categories', 'categories'],
-                    ['--child-metrics', 'childMetrics'],
-                    ['--filters', 'filters'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -159,32 +439,262 @@ export function metricsCommand() {
         .option('--categories <json>', 'categories')
         .option('--child-metrics <json>', 'child_metrics')
         .option('--filters <json>', 'filters')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--metric-id', 'metricId'],
+                ['--name', 'name'],
+                ['--type', 'type'],
+                ['--criteria', 'criteria'],
+                ['--description', 'description'],
+                ['--return-type', 'returnType'],
+                ['--enabled-in-prod', 'enabledInProd'],
+                ['--no-enabled-in-prod', 'enabledInProd'],
+                ['--needs-ground-truth', 'needsGroundTruth'],
+                ['--no-needs-ground-truth', 'needsGroundTruth'],
+                ['--sampling-percentage', 'samplingPercentage'],
+                ['--model-provider', 'modelProvider'],
+                ['--model-name', 'modelName'],
+                ['--scale', 'scale'],
+                ['--threshold', 'threshold'],
+                ['--categories', 'categories'],
+                ['--child-metrics', 'childMetrics'],
+                ['--filters', 'filters'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "metric_id": {
+      "type": "string",
+      "description": "The unique identifier of the metric to update"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "PYTHON",
+        "LLM",
+        "HUMAN",
+        "COMPOSITE"
+      ]
+    },
+    "criteria": {
+      "type": "string"
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "return_type": {
+      "type": "string",
+      "enum": [
+        "float",
+        "boolean",
+        "string",
+        "categorical"
+      ]
+    },
+    "enabled_in_prod": {
+      "type": "boolean"
+    },
+    "needs_ground_truth": {
+      "type": "boolean"
+    },
+    "sampling_percentage": {
+      "type": "number"
+    },
+    "model_provider": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "model_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scale": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "threshold": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "pass_when": {
+          "type": [
+            "boolean",
+            "number"
+          ]
+        },
+        "passing_categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "score": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "category",
+          "score"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "child_metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "scale": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "weight"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "filterArray": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "exists",
+                  "not exists",
+                  "is",
+                  "is not",
+                  "contains",
+                  "not contains",
+                  "greater than",
+                  "less than",
+                  "after",
+                  "before"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "datetime"
+                ]
+              }
+            },
+            "required": [
+              "field",
+              "operator",
+              "value",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "filterArray"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "metric_id"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'metric-id': 'metric_id',
+                name: 'name',
+                type: 'type',
+                criteria: 'criteria',
+                description: 'description',
+                'return-type': 'return_type',
+                'enabled-in-prod': 'enabled_in_prod',
+                'needs-ground-truth': 'needs_ground_truth',
+                'sampling-percentage': 'sampling_percentage',
+                'model-provider': 'model_provider',
+                'model-name': 'model_name',
+                scale: 'scale',
+                threshold: 'threshold',
+                categories: 'categories',
+                'child-metrics': 'child_metrics',
+                filters: 'filters',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--metric-id', 'metricId'],
-                    ['--name', 'name'],
-                    ['--type', 'type'],
-                    ['--criteria', 'criteria'],
-                    ['--description', 'description'],
-                    ['--return-type', 'returnType'],
-                    ['--enabled-in-prod', 'enabledInProd'],
-                    ['--no-enabled-in-prod', 'enabledInProd'],
-                    ['--needs-ground-truth', 'needsGroundTruth'],
-                    ['--no-needs-ground-truth', 'needsGroundTruth'],
-                    ['--sampling-percentage', 'samplingPercentage'],
-                    ['--model-provider', 'modelProvider'],
-                    ['--model-name', 'modelName'],
-                    ['--scale', 'scale'],
-                    ['--threshold', 'threshold'],
-                    ['--categories', 'categories'],
-                    ['--child-metrics', 'childMetrics'],
-                    ['--filters', 'filters'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -227,13 +737,38 @@ export function metricsCommand() {
         .command('delete')
         .description('Delete a metric')
         .option('--metric-id <value>', 'The unique identifier of the metric to delete (required)')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [['--metric-id', 'metricId']];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "metric_id": {
+      "type": "string",
+      "description": "The unique identifier of the metric to delete"
+    }
+  },
+  "required": [
+    "metric_id"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'metric-id': 'metric_id',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [['--metric-id', 'metricId']]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -258,16 +793,292 @@ export function metricsCommand() {
         .description('Run a metric evaluation')
         .option('--metric <json>', 'metric (required)')
         .option('--event <json>', 'event (required)')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--metric', 'metric'],
+                ['--event', 'event'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "metric": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "LLM",
+            "PYTHON"
+          ]
+        },
+        "criteria": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "default": true
+        },
+        "return_type": {
+          "type": "string",
+          "enum": [
+            "float",
+            "boolean",
+            "string",
+            "categorical"
+          ],
+          "default": "float"
+        },
+        "enabled_in_prod": {
+          "type": "boolean",
+          "default": false
+        },
+        "needs_ground_truth": {
+          "type": "boolean",
+          "default": false
+        },
+        "sampling_percentage": {
+          "type": "number",
+          "default": 10
+        },
+        "model_provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scale": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "threshold": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "pass_when": {
+                  "type": [
+                    "boolean",
+                    "number"
+                  ]
+                },
+                "passing_categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "categories": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string"
+                  },
+                  "score": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "category",
+                  "score"
+                ],
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "child_metrics": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": "number"
+                  },
+                  "scale": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "weight"
+                ],
+                "additionalProperties": false
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "filters": {
+          "type": "object",
+          "properties": {
+            "filterArray": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": [
+                      "exists",
+                      "not exists",
+                      "is",
+                      "is not",
+                      "contains",
+                      "not contains",
+                      "greater than",
+                      "less than",
+                      "after",
+                      "before"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "datetime"
+                    ]
+                  }
+                },
+                "required": [
+                  "field",
+                  "operator",
+                  "value",
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "filterArray"
+          ],
+          "additionalProperties": false,
+          "default": {
+            "filterArray": []
+          }
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "criteria"
+      ],
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "event_type": {
+          "type": "string"
+        },
+        "event_name": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "workspace_id": {
+          "type": "string"
+        },
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "ground_truth": {}
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "metric",
+    "event"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                metric: 'metric',
+                event: 'event',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--metric', 'metric'],
-                    ['--event', 'event'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {

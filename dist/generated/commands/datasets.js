@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command } from 'commander';
-import { assertNoConflictingFlags, assertRequiredFields, createClient, parseJson, readRequestFile, } from '../../utils.js';
+import { assertNoOtherFlags, assertRequiredFields, createClient, handleSchemaIntrospection, parseJson, readRequestFile, } from '../../utils.js';
 export function datasetsCommand() {
     const cmd = new Command('datasets').description('Datasets commands');
     cmd
@@ -8,16 +8,43 @@ export function datasetsCommand() {
         .description('Get datasets')
         .option('--dataset-id <value>', 'Unique dataset ID for filtering specific dataset')
         .option('--name <value>', 'Dataset name to filter by')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--dataset-id', 'datasetId'],
+                ['--name', 'name'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "description": "Unique dataset ID for filtering specific dataset"
+    },
+    "name": {
+      "type": "string",
+      "description": "Dataset name to filter by"
+    }
+  },
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'dataset-id': 'dataset_id',
+                name: 'name',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--dataset-id', 'datasetId'],
-                    ['--name', 'name'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -43,17 +70,54 @@ export function datasetsCommand() {
         .option('--name <value>', 'Name of the dataset')
         .option('--description <value>', 'Description of the dataset')
         .option('--datapoints <json>', 'Initial datapoint IDs to include')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--name', 'name'],
+                ['--description', 'description'],
+                ['--datapoints', 'datapoints'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the dataset",
+      "default": "Untitled Dataset"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the dataset"
+    },
+    "datapoints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Initial datapoint IDs to include",
+      "default": []
+    }
+  },
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                name: 'name',
+                description: 'description',
+                datapoints: 'datapoints',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--name', 'name'],
-                    ['--description', 'description'],
-                    ['--datapoints', 'datapoints'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -81,18 +145,61 @@ export function datasetsCommand() {
         .option('--name <value>', 'New dataset name')
         .option('--description <value>', 'New dataset description')
         .option('--datapoints <json>', 'Updated list of datapoint IDs')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--dataset-id', 'datasetId'],
+                ['--name', 'name'],
+                ['--description', 'description'],
+                ['--datapoints', 'datapoints'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "description": "The unique identifier of the dataset to update like \`663876ec4611c47f4970f0c3\`"
+    },
+    "name": {
+      "type": "string",
+      "description": "New dataset name"
+    },
+    "description": {
+      "type": "string",
+      "description": "New dataset description"
+    },
+    "datapoints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Updated list of datapoint IDs"
+    }
+  },
+  "required": [
+    "dataset_id"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'dataset-id': 'dataset_id',
+                name: 'name',
+                description: 'description',
+                datapoints: 'datapoints',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--dataset-id', 'datasetId'],
-                    ['--name', 'name'],
-                    ['--description', 'description'],
-                    ['--datapoints', 'datapoints'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -119,13 +226,38 @@ export function datasetsCommand() {
         .command('delete')
         .description('Delete a dataset')
         .option('--dataset-id <value>', 'The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` (required)')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [['--dataset-id', 'datasetId']];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "description": "The unique identifier of the dataset to be deleted like \`663876ec4611c47f4970f0c3\`"
+    }
+  },
+  "required": [
+    "dataset_id"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'dataset-id': 'dataset_id',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [['--dataset-id', 'datasetId']]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -151,17 +283,81 @@ export function datasetsCommand() {
         .option('--dataset-id <value>', 'The unique identifier of the dataset to add datapoints to like  `663876ec4611c47f4970f0c3` (required)')
         .option('--data <json>', 'Array of datapoint data objects to add (required)')
         .option('--mapping <json>', 'mapping (required)')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--dataset-id', 'datasetId'],
+                ['--data', 'data'],
+                ['--mapping', 'mapping'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "description": "The unique identifier of the dataset to add datapoints to like  \`663876ec4611c47f4970f0c3\`"
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      "description": "Array of datapoint data objects to add"
+    },
+    "mapping": {
+      "type": "object",
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "ground_truth": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "dataset_id",
+    "data",
+    "mapping"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'dataset-id': 'dataset_id',
+                data: 'data',
+                mapping: 'mapping',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--dataset-id', 'datasetId'],
-                    ['--data', 'data'],
-                    ['--mapping', 'mapping'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {
@@ -192,16 +388,47 @@ export function datasetsCommand() {
         .description('Remove a datapoint from a dataset')
         .option('--dataset-id <value>', 'The unique identifier of the dataset (required)')
         .option('--datapoint-id <value>', 'The unique identifier of the datapoint to remove (required)')
-        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Mutually exclusive with the per-field flags above.')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         try {
+            const FIELD_FLAG_PAIRS = [
+                ['--dataset-id', 'datasetId'],
+                ['--datapoint-id', 'datapointId'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "description": "The unique identifier of the dataset"
+    },
+    "datapoint_id": {
+      "type": "string",
+      "description": "The unique identifier of the datapoint to remove"
+    }
+  },
+  "required": [
+    "dataset_id",
+    "datapoint_id"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'dataset-id': 'dataset_id',
+                'datapoint-id': 'datapoint_id',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
             const client = createClient(command);
             let request;
             if (opts.filename !== undefined) {
-                assertNoConflictingFlags(opts, [
-                    ['--dataset-id', 'datasetId'],
-                    ['--datapoint-id', 'datapointId'],
-                ]);
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
                 request = readRequestFile(opts.filename);
             }
             else {

@@ -9,6 +9,15 @@ outline: deep
 
 Run, retrieve, and compare evaluation runs to measure how prompt or configuration changes affect agent performance.
 
+## Schema introspection {#schema-introspection}
+
+Every command below with arguments supports two read-only flags for tooling and AI agents:
+
+- `--show-file-schema` — print the JSON Schema for the full request object (the format `--filename` accepts).
+- `--show-argument-schema <flag-name>` — print the JSON Schema for one argument's value. Pass the kebab flag name **without** the leading `--` (e.g. `dataset-id`, not `--dataset-id`).
+
+Both write pure JSON to stdout and never call the API. They cannot be combined with any other command-specific flag.
+
 ## `list-runs` {#list-runs}
 
 Get a list of evaluation runs
@@ -34,6 +43,8 @@ honeyhive experiments list-runs [options]
 | `--sort-by` | string | no | Field to sort by Allowed: `created_at`, `updated_at`, `name`, `status`. |
 | `--sort-order` | string | no | Sort order Allowed: `asc`, `desc`. |
 | `--status` | string | no | Filter by run status Allowed: `pending`, `completed`, `failed`, `cancelled`, `running`. |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `create-run` {#create-run}
 
@@ -65,6 +76,8 @@ honeyhive experiments create-run [options]
 | `--session-ids` | json | no | session_ids |
 | `--status` | string | no | status Allowed: `pending`, `completed`, `failed`, `cancelled`, `running`. |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `get-runs-schema` {#get-runs-schema}
 
 Get events schema across all experiment runs in a project
@@ -83,6 +96,8 @@ honeyhive experiments get-runs-schema [options]
 |---|---|---|---|
 | `--date-range` | json | no | Filter by date range |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `get-run` {#get-run}
 
 Get details of an evaluation run
@@ -100,6 +115,8 @@ honeyhive experiments get-run [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--run-id` | string | yes | run_id |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `update-run` {#update-run}
 
@@ -130,6 +147,8 @@ honeyhive experiments update-run [options]
 | `--session-ids` | json | no | session_ids |
 | `--status` | string | no | status Allowed: `pending`, `completed`, `failed`, `cancelled`, `running`. |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `delete-run` {#delete-run}
 
 Delete an evaluation run
@@ -147,6 +166,8 @@ honeyhive experiments delete-run [options]
 | Flag | Type | Required | Description |
 |---|---|---|---|
 | `--run-id` | string | yes | run_id |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `get-run-schema` {#get-run-schema}
 
@@ -166,6 +187,8 @@ honeyhive experiments get-run-schema [options]
 |---|---|---|---|
 | `--run-id` | string | yes | Experiment run ID (UUIDv4) |
 | `--date-range` | json | no | Filter by date range |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `get-run-metrics` {#get-run-metrics}
 
@@ -187,6 +210,8 @@ honeyhive experiments get-run-metrics [options]
 | `--date-range` | string | no | Date range filter as JSON string |
 | `--filters` | json | no | Optional filters to apply (JSON string or array of filter objects) |
 
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `compare-runs` {#compare-runs}
 
 Retrieve experiment comparison
@@ -207,6 +232,8 @@ honeyhive experiments compare-runs [options]
 | `--old-run-id` | string | yes | Old experiment run ID to compare against (UUIDv4) |
 | `--aggregate-function` | string | no | Aggregation function to apply to metrics Allowed: `average`, `min`, `max`, `median`, `p95`, `p99`, `p90`, `sum`, `count`. |
 | `--filters` | json | no | Optional filters to apply (JSON string or array of filter objects) |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
 ## `compare-run-events` {#compare-run-events}
 
@@ -231,3 +258,5 @@ honeyhive experiments compare-run-events [options]
 | `--filter` | json | no | Additional filter criteria (JSON string or object) |
 | `--limit` | number | no | Maximum number of results |
 | `--page` | number | no | Page number for pagination |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).

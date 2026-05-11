@@ -4,7 +4,6 @@ import { datasetsCommand } from './datasets.js';
 import { eventsCommand } from './events.js';
 import { experimentsCommand } from './experiments.js';
 import { metricsCommand } from './metrics.js';
-import { queuesCommand } from './queues.js';
 import { sessionsCommand } from './sessions.js';
 export function registerCommands(program) {
     program.addCommand(sessionsCommand());
@@ -13,6 +12,5 @@ export function registerCommands(program) {
     program.addCommand(datapointsCommand());
     program.addCommand(datasetsCommand());
     program.addCommand(experimentsCommand());
-    program.addCommand(queuesCommand());
 }
 //# sourceMappingURL=index.js.map

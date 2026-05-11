@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-rc.8",
+  "version": "1.0.0",
   "name": "@honeyhive/cli",
   "type": "module",
   "description": "HoneyHive CLI",
@@ -17,7 +17,7 @@
     "Commander-specific rule (not a general rule): `commander`'s version MUST be an exact pin and MUST match the version in @hive-kube/server-sdk-generator's package.json. The generator imports Commander at codegen time to derive `opts` attribute names that get baked into this CLI's generated source — any drift between codegen-time and runtime Commander would silently produce mismatched opts keys. See AGENTS.md."
   ],
   "dependencies": {
-    "@honeyhive/api-client": "1.0.0-rc.6",
+    "@honeyhive/api-client": "1.0.0",
     "commander": "13.1.0",
     "jsonc-parser": "^3.3.1",
     "yaml": "^2.8.3"

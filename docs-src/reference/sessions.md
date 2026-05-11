@@ -9,6 +9,15 @@ outline: deep
 
 Group related trace events into sessions, the top-level container for a multi-step or multi-service AI interaction.
 
+## Schema introspection {#schema-introspection}
+
+Every command below with arguments supports two read-only flags for tooling and AI agents:
+
+- `--show-file-schema` — print the JSON Schema for the full request object (the format `--filename` accepts).
+- `--show-argument-schema <flag-name>` — print the JSON Schema for one argument's value. Pass the kebab flag name **without** the leading `--` (e.g. `session-id`, not `--session-id`).
+
+Both write pure JSON to stdout and never call the API. They cannot be combined with any other command-specific flag.
+
 ## `create` {#create}
 
 Start a new session
@@ -74,3 +83,5 @@ honeyhive sessions create [options]
 | `--source` | string | no | Source of the session (e.g., sdk-python) |
 | `--start-time` | number | no | Session start time as Unix milliseconds |
 | `--user-properties` | json | no | User properties associated with the session |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).

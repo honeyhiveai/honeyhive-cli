@@ -50,7 +50,7 @@ Pass the key directly on the command line. **Never hard-code the key or commit i
 honeyhive --api-key "$MY_HONEYHIVE_KEY" datasets list
 ```
 
-## Configuration
+## Server URL
 
 By default the CLI talks to `https://api.honeyhive.ai`. To point at a self-hosted deployment or a staging environment, set the `HH_API_URL` environment variable or pass `--base-url`:
 
@@ -74,6 +74,15 @@ honeyhive --verbose datasets list
 ```
 
 Output is written to stderr and only fires once per invocation. An explicit `--verbose` flag matches the precedence of the other flags. The masked API key keeps the recognized prefix (`hh_`, `hh_org_`, `hh_ws_`, `hh_cp_`, `hh_dp_`) and the last 4 characters; anything else renders as 8 fixed-width asterisks.
+
+## Schema introspection
+
+Every command that takes arguments supports two read-only flags for tooling and AI agents:
+
+- `--show-file-schema` — print the JSON Schema for the full request object (the same shape `--filename` accepts). See [Using a file for upload arguments](#using-a-file-for-upload-arguments) for the file format itself.
+- `--show-argument-schema <flag-name>` — print the JSON Schema for a single argument's value (e.g., `honeyhive sessions create --show-argument-schema user-properties`). Pass the kebab flag name **without** the leading `--`.
+
+Both write pure JSON to stdout and never call the API. They cannot be combined with any other command-specific flag.
 
 ## Example: Creating and Deleting a Dataset
 
@@ -106,6 +115,22 @@ honeyhive datapoints create \
 # 3. Later, delete the dataset.
 honeyhive datasets delete --dataset-id "$DATASET_ID"
 ```
+
+## Using a file for upload arguments
+
+Instead of passing data via command line arguments, you can also read from a file using the `--filename`/`-f` flag:
+
+```sh
+honeyhive datapoints create --filename datapoint.json
+```
+
+You can get the JSON Schema for the file by running:
+
+```sh
+honeyhive datapoints create --show-file-schema
+```
+
+This file contains the entire request (request body + url params + query params) flattened into a single object. Aside from this flattening, properties exactly follow the format of our [OpenAPI spec](https://docs.honeyhive.ai/v2/api-reference-autogen/), so be aware that top level properties are either `snake_case` or `camelCase`, not `--kebab-case` like the CLI flags.
 
 ## Additional resources
 
