@@ -85,3 +85,48 @@ honeyhive sessions create [options]
 | `--user-properties` | json | no | User properties associated with the session |
 
 Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
+## `create-event-batch` {#create-event-batch}
+
+Add a batch of events to a session
+
+AIP-233 nested batch create. Adds a batch of events to an existing
+session. Each event in the batch is stored with `session_id` set from
+the URL path, overriding any `session_id` in the event body.
+
+**Required properties:**
+
+- `events` (array of event objects) — Each event must include
+  `event_type` (one of `chain`, `model`, `tool`, `session`) and `inputs`.
+
+Unknown top-level fields and unknown per-event fields are rejected at
+the SDK boundary; the deprecated per-event `project` field is no
+longer accepted.
+
+Events are processed sequentially (not via the worker-pool batch path
+used by `POST /v1/events/batch`) — semantics match the legacy
+`POST /session/{session_id}/traces` route per the Normalize Routes
+RFC.
+
+### Usage
+
+```sh
+honeyhive sessions create-event-batch [options]
+```
+
+### Options
+
+| Flag | Type | Required | Description |
+|---|---|---|---|
+| `--events` | json | yes | Events to add to the session |
+| `--session-id` | string | yes | Session ID to add events to |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
+### Example response
+
+```json
+{
+  "success": true
+}
+```

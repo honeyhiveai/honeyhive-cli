@@ -889,6 +889,105 @@ export function experimentsCommand() {
         }
     });
     cmd
+        .command('get-summary')
+        .description('Retrieve experiment summary')
+        .option('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
+        .addOption(new Option('--aggregate-function <value>', 'Aggregation function to apply to metrics').choices(['average', 'min', 'max', 'median', 'p95', 'p99', 'p90', 'sum', 'count']))
+        .option('--filters <json>', 'Optional filters to apply (JSON string or array of filter objects)')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
+        .action(async (opts, command) => {
+        try {
+            const FIELD_FLAG_PAIRS = [
+                ['--run-id', 'runId'],
+                ['--aggregate-function', 'aggregateFunction'],
+                ['--filters', 'filters'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Experiment run ID (UUIDv4)"
+    },
+    "aggregate_function": {
+      "type": "string",
+      "enum": [
+        "average",
+        "min",
+        "max",
+        "median",
+        "p95",
+        "p99",
+        "p90",
+        "sum",
+        "count"
+      ],
+      "description": "Aggregation function to apply to metrics"
+    },
+    "filters": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "not": {}
+            }
+          }
+        }
+      ],
+      "description": "Optional filters to apply (JSON string or array of filter objects)"
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'run-id': 'run_id',
+                'aggregate-function': 'aggregate_function',
+                filters: 'filters',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
+            const client = createClient(command);
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [['--run-id', 'runId']]);
+                request = {
+                    run_id: opts.runId,
+                    ...(opts.aggregateFunction !== undefined && {
+                        aggregate_function: opts.aggregateFunction,
+                    }),
+                    ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
+                };
+            }
+            const result = await client.experiments.getSummary(request);
+            if (result !== undefined) {
+                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+            }
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.error(message);
+            process.exit(1);
+        }
+    });
+    cmd
         .command('compare-runs')
         .description('Retrieve experiment comparison')
         .option('--new-run-id <value>', 'New experiment run ID to compare (UUIDv4) (required)')

@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
 import { Command } from 'commander';
-import { assertNoOtherFlags, createClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
+import { assertNoOtherFlags, assertRequiredFields, createClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function sessionsCommand() {
     const cmd = new Command('sessions').description('Sessions commands');
     cmd
@@ -162,6 +162,189 @@ export function sessionsCommand() {
             process.exit(1);
         }
     });
+    cmd
+        .command('create-event-batch')
+        .description('Add a batch of events to a session')
+        .option('--session-id <value>', 'Session ID to add events to (required)')
+        .option('--events <json>', 'Events to add to the session (required)')
+        .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
+        .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
+        .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
+        .action(async (opts, command) => {
+        try {
+            const FIELD_FLAG_PAIRS = [
+                ['--session-id', 'sessionId'],
+                ['--events', 'events'],
+            ];
+            const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Session ID to add events to"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "Project ID"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of the event (e.g., sdk-python)"
+          },
+          "event_name": {
+            "type": "string",
+            "description": "Name of the event"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "model",
+              "tool",
+              "chain",
+              "session"
+            ],
+            "description": "Type of event (model, tool, chain, or session)"
+          },
+          "event_id": {
+            "type": "string",
+            "description": "Unique event identifier"
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Session this event belongs to"
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "Parent event ID in the trace hierarchy"
+          },
+          "children_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Child event IDs in the trace hierarchy"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Configuration used for this event"
+          },
+          "inputs": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Input data for the event"
+          },
+          "outputs": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Output data from the event"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Error message if the event failed"
+          },
+          "start_time": {
+            "type": "number",
+            "description": "Event start time as Unix milliseconds"
+          },
+          "end_time": {
+            "type": "number",
+            "description": "Event end time as Unix milliseconds"
+          },
+          "duration": {
+            "type": "number",
+            "description": "Event duration in milliseconds"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Arbitrary metadata for the event"
+          },
+          "feedback": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Feedback data associated with the event"
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Metric values computed for the event"
+          },
+          "user_properties": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "User properties associated with the event"
+          }
+        },
+        "required": [
+          "event_type",
+          "inputs"
+        ],
+        "additionalProperties": false,
+        "description": "Request body for POST /v1/events (bare event object)"
+      },
+      "description": "Events to add to the session"
+    }
+  },
+  "required": [
+    "session_id",
+    "events"
+  ],
+  "additionalProperties": false
+}`;
+            const KEBAB_TO_SPEC = {
+                'session-id': 'session_id',
+                events: 'events',
+            };
+            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+                ['--filename', 'filename'],
+                ...FIELD_FLAG_PAIRS,
+            ])) {
+                return;
+            }
+            const client = createClient(command);
+            let request;
+            if (opts.filename !== undefined) {
+                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+                request = readRequestFile(opts.filename);
+            }
+            else {
+                assertRequiredFields(opts, [
+                    ['--session-id', 'sessionId'],
+                    ['--events', 'events'],
+                ]);
+                request = {
+                    session_id: opts.sessionId,
+                    events: parseJson(opts.events),
+                };
+            }
+            const result = await client.sessions.createEventBatch(request);
+            if (result !== undefined) {
+                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+            }
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.error(message);
+            process.exit(1);
+        }
+    })
+        .addHelpText('after', `
+Examples:
+
+  Response:
+    {
+      "success": true
+    }
+`);
     cmd.action(() => {
         if (!process.argv.includes('--help') && !process.argv.includes('-h')) {
             console.error('Error: subcommand is required\n');

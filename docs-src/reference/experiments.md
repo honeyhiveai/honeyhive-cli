@@ -212,6 +212,28 @@ honeyhive experiments get-run-metrics [options]
 
 Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
 
+## `get-summary` {#get-summary}
+
+Retrieve experiment summary
+
+Compute evaluation summary for an experiment run: pass/fail results, metric aggregations, per-datapoint results, event details, and the experiment run object.
+
+### Usage
+
+```sh
+honeyhive experiments get-summary [options]
+```
+
+### Options
+
+| Flag | Type | Required | Description |
+|---|---|---|---|
+| `--run-id` | string | yes | Experiment run ID (UUIDv4) |
+| `--aggregate-function` | string | no | Aggregation function to apply to metrics Allowed: `average`, `min`, `max`, `median`, `p95`, `p99`, `p90`, `sum`, `count`. |
+| `--filters` | json | no | Optional filters to apply (JSON string or array of filter objects) |
+
+Also supports `--show-file-schema`, `--show-argument-schema <flag-name>`, and `--filename` — see [Schema introspection](#schema-introspection).
+
 ## `compare-runs` {#compare-runs}
 
 Retrieve experiment comparison

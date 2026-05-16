@@ -2,6 +2,7 @@
 
 import { type Command } from 'commander';
 
+import { chartsCommand } from './charts.js';
 import { datapointsCommand } from './datapoints.js';
 import { datasetsCommand } from './datasets.js';
 import { eventsCommand } from './events.js';
@@ -12,6 +13,7 @@ import { sessionsCommand } from './sessions.js';
 export function registerCommands(program: Command): void {
   program.addCommand(sessionsCommand());
   program.addCommand(eventsCommand());
+  program.addCommand(chartsCommand());
   program.addCommand(metricsCommand());
   program.addCommand(datapointsCommand());
   program.addCommand(datasetsCommand());

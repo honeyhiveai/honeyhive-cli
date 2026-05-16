@@ -5,6 +5,7 @@ export const referenceSidebar = [
     text: 'Reference',
     items: [
       { text: 'Overview', link: '/reference/' },
+      { text: 'Charts', link: '/reference/charts' },
       { text: 'Datapoints', link: '/reference/datapoints' },
       { text: 'Datasets', link: '/reference/datasets' },
       { text: 'Events', link: '/reference/events' },
