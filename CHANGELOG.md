@@ -1,3 +1,8 @@
+## [1.1.1] - 2026-05-19
+
+### Fixes & Improvements
+- Error output for failed API requests now includes the server's error message. All CLI commands that hit the API previously printed only `API error <status>`; they now print `API error <status>: <message>` with the actionable detail from the server.
+
 ## [1.1.0] - 2026-05-15
 
 ### What's New

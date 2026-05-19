@@ -3,7 +3,7 @@ title: 'Datapoints'
 outline: deep
 ---
 
-<!-- AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate. -->
+<!-- AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate. -->
 
 # Datapoints {#datapoints}
 

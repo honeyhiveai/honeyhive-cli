@@ -3,7 +3,7 @@ title: 'Sessions'
 outline: deep
 ---
 
-<!-- AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate. -->
+<!-- AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate. -->
 
 # Sessions {#sessions}
 

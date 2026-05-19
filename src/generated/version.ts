@@ -1,3 +1,3 @@
-// AUTO-GENERATED — do not edit manually. Run `pnpm generate:cli` to regenerate.
+// AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate.
 
-export const CLI_VERSION = '1.1.0';
+export const CLI_VERSION = '1.1.1';

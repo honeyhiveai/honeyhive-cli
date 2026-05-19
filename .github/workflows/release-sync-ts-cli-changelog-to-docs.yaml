@@ -1,13 +1,20 @@
 name: Sync TypeScript CLI Release to Docs
 
 on:
-  # Listens for the Release / TypeScript CLI workflow's `gh release create`
-  # call. `release: [published]` fires reliably here because the upstream
-  # release is created via a Propolis-app token, not the default GITHUB_TOKEN
-  # (which would suppress the event). The `workflows: ["Publish"]` workflow_run
-  # listener this replaces is gone now that publish.yaml is gone.
-  release:
-    types: [published]
+  # Bridged from the Release / TypeScript CLI workflow in hive-kube via
+  # `repository_dispatch` rather than the natural `release: [published]` event.
+  # Reason: anthropics/claude-code-action whitelists event names internally and
+  # throws "Unsupported event type: release" — see
+  # https://github.com/anthropics/claude-code-action src/github/context.ts. The
+  # supported automation events are workflow_dispatch, repository_dispatch,
+  # schedule, and workflow_run. Of those, only repository_dispatch crosses the
+  # repo boundary from the monorepo with a custom payload (workflow_run only
+  # listens to workflows in the SAME repo; the public CLI repo has no
+  # in-repo publish workflow to listen to). The dispatch is fired by the
+  # release-ts-cli.yaml `release` job's "Trigger docs changelog sync" step,
+  # which uses a Propolis-app token scoped to honeyhive-cli.
+  repository_dispatch:
+    types: [cli-release-published]
   workflow_dispatch:
     inputs:
       version:
@@ -26,28 +33,36 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      # Pin the checkout to the exact tag the release event references (or to
-      # the dispatcher's chosen ref for workflow_dispatch). Without an
+      # Pin the checkout to the exact version the dispatch payload references
+      # (or to the dispatcher's chosen ref for workflow_dispatch). Without an
       # explicit ref, checkout@v6 would resolve to default-branch tip and
-      # race any commits landing on main between the release event firing
-      # and this run starting.
+      # race any commits landing on main between the dispatch firing and
+      # this run starting. The dispatch payload's `version` is always a
+      # v-prefixed tag (see release-ts-cli.yaml), so it doubles as a git ref.
+      #
+      # The fallback explicitly gates on event_name so a malformed
+      # repository_dispatch (missing client_payload.version) fails loudly at
+      # checkout instead of silently checking out the CLI repo's default
+      # branch tip — under repository_dispatch, github.ref resolves to
+      # main, which would let a fat-fingered manual `gh api` invocation sync
+      # docs for the wrong tree.
       - name: Checkout honeyhive-cli
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.release.tag_name || github.ref }}
+          ref: ${{ github.event.client_payload.version || (github.event_name == 'workflow_dispatch' && github.ref) || '' }}
 
       - name: Resolve release version
         id: resolve-version
         shell: bash
         env:
-          # release-event path: tag_name (e.g. "v2.0.0-rc.3").
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          # repository_dispatch path: version from client_payload (e.g. "v2.0.0-rc.3").
+          DISPATCH_VERSION: ${{ github.event.client_payload.version }}
           # workflow_dispatch path: optional explicit version input.
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [[ -n "${RELEASE_TAG}" ]]; then
-            VERSION="${RELEASE_TAG}"
+          if [[ -n "${DISPATCH_VERSION}" ]]; then
+            VERSION="${DISPATCH_VERSION}"
           elif [[ -n "${INPUT_VERSION}" ]]; then
             VERSION="${INPUT_VERSION}"
           else
@@ -58,8 +73,8 @@ jobs:
             VERSION=$(jq -r '.version' package.json)
           fi
           # Normalize to a v-prefixed tag so branch/PR/commit references are
-          # consistent whether the version came from the release event, the
-          # input, or package.json.
+          # consistent whether the version came from the dispatch payload,
+          # the workflow_dispatch input, or package.json.
           case "$VERSION" in
             v*) ;;
             *) VERSION="v${VERSION}" ;;
