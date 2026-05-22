@@ -21,7 +21,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.1.1/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.2.1/install.sh | sh
 ```
 <!-- install-script-end -->
 
@@ -50,25 +50,27 @@ Pass the key directly on the command line. **Never hard-code the key or commit i
 honeyhive --api-key "$MY_HONEYHIVE_KEY" datasets list
 ```
 
-## Server URL
+## Data plane URL
 
-By default the CLI talks to `https://api.honeyhive.ai`. To point at a self-hosted deployment or a staging environment, set the `HH_API_URL` environment variable or pass `--base-url`:
+By default the CLI talks to `https://api.dp1.us.honeyhive.ai`. To point at a self-hosted deployment or a staging environment, set the `HH_DATA_PLANE_URL` environment variable or pass `--data-plane-url`:
 
 ```sh
-export HH_API_URL=https://honeyhive.example.com
+export HH_DATA_PLANE_URL=https://honeyhive.example.com
 honeyhive datasets list
 
 # Or per-invocation:
-honeyhive --base-url https://honeyhive.example.com datasets list
+honeyhive --data-plane-url https://honeyhive.example.com datasets list
 ```
+
+> **Deprecated aliases:** the `--base-url` flag and the `HH_API_URL` environment variable are still accepted but will be removed in the next major version. Using either logs a deprecation warning to stderr. Migrate to `--data-plane-url` / `HH_DATA_PLANE_URL`.
 
 ## Verbose logging
 
-Pass `--verbose` (or set `HH_VERBOSE=true`) to log the resolved API URL, a masked API key, and the CLI version on startup. Useful when debugging "is this hitting prod or staging?" or "did the right `HH_API_KEY` get picked up?".
+Pass `--verbose` (or set `HH_VERBOSE=true`) to log the resolved data plane URL, a masked API key, and the CLI version on startup. Useful when debugging "is this hitting prod or staging?" or "did the right `HH_API_KEY` get picked up?".
 
 ```sh
 honeyhive --verbose datasets list
-# API URL: https://api.dp1.us.honeyhive.ai
+# Data plane URL: https://api.dp1.us.honeyhive.ai
 # API Key: hh_****XXX
 # Package: @honeyhive/cli vX.Y.Z
 ```

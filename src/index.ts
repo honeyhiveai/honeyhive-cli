@@ -10,8 +10,12 @@ program
   .description('HoneyHive CLI')
   .version(CLI_VERSION)
   .option('--api-key <key>', 'API key (overrides HH_API_KEY env var)')
-  .option('--base-url <url>', 'Base URL (overrides HH_API_URL env var)')
-  .option('--verbose', 'Log the resolved API URL, masked API key, and CLI version on startup');
+  .option('--data-plane-url <url>', 'Data plane URL (overrides HH_DATA_PLANE_URL env var)')
+  .option('--base-url <url>', '(Deprecated, use --data-plane-url) Data plane URL')
+  .option(
+    '--verbose',
+    'Log the resolved data plane URL, masked API key, and CLI version on startup',
+  );
 
 registerCommands(program);
 

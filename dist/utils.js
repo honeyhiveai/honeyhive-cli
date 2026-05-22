@@ -13,9 +13,28 @@ export function createClient(command) {
         console.error('Missing API key: provide --api-key or set the HH_API_KEY environment variable');
         process.exit(1);
     }
+    // Both --data-plane-url (new) and --base-url (deprecated) accept the same
+    // value. Warn on --base-url whenever the user passes it, even if
+    // --data-plane-url also wins resolution — we want callers to drop the old
+    // flag from their scripts.
+    //
+    // The chassis (`console.warn`, `Warning: option "--<flag>" is deprecated
+    // and will be removed in the next major version.`) matches the CLI
+    // generator's per-option deprecation warning in
+    // `typescript/packages/server-sdk-generator/src/cli.ts` (search for
+    // `is deprecated and will be removed`). The hand-written warning here
+    // appends `Use "--<replacement>" instead.` because we know the
+    // replacement at this call site; the generator currently omits a Use
+    // clause because the OpenAPI spec doesn't yet model replacements. If
+    // the generator's chassis changes, update this string too (and vice
+    // versa); the Use clause only appears in hand-written warnings.
+    if (globalOpts.baseUrl !== undefined) {
+        console.warn('Warning: option "--base-url" is deprecated and will be removed in the next major version. Use "--data-plane-url" instead.');
+    }
+    const resolvedDataPlaneUrl = globalOpts.dataPlaneUrl ?? globalOpts.baseUrl;
     return new Client({
         apiKey,
-        ...(globalOpts.baseUrl !== undefined && { serverUrl: globalOpts.baseUrl }),
+        ...(resolvedDataPlaneUrl !== undefined && { dataPlaneUrl: resolvedDataPlaneUrl }),
         ...(globalOpts.verbose !== undefined && { verbose: globalOpts.verbose }),
         _internal_provenance: {
             package: CLI_PACKAGE_NAME,

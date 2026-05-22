@@ -1,3 +1,17 @@
+# CLI Changelog
+
+## [1.2.1] - 2026-05-22
+
+Internal improvements only.
+
+## [1.2.0] - 2026-05-21
+
+### What's New
+- Added `--data-plane-url` flag and `HH_DATA_PLANE_URL` environment variable for pointing the CLI at a specific HoneyHive data plane (e.g. self-hosted or staging deployments). Verbose output now labels this value as `Data plane URL:` instead of `API URL:`.
+
+### Compatibility & Deprecations
+- The `--base-url` flag and `HH_API_URL` environment variable are deprecated and will be removed in the next major version. They still work as aliases for the new names but now log a deprecation warning to stderr on each invocation. Migrate to `--data-plane-url` / `HH_DATA_PLANE_URL`.
+
 ## [1.1.1] - 2026-05-19
 
 ### Fixes & Improvements
