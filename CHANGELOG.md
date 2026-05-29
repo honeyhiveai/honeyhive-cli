@@ -1,5 +1,10 @@
 # CLI Changelog
 
+## [1.3.0] - 2026-05-29
+
+### What's New
+- Added `metric-versions` subcommands for managing snapshot versions of a metric's definition: `metric-versions list`, `metric-versions create`, and `metric-versions deploy`. Use these to review history, create new draft or immediately-deployed versions, and roll between versions without losing history.
+
 ## [1.2.1] - 2026-05-22
 
 Internal improvements only.

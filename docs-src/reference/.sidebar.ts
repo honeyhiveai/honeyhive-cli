@@ -10,6 +10,7 @@ export const referenceSidebar = [
       { text: 'Datasets', link: '/reference/datasets' },
       { text: 'Events', link: '/reference/events' },
       { text: 'Experiments', link: '/reference/experiments' },
+      { text: 'Metric Versions', link: '/reference/metric-versions' },
       { text: 'Metrics', link: '/reference/metrics' },
       { text: 'Sessions', link: '/reference/sessions' },
     ],
