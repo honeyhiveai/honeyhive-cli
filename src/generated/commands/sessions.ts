@@ -5,7 +5,7 @@ import { Command } from 'commander';
 import {
   assertNoOtherFlags,
   assertRequiredFields,
-  createClient,
+  createDataPlaneClient,
   handleSchemaIntrospection,
   parseJson,
   parseNumber,
@@ -149,7 +149,7 @@ export function sessionsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.sessions.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -343,7 +343,7 @@ export function sessionsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.sessions.createEventBatch>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

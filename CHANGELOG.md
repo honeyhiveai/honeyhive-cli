@@ -1,5 +1,18 @@
 # CLI Changelog
 
+## [1.4.0] - 2026-06-26
+
+### What's New
+- Added `events get --event-id <id>` to fetch a single event by its ID.
+- Added the `--project-api-key` flag and `HH_PROJECT_API_KEY` environment variable as the primary way to authenticate the CLI. Verbose output now labels the key as `Project API key:` (previously `API Key:`).
+- `experiments list-runs`, `experiments get-run`, and `experiments get-summary` output now includes the linked `dataset_name`, and `get-summary` now reports `dataset_id` for offline (`EXT-*`) datasets that previously returned `null`.
+
+### Fixes & Improvements
+- `events update --outputs` now requires an object or `null` (where `null` preserves the existing outputs); non-object values (strings, arrays, scalars) are rejected up front. These values were previously accepted but corrupted the stored event, which could break other consumers reading it back.
+
+### Compatibility & Deprecations
+- The `--api-key` flag and `HH_API_KEY` environment variable are now deprecated aliases for `--project-api-key` / `HH_PROJECT_API_KEY`. They still work but log a deprecation warning to stderr and will be removed in the next major version. Migrate to the new names.
+
 ## [1.3.0] - 2026-05-29
 
 ### What's New

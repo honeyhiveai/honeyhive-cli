@@ -5,7 +5,7 @@ import { Command, Option } from 'commander';
 import {
   assertNoOtherFlags,
   assertRequiredFields,
-  createClient,
+  createDataPlaneClient,
   handleSchemaIntrospection,
   parseJson,
   parseNumber,
@@ -170,7 +170,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.listRuns>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -362,7 +362,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.createRun>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -463,7 +463,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.getRunsSchema>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -528,7 +528,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.getRun>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -702,7 +702,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.updateRun>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -783,7 +783,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.deleteRun>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -881,7 +881,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.getRunSchema>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -981,7 +981,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.getRunMetrics>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -1098,7 +1098,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.getSummary>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -1225,7 +1225,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.compareRuns>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -1355,7 +1355,7 @@ export function experimentsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.experiments.compareRunEvents>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

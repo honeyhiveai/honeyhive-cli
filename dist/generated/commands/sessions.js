@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate.
 import { Command } from 'commander';
-import { assertNoOtherFlags, assertRequiredFields, createClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
+import { assertNoOtherFlags, assertRequiredFields, createDataPlaneClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function sessionsCommand() {
     const cmd = new Command('sessions').description('Sessions commands');
     cmd
@@ -126,7 +126,7 @@ export function sessionsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -310,7 +310,7 @@ export function sessionsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

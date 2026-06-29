@@ -1,3 +1,3 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate.
-export const CLI_VERSION = '1.3.0';
+export const CLI_VERSION = '1.4.0';
 //# sourceMappingURL=version.js.map

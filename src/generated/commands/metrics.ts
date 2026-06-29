@@ -5,7 +5,7 @@ import { Command, Option } from 'commander';
 import {
   assertNoOtherFlags,
   assertRequiredFields,
-  createClient,
+  createDataPlaneClient,
   handleSchemaIntrospection,
   parseJson,
   parseNumber,
@@ -17,7 +17,7 @@ export function metricsCommand(): Command {
 
   cmd
     .command('list')
-    .description('Get all metrics')
+    .description('List all metrics')
     .option('--type <value>', 'Filter by metric type')
     .option('--id <value>', 'Filter by specific metric ID')
     .option(
@@ -64,7 +64,7 @@ export function metricsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.metrics.list>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -405,7 +405,7 @@ export function metricsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.metrics.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -742,7 +742,7 @@ export function metricsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.metrics.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -826,7 +826,7 @@ export function metricsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.metrics.delete>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -1146,7 +1146,7 @@ export function metricsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.metrics.run>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

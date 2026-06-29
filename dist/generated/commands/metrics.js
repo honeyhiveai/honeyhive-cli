@@ -1,11 +1,11 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate.
 import { Command, Option } from 'commander';
-import { assertNoOtherFlags, assertRequiredFields, createClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
+import { assertNoOtherFlags, assertRequiredFields, createDataPlaneClient, handleSchemaIntrospection, parseJson, parseNumber, readRequestFile, } from '../../utils.js';
 export function metricsCommand() {
     const cmd = new Command('metrics').description('Metrics commands');
     cmd
         .command('list')
-        .description('Get all metrics')
+        .description('List all metrics')
         .option('--type <value>', 'Filter by metric type')
         .option('--id <value>', 'Filter by specific metric ID')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -41,7 +41,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -368,7 +368,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -691,7 +691,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -765,7 +765,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -1075,7 +1075,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

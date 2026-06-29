@@ -5,7 +5,7 @@ import { Command, Option } from 'commander';
 import {
   assertNoOtherFlags,
   assertRequiredFields,
-  createClient,
+  createDataPlaneClient,
   handleSchemaIntrospection,
   parseJson,
   parseNumber,
@@ -211,7 +211,7 @@ export function eventsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.events.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -269,6 +269,71 @@ Examples:
     );
 
   cmd
+    .command('get')
+    .description('Get an event by ID')
+    .option('--event-id <value>', 'The unique identifier of the event to retrieve (required)')
+    .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
+    )
+    .action(async (opts: Record<string, unknown>, command: Command) => {
+      try {
+        const FIELD_FLAG_PAIRS = [['--event-id', 'eventId']] as const;
+        const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "The unique identifier of the event to retrieve"
+    }
+  },
+  "required": [
+    "event_id"
+  ],
+  "additionalProperties": false
+}`;
+        const KEBAB_TO_SPEC = {
+          'event-id': 'event_id',
+        } as const;
+        if (
+          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+          ])
+        ) {
+          return;
+        }
+        const client = createDataPlaneClient(command);
+        let request: Parameters<typeof client.events.get>[0];
+        if (opts.filename !== undefined) {
+          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+          request = readRequestFile(opts.filename) as Parameters<typeof client.events.get>[0];
+        } else {
+          assertRequiredFields(opts, [['--event-id', 'eventId']]);
+          request = {
+            event_id: opts.eventId,
+          } as Parameters<typeof client.events.get>[0];
+        }
+        const result = await client.events.get(request);
+        if (result !== undefined) {
+          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+        }
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(message);
+        process.exit(1);
+      }
+    });
+
+  cmd
     .command('update')
     .description('Update an event')
     .option('--event-id <value>', 'The unique identifier of the event to update (required)')
@@ -277,7 +342,7 @@ Examples:
     .option('--metrics <json>', 'Metric values to merge into the event')
     .option(
       '--outputs <json>',
-      'Output data to replace on the event (accepts objects, strings, arrays, or scalars)',
+      'Output object to replace on the event. Must be an object or null; null preserves the existing outputs. Non-object values (strings, arrays, scalars) are rejected.',
     )
     .option('--config <json>', 'Configuration fields to merge into the event')
     .option('--user-properties <json>', 'User properties to merge into the event')
@@ -336,7 +401,16 @@ Examples:
       "description": "Metric values to merge into the event"
     },
     "outputs": {
-      "description": "Output data to replace on the event (accepts objects, strings, arrays, or scalars)"
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Output object to replace on the event. Must be an object or null; null preserves the existing outputs. Non-object values (strings, arrays, scalars) are rejected."
     },
     "config": {
       "type": "object",
@@ -389,7 +463,7 @@ Examples:
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.events.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -469,11 +543,11 @@ Examples:
     .option('--page <value>', 'Page number of results (default 1)')
     .option(
       '--ignore-order',
-      'Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC.',
+      'Deprecated: accepted but ignored. Results are always ordered by start_time descending.',
     )
     .option(
       '--no-ignore-order',
-      'Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC.',
+      'Deprecated: accepted but ignored. Results are always ordered by start_time descending.',
     )
     .option('--evaluation-id <value>', 'Filter by evaluation/experiment run ID')
     .option(
@@ -579,7 +653,7 @@ Examples:
     },
     "ignore_order": {
       "type": "boolean",
-      "description": "Deprecated: accepted for SDK back-compat but treated as a no-op. Pagination requires a stable ORDER BY to produce consistent pages, and with the 1000-row cap skipping the sort is not worth the inconsistency. The route always orders by start_time DESC."
+      "description": "Deprecated: accepted but ignored. Results are always ordered by start_time descending."
     },
     "evaluation_id": {
       "type": "string",
@@ -604,7 +678,7 @@ Examples:
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.events.search>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -814,7 +888,7 @@ Examples:
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.events.createBatch>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

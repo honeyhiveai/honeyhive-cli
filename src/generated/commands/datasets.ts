@@ -5,7 +5,7 @@ import { Command } from 'commander';
 import {
   assertNoOtherFlags,
   assertRequiredFields,
-  createClient,
+  createDataPlaneClient,
   handleSchemaIntrospection,
   parseJson,
   readRequestFile,
@@ -63,7 +63,7 @@ export function datasetsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.datasets.list>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -146,7 +146,7 @@ export function datasetsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.datasets.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -241,7 +241,7 @@ export function datasetsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.datasets.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -312,7 +312,7 @@ export function datasetsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.datasets.delete>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -425,7 +425,7 @@ export function datasetsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.datasets.addDatapoints>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -508,7 +508,7 @@ export function datasetsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.datasets.removeDatapoint>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

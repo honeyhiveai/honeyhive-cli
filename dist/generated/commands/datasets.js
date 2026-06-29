@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate.
 import { Command } from 'commander';
-import { assertNoOtherFlags, assertRequiredFields, createClient, handleSchemaIntrospection, parseJson, readRequestFile, } from '../../utils.js';
+import { assertNoOtherFlags, assertRequiredFields, createDataPlaneClient, handleSchemaIntrospection, parseJson, readRequestFile, } from '../../utils.js';
 export function datasetsCommand() {
     const cmd = new Command('datasets').description('Datasets commands');
     cmd
@@ -41,7 +41,7 @@ export function datasetsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -114,7 +114,7 @@ export function datasetsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -196,7 +196,7 @@ export function datasetsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -254,7 +254,7 @@ export function datasetsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -354,7 +354,7 @@ export function datasetsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -425,7 +425,7 @@ export function datasetsCommand() {
             ])) {
                 return;
             }
-            const client = createClient(command);
+            const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

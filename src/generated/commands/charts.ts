@@ -5,7 +5,7 @@ import { Command, Option } from 'commander';
 import {
   assertNoOtherFlags,
   assertRequiredFields,
-  createClient,
+  createDataPlaneClient,
   handleSchemaIntrospection,
   parseJson,
   readRequestFile,
@@ -19,7 +19,7 @@ export function chartsCommand(): Command {
     .description('List charts')
     .action(async (_opts: Record<string, unknown>, command: Command) => {
       try {
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         const result = await client.charts.list();
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -34,13 +34,13 @@ export function chartsCommand(): Command {
   cmd
     .command('create')
     .description('Create a new chart')
-    .option('--name <value>', 'name (required)')
-    .option('--metric <value>', 'metric (required)')
-    .option('--description <value>', 'description')
-    .option('--func <value>', 'func')
-    .option('--group-by <value>', 'groupBy')
+    .option('--name <value>', 'Display name for the chart (required)')
+    .option('--metric <value>', 'Name of the metric to visualize (required)')
+    .option('--description <value>', 'Description of what the chart shows')
+    .option('--func <value>', 'Aggregation function to apply (e.g. sum, avg, median, min, max)')
+    .option('--group-by <value>', 'Field to group results by')
     .addOption(
-      new Option('--bucketing <value>', 'bucketing').choices([
+      new Option('--bucketing <value>', 'Time bucket granularity for aggregation').choices([
         'minute',
         'hour',
         'day',
@@ -48,9 +48,9 @@ export function chartsCommand(): Command {
         'month',
       ]),
     )
-    .option('--date-range <json>', 'dateRange')
-    .option('--query <json>', 'query')
-    .option('--owner-id <value>', 'owner_id')
+    .option('--date-range <json>', 'Time range to query')
+    .option('--query <json>', 'Filters to apply to the chart data')
+    .option('--owner-id <value>', 'ID of the user who owns this chart')
     .option(
       '--show-file-schema',
       'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
@@ -80,22 +80,27 @@ export function chartsCommand(): Command {
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "Display name for the chart"
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "Description of what the chart shows"
     },
     "metric": {
-      "type": "string"
+      "type": "string",
+      "description": "Name of the metric to visualize"
     },
     "func": {
-      "type": "string"
+      "type": "string",
+      "description": "Aggregation function to apply (e.g. sum, avg, median, min, max)"
     },
     "groupBy": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "description": "Field to group results by"
     },
     "bucketing": {
       "type": "string",
@@ -106,6 +111,7 @@ export function chartsCommand(): Command {
         "week",
         "month"
       ],
+      "description": "Time bucket granularity for aggregation",
       "default": "day"
     },
     "dateRange": {
@@ -144,7 +150,8 @@ export function chartsCommand(): Command {
           ],
           "additionalProperties": false
         }
-      ]
+      ],
+      "description": "Time range to query"
     },
     "query": {
       "type": "array",
@@ -152,19 +159,23 @@ export function chartsCommand(): Command {
         "type": "object",
         "properties": {
           "field": {
-            "type": "string"
+            "type": "string",
+            "description": "Name of the field to filter on"
           },
           "value": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Value to compare against"
           },
           "type": {
-            "type": "string"
+            "type": "string",
+            "description": "Data type of the field (e.g. string, number)"
           },
           "operator": {
-            "type": "string"
+            "type": "string",
+            "description": "Comparison operator (e.g. is, is not, contains, greater than, less than)"
           }
         },
         "required": [
@@ -174,10 +185,12 @@ export function chartsCommand(): Command {
           "operator"
         ],
         "additionalProperties": false
-      }
+      },
+      "description": "Filters to apply to the chart data"
     },
     "owner_id": {
-      "type": "string"
+      "type": "string",
+      "description": "ID of the user who owns this chart"
     }
   },
   "required": [
@@ -205,7 +218,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.charts.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -281,7 +294,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.charts.get>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -307,13 +320,13 @@ export function chartsCommand(): Command {
     .command('update')
     .description('Update a chart')
     .option('--chart-id <value>', 'The unique identifier of the chart to update (required)')
-    .option('--name <value>', 'name')
-    .option('--description <value>', 'description')
-    .option('--metric <value>', 'metric')
-    .option('--func <value>', 'func')
-    .option('--group-by <value>', 'groupBy')
+    .option('--name <value>', 'Display name for the chart')
+    .option('--description <value>', 'Description of what the chart shows')
+    .option('--metric <value>', 'Name of the metric to visualize')
+    .option('--func <value>', 'Aggregation function to apply (e.g. sum, avg, median, min, max)')
+    .option('--group-by <value>', 'Field to group results by')
     .addOption(
-      new Option('--bucketing <value>', 'bucketing').choices([
+      new Option('--bucketing <value>', 'Time bucket granularity for aggregation').choices([
         'minute',
         'hour',
         'day',
@@ -321,9 +334,9 @@ export function chartsCommand(): Command {
         'month',
       ]),
     )
-    .option('--date-range <json>', 'dateRange')
-    .option('--query <json>', 'query')
-    .option('--owner-id <value>', 'owner_id')
+    .option('--date-range <json>', 'Time range to query')
+    .option('--query <json>', 'Filters to apply to the chart data')
+    .option('--owner-id <value>', 'ID of the user who owns this chart')
     .option(
       '--show-file-schema',
       'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
@@ -358,22 +371,27 @@ export function chartsCommand(): Command {
       "description": "The unique identifier of the chart to update"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "Display name for the chart"
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "Description of what the chart shows"
     },
     "metric": {
-      "type": "string"
+      "type": "string",
+      "description": "Name of the metric to visualize"
     },
     "func": {
-      "type": "string"
+      "type": "string",
+      "description": "Aggregation function to apply (e.g. sum, avg, median, min, max)"
     },
     "groupBy": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "description": "Field to group results by"
     },
     "bucketing": {
       "type": "string",
@@ -383,7 +401,8 @@ export function chartsCommand(): Command {
         "day",
         "week",
         "month"
-      ]
+      ],
+      "description": "Time bucket granularity for aggregation"
     },
     "dateRange": {
       "anyOf": [
@@ -421,7 +440,8 @@ export function chartsCommand(): Command {
           ],
           "additionalProperties": false
         }
-      ]
+      ],
+      "description": "Time range to query"
     },
     "query": {
       "type": "array",
@@ -429,19 +449,23 @@ export function chartsCommand(): Command {
         "type": "object",
         "properties": {
           "field": {
-            "type": "string"
+            "type": "string",
+            "description": "Name of the field to filter on"
           },
           "value": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Value to compare against"
           },
           "type": {
-            "type": "string"
+            "type": "string",
+            "description": "Data type of the field (e.g. string, number)"
           },
           "operator": {
-            "type": "string"
+            "type": "string",
+            "description": "Comparison operator (e.g. is, is not, contains, greater than, less than)"
           }
         },
         "required": [
@@ -451,10 +475,12 @@ export function chartsCommand(): Command {
           "operator"
         ],
         "additionalProperties": false
-      }
+      },
+      "description": "Filters to apply to the chart data"
     },
     "owner_id": {
-      "type": "string"
+      "type": "string",
+      "description": "ID of the user who owns this chart"
     }
   },
   "required": [
@@ -482,7 +508,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.charts.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -556,7 +582,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createClient(command);
+        const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.charts.delete>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

@@ -12,43 +12,69 @@ const CLI_PACKAGE_NAME = '@honeyhive/cli';
 
 const SUPPORTED_FILE_EXTENSIONS = new Set<string>(['.json', '.jsonc', '.yaml', '.yml']);
 
-export function createClient(command: Command): Client {
+export function createDataPlaneClient(command: Command): Client {
   const globalOpts = command.optsWithGlobals<{
+    projectApiKey?: string;
     apiKey?: string;
     dataPlaneUrl?: string;
     baseUrl?: string;
     verbose?: boolean;
   }>();
-  const apiKey = globalOpts.apiKey ?? process.env.HH_API_KEY;
-  if (!apiKey) {
-    console.error('Missing API key: provide --api-key or set the HH_API_KEY environment variable');
-    process.exit(1);
-  }
 
-  // Both --data-plane-url (new) and --base-url (deprecated) accept the same
-  // value. Warn on --base-url whenever the user passes it, even if
-  // --data-plane-url also wins resolution — we want callers to drop the old
-  // flag from their scripts.
+  // Warn on any deprecated flag the user actually passed, even if its
+  // replacement also wins resolution — we want callers to drop the old flag
+  // from their scripts. These warnings run BEFORE the missing-key check below
+  // so they still fire when the key is absent (e.g. `honeyhive --base-url X
+  // ...` with no key).
   //
   // The chassis (`console.warn`, `Warning: option "--<flag>" is deprecated
   // and will be removed in the next major version.`) matches the CLI
   // generator's per-option deprecation warning in
-  // `typescript/packages/server-sdk-generator/src/cli.ts` (search for
+  // `typescript/packages/server-client-generator/src/cli.ts` (search for
   // `is deprecated and will be removed`). The hand-written warning here
   // appends `Use "--<replacement>" instead.` because we know the
   // replacement at this call site; the generator currently omits a Use
   // clause because the OpenAPI spec doesn't yet model replacements. If
   // the generator's chassis changes, update this string too (and vice
   // versa); the Use clause only appears in hand-written warnings.
+  if (globalOpts.apiKey !== undefined) {
+    console.warn(
+      'Warning: option "--api-key" is deprecated and will be removed in the next major version. Use "--project-api-key" instead.',
+    );
+  }
   if (globalOpts.baseUrl !== undefined) {
     console.warn(
       'Warning: option "--base-url" is deprecated and will be removed in the next major version. Use "--data-plane-url" instead.',
     );
   }
+
+  // Resolve the API key from flags only. Environment-variable resolution
+  // (HH_PROJECT_API_KEY ?? HH_API_KEY) and the HH_API_KEY deprecation
+  // warning are owned by the SDK chassis, the single source of truth — so we
+  // never read env into the option here (matching how the URL is handled:
+  // the CLI passes only --data-plane-url/--base-url flags and lets the SDK
+  // read HH_DATA_PLANE_URL/HH_API_URL). We still peek at the env vars purely
+  // to decide whether to emit the CLI's friendly, flag-named missing-key
+  // error before constructing the client.
+  const apiKeyFromFlags = globalOpts.projectApiKey ?? globalOpts.apiKey;
+  // The `!!` env checks intentionally mirror the SDK's `getEnv`
+  // empty-string-as-unset rule (api-client `getEnv`), so this pre-flight
+  // agrees with the SDK's own resolution: `HH_API_KEY=""` is "no key" on both
+  // sides. If `getEnv` ever changes its normalization (e.g. trimming
+  // whitespace), update this peek too so the two checks don't silently desync.
+  const hasKey =
+    apiKeyFromFlags !== undefined || !!process.env.HH_PROJECT_API_KEY || !!process.env.HH_API_KEY;
+  if (!hasKey) {
+    console.error(
+      'Missing project API key: provide --project-api-key or set the HH_PROJECT_API_KEY environment variable',
+    );
+    process.exit(1);
+  }
+
   const resolvedDataPlaneUrl = globalOpts.dataPlaneUrl ?? globalOpts.baseUrl;
 
   return new Client({
-    apiKey,
+    ...(apiKeyFromFlags !== undefined && { projectApiKey: apiKeyFromFlags }),
     ...(resolvedDataPlaneUrl !== undefined && { dataPlaneUrl: resolvedDataPlaneUrl }),
     ...(globalOpts.verbose !== undefined && { verbose: globalOpts.verbose }),
     _internal_provenance: {
