@@ -1,6 +1,16 @@
-import { Client } from '@honeyhive/api-client';
+import { Client as DataPlaneClient } from '@honeyhive/api-client';
+import { Client as ControlPlaneClient } from '@honeyhive/control-plane-sdk';
 import { type Command } from 'commander';
-export declare function createDataPlaneClient(command: Command): Client;
+export declare function createDataPlaneClient(command: Command): DataPlaneClient;
+/**
+ * The control plane counterpart of {@link createDataPlaneClient}. Kept as a
+ * separate factory rather than one parameterized builder because the two planes
+ * agree on almost nothing at this layer: different option names, different
+ * environment variables, different accepted key kinds, and a set of deprecated
+ * aliases that exists on one side only. The credential pre-flight is the part
+ * they genuinely share, and that is shared.
+ */
+export declare function createControlPlaneClient(command: Command): ControlPlaneClient;
 export declare function parseJson(value: unknown): unknown;
 export declare function parseNumber(value: unknown): number;
 /**

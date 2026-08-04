@@ -14,9 +14,11 @@ program
   .option('--data-plane-url <url>', 'Data plane URL (overrides HH_DATA_PLANE_URL env var)')
   .option('--base-url <url>', '(Deprecated, use --data-plane-url) Data plane URL')
   .option(
-    '--verbose',
-    'Log the resolved data plane URL, masked API key, and CLI version on startup',
-  );
+    '--control-plane-api-key <key>',
+    'Control plane API key (overrides HH_CONTROL_PLANE_API_KEY env var)',
+  )
+  .option('--control-plane-url <url>', 'Control plane URL (overrides HH_CONTROL_PLANE_URL env var)')
+  .option('--verbose', 'Log the resolved API URL, masked API key, and CLI version on startup');
 
 registerCommands(program);
 

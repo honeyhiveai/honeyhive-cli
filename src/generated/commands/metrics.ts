@@ -118,7 +118,10 @@ export function metricsCommand(): Command {
     .option('--scale <value>', 'scale')
     .option('--threshold <json>', 'threshold')
     .option('--categories <json>', 'categories')
-    .option('--child-metrics <json>', 'child_metrics')
+    .option(
+      '--child-metrics <json>',
+      '(deprecated) Deprecated and ignored. Composite metrics are no longer supported.',
+    )
     .option('--filters <json>', 'filters')
     .option(
       '--show-file-schema',
@@ -308,7 +311,9 @@ export function metricsCommand(): Command {
         {
           "type": "null"
         }
-      ]
+      ],
+      "deprecated": true,
+      "description": "Deprecated and ignored. Composite metrics are no longer supported."
     },
     "filters": {
       "type": "object",
@@ -405,6 +410,13 @@ export function metricsCommand(): Command {
         ) {
           return;
         }
+        if (opts.filename === undefined) {
+          if (opts.childMetrics !== undefined) {
+            console.warn(
+              'Warning: option "--child-metrics" is deprecated and will be removed in the next major version.',
+            );
+          }
+        }
         const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.metrics.create>[0];
         if (opts.filename !== undefined) {
@@ -477,7 +489,10 @@ export function metricsCommand(): Command {
     .option('--scale <value>', 'scale')
     .option('--threshold <json>', 'threshold')
     .option('--categories <json>', 'categories')
-    .option('--child-metrics <json>', 'child_metrics')
+    .option(
+      '--child-metrics <json>',
+      '(deprecated) Deprecated and ignored. Composite metrics are no longer supported.',
+    )
     .option('--filters <json>', 'filters')
     .option(
       '--show-file-schema',
@@ -624,32 +639,41 @@ export function metricsCommand(): Command {
       }
     },
     "child_metrics": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "weight": {
-            "type": "number"
-          },
-          "scale": {
-            "type": [
-              "number",
-              "null"
-            ]
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number"
+              },
+              "scale": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "weight"
+            ],
+            "additionalProperties": false
           }
         },
-        "required": [
-          "name",
-          "weight"
-        ],
-        "additionalProperties": false
-      }
+        {
+          "type": "null"
+        }
+      ],
+      "deprecated": true,
+      "description": "Deprecated and ignored. Composite metrics are no longer supported."
     },
     "filters": {
       "type": "object",
@@ -741,6 +765,13 @@ export function metricsCommand(): Command {
           ])
         ) {
           return;
+        }
+        if (opts.filename === undefined) {
+          if (opts.childMetrics !== undefined) {
+            console.warn(
+              'Warning: option "--child-metrics" is deprecated and will be removed in the next major version.',
+            );
+          }
         }
         const client = createDataPlaneClient(command);
         let request: Parameters<typeof client.metrics.update>[0];
@@ -1027,7 +1058,9 @@ export function metricsCommand(): Command {
             {
               "type": "null"
             }
-          ]
+          ],
+          "deprecated": true,
+          "description": "Deprecated and ignored. Composite metrics are no longer supported."
         },
         "filters": {
           "type": "object",

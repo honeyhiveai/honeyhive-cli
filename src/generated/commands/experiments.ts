@@ -205,7 +205,7 @@ export function experimentsCommand(): Command {
     .command('create-run')
     .description('Create a new evaluation run')
     .option('--run-id <value>', 'run_id')
-    .option('--name <value>', 'name')
+    .option('--name <value>', 'Experiment run display name')
     .option('--description <value>', 'description')
     .addOption(
       new Option('--status <value>', 'status').choices([
@@ -261,7 +261,8 @@ export function experimentsCommand(): Command {
       "type": "string"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "Experiment run display name"
     },
     "description": {
       "type": "string"
@@ -556,7 +557,7 @@ export function experimentsCommand(): Command {
     .command('update-run')
     .description('Update an evaluation run')
     .option('--run-id <value>', 'run_id (required)')
-    .option('--name <value>', 'name')
+    .option('--name <value>', 'Experiment run display name')
     .option('--description <value>', 'description')
     .addOption(
       new Option('--status <value>', 'status').choices([
@@ -610,7 +611,8 @@ export function experimentsCommand(): Command {
       "type": "string"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "description": "Experiment run display name"
     },
     "description": {
       "type": "string"

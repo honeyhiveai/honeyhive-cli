@@ -92,7 +92,7 @@ export function metricsCommand() {
         .option('--scale <value>', 'scale')
         .option('--threshold <json>', 'threshold')
         .option('--categories <json>', 'categories')
-        .option('--child-metrics <json>', 'child_metrics')
+        .option('--child-metrics <json>', '(deprecated) Deprecated and ignored. Composite metrics are no longer supported.')
         .option('--filters <json>', 'filters')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
@@ -273,7 +273,9 @@ export function metricsCommand() {
         {
           "type": "null"
         }
-      ]
+      ],
+      "deprecated": true,
+      "description": "Deprecated and ignored. Composite metrics are no longer supported."
     },
     "filters": {
       "type": "object",
@@ -368,6 +370,11 @@ export function metricsCommand() {
             ])) {
                 return;
             }
+            if (opts.filename === undefined) {
+                if (opts.childMetrics !== undefined) {
+                    console.warn('Warning: option "--child-metrics" is deprecated and will be removed in the next major version.');
+                }
+            }
             const client = createDataPlaneClient(command);
             let request;
             if (opts.filename !== undefined) {
@@ -437,7 +444,7 @@ export function metricsCommand() {
         .option('--scale <value>', 'scale')
         .option('--threshold <json>', 'threshold')
         .option('--categories <json>', 'categories')
-        .option('--child-metrics <json>', 'child_metrics')
+        .option('--child-metrics <json>', '(deprecated) Deprecated and ignored. Composite metrics are no longer supported.')
         .option('--filters <json>', 'filters')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
@@ -575,32 +582,41 @@ export function metricsCommand() {
       }
     },
     "child_metrics": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "weight": {
-            "type": "number"
-          },
-          "scale": {
-            "type": [
-              "number",
-              "null"
-            ]
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number"
+              },
+              "scale": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "weight"
+            ],
+            "additionalProperties": false
           }
         },
-        "required": [
-          "name",
-          "weight"
-        ],
-        "additionalProperties": false
-      }
+        {
+          "type": "null"
+        }
+      ],
+      "deprecated": true,
+      "description": "Deprecated and ignored. Composite metrics are no longer supported."
     },
     "filters": {
       "type": "object",
@@ -690,6 +706,11 @@ export function metricsCommand() {
                 ...FIELD_FLAG_PAIRS,
             ])) {
                 return;
+            }
+            if (opts.filename === undefined) {
+                if (opts.childMetrics !== undefined) {
+                    console.warn('Warning: option "--child-metrics" is deprecated and will be removed in the next major version.');
+                }
             }
             const client = createDataPlaneClient(command);
             let request;
@@ -958,7 +979,9 @@ export function metricsCommand() {
             {
               "type": "null"
             }
-          ]
+          ],
+          "deprecated": true,
+          "description": "Deprecated and ignored. Composite metrics are no longer supported."
         },
         "filters": {
           "type": "object",

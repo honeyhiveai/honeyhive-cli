@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.1",
   "name": "@honeyhive/cli",
   "type": "module",
   "description": "HoneyHive CLI",
@@ -17,6 +17,7 @@
   ],
   "dependencies": {
     "@honeyhive/api-client": "1.4.0",
+    "@honeyhive/control-plane-sdk": "1.0.0",
     "commander": "13.1.0",
     "jsonc-parser": "^3.3.1",
     "yaml": "^2.9.0"

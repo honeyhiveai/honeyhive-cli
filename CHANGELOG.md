@@ -1,5 +1,27 @@
 # CLI Changelog
 
+## [1.5.1] - 2026-08-04
+
+### Fixes & Improvements
+- Fixed the Homebrew formula published for each release so `brew install honeyhive` and `brew upgrade honeyhive` resolve the current CLI version. The formula no longer declares an explicit version that recent Homebrew versions reject as redundant during validation.
+
+### Compatibility & Deprecations
+- Installing a stable release via Homebrew now requires Homebrew 6.0.14 or newer, which reads the version from the release URL. An older client that installs without updating first — most commonly `HOMEBREW_NO_AUTO_UPDATE=1` in a Docker or CI image — records the wrong version and will not report the install as outdated afterwards. Run `brew update` before installing, or reinstall once Homebrew is current. `npm` and `npx` installs are unaffected.
+
+## [1.5.0] - 2026-08-03
+
+### What's New
+- Added `projects` subcommands for managing projects: `projects create`, `projects get`, `projects update`, and `projects delete`.
+- Added `alerts` subcommands: `alerts list`, `alerts create`, and `alerts get`.
+- Added `--control-plane-api-key` / `HH_CONTROL_PLANE_API_KEY` and `--control-plane-url` / `HH_CONTROL_PLANE_URL`. The new `projects` and `alerts` commands talk to the HoneyHive control plane, which takes a fine-grained control plane API key (`hh_fgcp_...`) created at workspace or organization scope — not a project API key. Every other command is unchanged and still uses `--project-api-key` / `HH_PROJECT_API_KEY`; you only need the key for the commands you actually run.
+
+### Fixes & Improvements
+- The CLI now checks what kind of API key you supplied before sending a request. Passing a control plane key to a data plane command (or the reverse) fails immediately with a message naming the key kind the command needs and the flag or environment variable the wrong key came from, instead of an unexplained `401` from the server.
+- `--verbose` now reports the URL and key for whichever API the command talks to (`Control plane URL:` for `projects` and `alerts`), and masks a fine-grained control plane key exactly as the HoneyHive app displays it, so you can match a log line to a key in your account.
+
+### Compatibility & Deprecations
+- Composite metrics are no longer supported. `metrics create` and `metrics update` now fail with a `400` when passed `--type COMPOSITE`, existing composite metrics and their versions have been deleted, and `--child-metrics` no longer has any effect on a metric's score.
+
 ## [1.4.0] - 2026-06-26
 
 ### What's New

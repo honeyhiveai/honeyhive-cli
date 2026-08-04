@@ -286,7 +286,9 @@ export function metricVersionsCommand(): Command {
             {
               "type": "null"
             }
-          ]
+          ],
+          "deprecated": true,
+          "description": "Deprecated and ignored. Composite metrics are no longer supported."
         },
         "filters": {
           "type": "object",
