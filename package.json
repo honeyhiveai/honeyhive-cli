@@ -1,5 +1,5 @@
 {
-  "version": "1.5.1",
+  "version": "1.6.0",
   "name": "@honeyhive/cli",
   "type": "module",
   "description": "HoneyHive CLI",
@@ -13,11 +13,11 @@
   },
   "//": [
     "Public-package rule: runtime deps cannot use pnpm's `catalog:` protocol. Consumers installing `@honeyhive/cli` from npm have no catalog to resolve against, so version ranges must be expressed inline. Applies to every entry in `dependencies` below.",
-    "Commander-specific rule (not a general rule): `commander`'s version MUST be an exact pin and MUST match the version in @hive-kube/server-client-generator's package.json. The generator imports Commander at codegen time to derive `opts` attribute names that get baked into this CLI's generated source — any drift between codegen-time and runtime Commander would silently produce mismatched opts keys. See AGENTS.md."
+    "Commander-specific rule (not a general rule): `commander`'s version MUST be an exact pin and MUST match the version that the code generator builds against. The generator imports Commander at codegen time to derive `opts` attribute names that get baked into this CLI's generated source — any drift between codegen-time and runtime Commander would silently produce mismatched opts keys. See AGENTS.md."
   ],
   "dependencies": {
-    "@honeyhive/api-client": "1.4.0",
-    "@honeyhive/control-plane-sdk": "1.0.0",
+    "@honeyhive/api-client": "1.4.1",
+    "@honeyhive/control-plane-sdk": "1.1.0",
     "commander": "13.1.0",
     "jsonc-parser": "^3.3.1",
     "yaml": "^2.9.0"

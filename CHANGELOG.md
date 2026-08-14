@@ -1,5 +1,16 @@
 # CLI Changelog
 
+## [1.6.0] - 2026-08-14
+
+### What's New
+- Added `workspaces` subcommands for managing workspaces: `workspaces create`, `workspaces get`, `workspaces update`, and `workspaces delete`. `workspaces create` takes `--virtual-dataplane-id` and `--name`, plus optional `--description` and `--workspace-creator` (the email of the user to grant workspace-creator membership to, for API key callers).
+- Added `virtual-dataplanes` subcommands for managing virtual data planes: `virtual-dataplanes create`, `virtual-dataplanes get`, `virtual-dataplanes update`, and `virtual-dataplanes delete`. `virtual-dataplanes create` takes `--org-id` and `--name`, plus optional `--cluster-id` (required when the organization has no virtual data planes yet, or its virtual data planes span more than one cluster) and `--dataplane-creator`.
+- `workspaces delete` and `virtual-dataplanes delete` accept `--dangerously-delete-child-scopes` to archive a scope that still has active children, archiving those children too. Without the flag, deleting a workspace with active projects — or a virtual data plane with active workspaces — fails with a `409` and changes nothing.
+- Like `projects` and `alerts`, both new command groups talk to the HoneyHive control plane: they take a fine-grained control plane API key (`hh_fgcp_...`) via `--control-plane-api-key` / `HH_CONTROL_PLANE_API_KEY` and honor `--control-plane-url` / `HH_CONTROL_PLANE_URL`. Data plane commands are unchanged and still use `--project-api-key` / `HH_PROJECT_API_KEY`.
+
+### Fixes & Improvements
+- Security fixes
+
 ## [1.5.1] - 2026-08-04
 
 ### Fixes & Improvements

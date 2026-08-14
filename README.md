@@ -21,7 +21,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.5.1/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.6.0/install.sh | sh
 ```
 <!-- install-script-end -->
 
@@ -36,7 +36,7 @@ Both HoneyHive APIs authenticate requests using an API key sent as a Bearer toke
 | Commands | Key | Environment variable | Flag |
 | --- | --- | --- | --- |
 | `sessions`, `events`, `charts`, `metrics`, `metric-versions`, `datapoints`, `datasets`, `experiments` | A project API key (`hh_...`) or a read-only project API key (`hh_ro_...`) | `HH_PROJECT_API_KEY` | `--project-api-key` |
-| `projects`, `alerts` | A fine-grained control plane API key (`hh_fgcp_...`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` |
+| `virtual-dataplanes`, `workspaces`, `projects`, `alerts` | A fine-grained control plane API key (`hh_fgcp_...`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` |
 
 A key is only required by the commands that use it. If you hold a project API key and no control plane key, every data plane command works exactly as before; nothing is checked until you run a command that needs the key you don't have.
 
@@ -72,7 +72,7 @@ Each API has its own default and its own override. To point at a self-hosted dep
 | Commands | Default | Environment variable | Flag |
 | --- | --- | --- | --- |
 | Data plane commands | `https://api.dp1.us.honeyhive.ai` | `HH_DATA_PLANE_URL` | `--data-plane-url` |
-| `projects`, `alerts` | `https://api.cp.us.honeyhive.ai` | `HH_CONTROL_PLANE_URL` | `--control-plane-url` |
+| `virtual-dataplanes`, `workspaces`, `projects`, `alerts` | `https://api.cp.us.honeyhive.ai` | `HH_CONTROL_PLANE_URL` | `--control-plane-url` |
 
 ```sh
 export HH_DATA_PLANE_URL=https://honeyhive.example.com
