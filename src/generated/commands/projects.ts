@@ -86,7 +86,7 @@ export function projectsCommand(): Command {
         ) {
           return;
         }
-        const client = createControlPlaneClient(command);
+        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
         let request: Parameters<typeof client.projects.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -157,7 +157,7 @@ export function projectsCommand(): Command {
         ) {
           return;
         }
-        const client = createControlPlaneClient(command);
+        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
         let request: Parameters<typeof client.projects.get>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -238,7 +238,7 @@ export function projectsCommand(): Command {
         ) {
           return;
         }
-        const client = createControlPlaneClient(command);
+        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
         let request: Parameters<typeof client.projects.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -305,7 +305,7 @@ export function projectsCommand(): Command {
         ) {
           return;
         }
-        const client = createControlPlaneClient(command);
+        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
         let request: Parameters<typeof client.projects.delete>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

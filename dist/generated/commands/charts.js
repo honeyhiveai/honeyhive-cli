@@ -8,7 +8,7 @@ export function chartsCommand() {
         .description('List charts')
         .action(async (_opts, command) => {
         try {
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             const result = await client.charts.list();
             if (result !== undefined) {
                 process.stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -194,7 +194,7 @@ export function chartsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -260,7 +260,7 @@ export function chartsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -462,7 +462,7 @@ export function chartsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -526,7 +526,7 @@ export function chartsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

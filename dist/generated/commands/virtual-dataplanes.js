@@ -8,6 +8,7 @@ export function virtualDataplanesCommand() {
         .description('Create a virtual data plane')
         .option('--org-id <value>', 'The unique identifier of the organization the virtual data plane is created in (required)')
         .option('--name <value>', 'Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. (required)')
+        .option('--slug <value>', 'Globally unique identifier for the virtual dataplane, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. A slug already in use returns 409.')
         .option('--cluster-id <value>', 'Physical cluster to host this virtual dataplane. Omit to place it alongside the existing virtual dataplanes in this org; required when the org has none yet, or when its virtual dataplanes span more than one cluster.')
         .option('--dataplane-creator <value>', 'Email of the user to grant the dataplane-creator membership to (API key actors only). A signed-in user does not see the new dataplane until their session refreshes, which happens on their next request to the control plane.')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -18,6 +19,7 @@ export function virtualDataplanesCommand() {
             const FIELD_FLAG_PAIRS = [
                 ['--org-id', 'orgId'],
                 ['--name', 'name'],
+                ['--slug', 'slug'],
                 ['--cluster-id', 'clusterId'],
                 ['--dataplane-creator', 'dataplaneCreator'],
             ];
@@ -31,6 +33,10 @@ export function virtualDataplanesCommand() {
     "name": {
       "type": "string",
       "description": "Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space."
+    },
+    "slug": {
+      "type": "string",
+      "description": "Globally unique identifier for the virtual dataplane, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. A slug already in use returns 409."
     },
     "cluster_id": {
       "type": "string",
@@ -50,6 +56,7 @@ export function virtualDataplanesCommand() {
             const KEBAB_TO_SPEC = {
                 'org-id': 'org_id',
                 name: 'name',
+                slug: 'slug',
                 'cluster-id': 'cluster_id',
                 'dataplane-creator': 'dataplane_creator',
             };
@@ -59,7 +66,7 @@ export function virtualDataplanesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -73,6 +80,7 @@ export function virtualDataplanesCommand() {
                 request = {
                     org_id: opts.orgId,
                     name: opts.name,
+                    ...(opts.slug !== undefined && { slug: opts.slug }),
                     ...(opts.clusterId !== undefined && { cluster_id: opts.clusterId }),
                     ...(opts.dataplaneCreator !== undefined && {
                         dataplane_creator: opts.dataplaneCreator,
@@ -122,7 +130,7 @@ export function virtualDataplanesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -186,7 +194,7 @@ export function virtualDataplanesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -253,7 +261,7 @@ export function virtualDataplanesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

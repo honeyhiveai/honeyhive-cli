@@ -66,7 +66,7 @@ export function datapointsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.datapoints.list>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -172,7 +172,7 @@ export function datapointsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.datapoints.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -345,7 +345,7 @@ export function datapointsCommand(): Command {
             );
           }
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.datapoints.createBatch>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -417,7 +417,7 @@ export function datapointsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.datapoints.get>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -530,7 +530,7 @@ export function datapointsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.datapoints.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -605,7 +605,7 @@ export function datapointsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.datapoints.delete>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

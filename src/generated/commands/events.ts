@@ -211,7 +211,7 @@ export function eventsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'IngestionApiKey');
         let request: Parameters<typeof client.events.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -311,7 +311,7 @@ Examples:
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.events.get>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -463,7 +463,7 @@ Examples:
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'IngestionApiKey');
         let request: Parameters<typeof client.events.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -678,7 +678,7 @@ Examples:
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.events.search>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -888,7 +888,7 @@ Examples:
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'IngestionApiKey');
         let request: Parameters<typeof client.events.createBatch>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

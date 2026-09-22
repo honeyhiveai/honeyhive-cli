@@ -8,6 +8,7 @@ export function workspacesCommand() {
         .description('Create a workspace')
         .option('--virtual-dataplane-id <value>', 'The unique identifier of the virtual data plane the workspace is created in (required)')
         .option('--name <value>', 'Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. (required)')
+        .option('--slug <value>', 'Globally unique identifier for the workspace, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. Supply it when the identifier has to match a value maintained outside HoneyHive, such as an identity provider group that grants access to this workspace. A slug already in use returns 409.')
         .option('--description <value>', 'Workspace description')
         .option('--workspace-creator <value>', 'Email of the user to grant the workspace-creator membership to (API key actors only). A signed-in user does not see the new workspace until their session refreshes, which happens on their next request to the control plane.')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -18,6 +19,7 @@ export function workspacesCommand() {
             const FIELD_FLAG_PAIRS = [
                 ['--virtual-dataplane-id', 'virtualDataplaneId'],
                 ['--name', 'name'],
+                ['--slug', 'slug'],
                 ['--description', 'description'],
                 ['--workspace-creator', 'workspaceCreator'],
             ];
@@ -31,6 +33,10 @@ export function workspacesCommand() {
     "name": {
       "type": "string",
       "description": "Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space."
+    },
+    "slug": {
+      "type": "string",
+      "description": "Globally unique identifier for the workspace, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. Supply it when the identifier has to match a value maintained outside HoneyHive, such as an identity provider group that grants access to this workspace. A slug already in use returns 409."
     },
     "description": {
       "type": "string",
@@ -50,6 +56,7 @@ export function workspacesCommand() {
             const KEBAB_TO_SPEC = {
                 'virtual-dataplane-id': 'virtual_dataplane_id',
                 name: 'name',
+                slug: 'slug',
                 description: 'description',
                 'workspace-creator': 'workspace_creator',
             };
@@ -59,7 +66,7 @@ export function workspacesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -73,6 +80,7 @@ export function workspacesCommand() {
                 request = {
                     virtual_dataplane_id: opts.virtualDataplaneId,
                     name: opts.name,
+                    ...(opts.slug !== undefined && { slug: opts.slug }),
                     ...(opts.description !== undefined && { description: opts.description }),
                     ...(opts.workspaceCreator !== undefined && {
                         workspace_creator: opts.workspaceCreator,
@@ -122,7 +130,7 @@ export function workspacesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -193,7 +201,7 @@ export function workspacesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -261,7 +269,7 @@ export function workspacesCommand() {
             ])) {
                 return;
             }
-            const client = createControlPlaneClient(command);
+            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

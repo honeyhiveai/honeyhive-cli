@@ -19,7 +19,7 @@ export function chartsCommand(): Command {
     .description('List charts')
     .action(async (_opts: Record<string, unknown>, command: Command) => {
       try {
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         const result = await client.charts.list();
         if (result !== undefined) {
           process.stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -218,7 +218,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.charts.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -294,7 +294,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.charts.get>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -508,7 +508,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.charts.update>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -582,7 +582,7 @@ export function chartsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.charts.delete>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

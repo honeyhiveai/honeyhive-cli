@@ -143,7 +143,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -322,7 +322,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -411,7 +411,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -464,7 +464,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -625,7 +625,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -694,7 +694,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -780,7 +780,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -865,7 +865,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -962,7 +962,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -1069,7 +1069,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -1187,7 +1187,7 @@ export function experimentsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

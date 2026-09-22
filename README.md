@@ -21,7 +21,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.6.0/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.7.0/install.sh | sh
 ```
 <!-- install-script-end -->
 
@@ -31,22 +31,28 @@ Homebrew on Linux is also supported — if you already use Homebrew, the macOS c
 
 ## Authorization
 
-Both HoneyHive APIs authenticate requests using an API key sent as a Bearer token in the `Authorization` header, but they take **different keys**, so each has its own environment variable and flag:
+Both HoneyHive APIs authenticate requests using an API key sent as a Bearer token in the `Authorization` header, but they take **different keys**, and the data plane takes a different key for sending traces and events than for everything else. Each has its own environment variable and flag:
 
 | Commands | Key | Environment variable | Flag |
 | --- | --- | --- | --- |
-| `sessions`, `events`, `charts`, `metrics`, `metric-versions`, `datapoints`, `datasets`, `experiments` | A project API key (`hh_...`) or a read-only project API key (`hh_ro_...`) | `HH_PROJECT_API_KEY` | `--project-api-key` |
+| `sessions create`, `sessions create-event-batch`, `events create`, `events update`, `events create-batch` | An ingestion API key (`hh_ingst_...`) | `HH_INGESTION_API_KEY` | `--ingestion-api-key` |
+| Every other `sessions` and `events` command, and `charts`, `metrics`, `metric-versions`, `datapoints`, `datasets`, `experiments` | A project API key (`hh_...`) or a read-only project API key (`hh_ro_...`) | `HH_PROJECT_API_KEY` | `--project-api-key` |
 | `virtual-dataplanes`, `workspaces`, `projects`, `alerts` | A fine-grained control plane API key (`hh_fgcp_...`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` |
 
 A key is only required by the commands that use it. If you hold a project API key and no control plane key, every data plane command works exactly as before; nothing is checked until you run a command that needs the key you don't have.
 
-Both kinds are created in the HoneyHive app, on an **API keys** page under **Settings**, but at different scopes: a project API key at project scope, and a fine-grained control plane API key at workspace or organization scope. A key of a kind the command can't use is rejected before any request is sent, with a message naming what the command needed.
+> **Compatibility:** the ingestion commands still accept a project API key, so a shell that exports only `HH_PROJECT_API_KEY` keeps working. New setups should give ingestion its own key.
+
+All three kinds are created in the HoneyHive app, on an **API keys** page under **Settings**, at different scopes: a project API key and an ingestion API key at project scope, and a fine-grained control plane API key at workspace or organization scope. A key of a kind the command can't use is rejected before any request is sent, with a message naming what the command needed.
 
 ### Environment variable (recommended)
 
 The CLI reads the variable automatically when the corresponding flag is not provided:
 
 ```sh
+export HH_INGESTION_API_KEY=...
+honeyhive sessions create --session-name my-session
+
 export HH_PROJECT_API_KEY=...
 honeyhive datasets list
 
@@ -59,6 +65,7 @@ honeyhive projects get --project-id ...
 Pass the key directly on the command line. **Never hard-code a key or commit one to source control.** Always read it from a secret store or environment variable:
 
 ```sh
+honeyhive --ingestion-api-key "$MY_HONEYHIVE_INGESTION_KEY" sessions create --session-name my-session
 honeyhive --project-api-key "$MY_HONEYHIVE_KEY" datasets list
 honeyhive --control-plane-api-key "$MY_HONEYHIVE_CP_KEY" projects get --project-id ...
 ```

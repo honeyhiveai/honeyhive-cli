@@ -60,7 +60,7 @@ export function metricVersionsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.metricVersions.list>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -91,7 +91,7 @@ export function metricVersionsCommand(): Command {
     .option('--message <value>', 'message (required)')
     .option(
       '--content <json>',
-      'Metric definition snapshot accepted by POST /v1/metrics/{metric_id}/versions.\nSix fields are optional and fall back to server-side defaults when omitted:\n- `description` → `""`\n- `return_type` → `"float"`\n- `enabled_in_prod` → `true` for HUMAN metrics, `false` otherwise\n- `needs_ground_truth` → `false`\n- `sampling_percentage` → `10`\n- `filters` → `{ "filterArray": [] }` (required)',
+      'Metric definition snapshot accepted by POST /v1/metrics/{metric_id}/versions.\nFive fields are optional and fall back to server-side defaults when omitted:\n- `description` → `""`\n- `return_type` → `"float"`\n- `enabled_in_prod` → `true` for HUMAN metrics, `false` otherwise\n- `sampling_percentage` → `10`\n- `filters` → `{ "filterArray": [] }` (required)',
     )
     .option('--deploy-immediately', 'deploy_immediately')
     .option('--no-deploy-immediately', 'deploy_immediately')
@@ -163,11 +163,6 @@ export function metricVersionsCommand(): Command {
         "enabled_in_prod": {
           "type": "boolean",
           "description": "Whether this version should run against production traffic. Defaults to \`false\` for non-HUMAN metrics and \`true\` for HUMAN metrics.",
-          "default": false
-        },
-        "needs_ground_truth": {
-          "type": "boolean",
-          "description": "Whether this metric requires ground-truth labels to evaluate. Defaults to \`false\`.",
           "default": false
         },
         "sampling_percentage": {
@@ -252,6 +247,11 @@ export function metricVersionsCommand(): Command {
               "type": "null"
             }
           ]
+        },
+        "needs_ground_truth": {
+          "type": "boolean",
+          "deprecated": true,
+          "description": "Deprecated and ignored. Ground-truth use is inferred from the evaluator definition."
         },
         "child_metrics": {
           "anyOf": [
@@ -360,7 +360,7 @@ export function metricVersionsCommand(): Command {
         "criteria"
       ],
       "additionalProperties": false,
-      "description": "Metric definition snapshot accepted by POST /v1/metrics/{metric_id}/versions.\\nSix fields are optional and fall back to server-side defaults when omitted:\\n- \`description\` → \`\\"\\"\`\\n- \`return_type\` → \`\\"float\\"\`\\n- \`enabled_in_prod\` → \`true\` for HUMAN metrics, \`false\` otherwise\\n- \`needs_ground_truth\` → \`false\`\\n- \`sampling_percentage\` → \`10\`\\n- \`filters\` → \`{ \\"filterArray\\": [] }\`"
+      "description": "Metric definition snapshot accepted by POST /v1/metrics/{metric_id}/versions.\\nFive fields are optional and fall back to server-side defaults when omitted:\\n- \`description\` → \`\\"\\"\`\\n- \`return_type\` → \`\\"float\\"\`\\n- \`enabled_in_prod\` → \`true\` for HUMAN metrics, \`false\` otherwise\\n- \`sampling_percentage\` → \`10\`\\n- \`filters\` → \`{ \\"filterArray\\": [] }\`"
     },
     "deploy_immediately": {
       "type": "boolean"
@@ -387,7 +387,7 @@ export function metricVersionsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.metricVersions.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -473,7 +473,7 @@ export function metricVersionsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'BearerAuth');
         let request: Parameters<typeof client.metricVersions.deploy>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

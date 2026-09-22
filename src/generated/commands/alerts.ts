@@ -132,7 +132,7 @@ export function alertsCommand(): Command {
         ) {
           return;
         }
-        const client = createControlPlaneClient(command);
+        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
         let request: Parameters<typeof client.alerts.list>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -516,7 +516,7 @@ export function alertsCommand(): Command {
         ) {
           return;
         }
-        const client = createControlPlaneClient(command);
+        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
         let request: Parameters<typeof client.alerts.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -615,7 +615,7 @@ export function alertsCommand(): Command {
         ) {
           return;
         }
-        const client = createControlPlaneClient(command);
+        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
         let request: Parameters<typeof client.alerts.get>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

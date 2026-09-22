@@ -1,7 +1,14 @@
 import { Client as DataPlaneClient } from '@honeyhive/api-client';
 import { Client as ControlPlaneClient } from '@honeyhive/control-plane-sdk';
 import { type Command } from 'commander';
-export declare function createDataPlaneClient(command: Command): DataPlaneClient;
+import { type ControlPlaneSecurityScheme, type DataPlaneSecurityScheme } from './generated/security.js';
+/**
+ * Builds the data plane client for a generated command, after judging the
+ * credential the command's operation will be sent with. `scheme` is the
+ * security scheme the operation declares in the OpenAPI spec, baked into the
+ * generated call.
+ */
+export declare function createDataPlaneClient(command: Command, scheme: DataPlaneSecurityScheme): DataPlaneClient;
 /**
  * The control plane counterpart of {@link createDataPlaneClient}. Kept as a
  * separate factory rather than one parameterized builder because the two planes
@@ -10,7 +17,7 @@ export declare function createDataPlaneClient(command: Command): DataPlaneClient
  * aliases that exists on one side only. The credential pre-flight is the part
  * they genuinely share, and that is shared.
  */
-export declare function createControlPlaneClient(command: Command): ControlPlaneClient;
+export declare function createControlPlaneClient(command: Command, scheme: ControlPlaneSecurityScheme): ControlPlaneClient;
 export declare function parseJson(value: unknown): unknown;
 export declare function parseNumber(value: unknown): number;
 /**

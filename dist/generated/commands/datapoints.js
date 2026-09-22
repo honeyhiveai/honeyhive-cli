@@ -44,7 +44,7 @@ export function datapointsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -140,7 +140,7 @@ export function datapointsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -297,7 +297,7 @@ export function datapointsCommand() {
                     console.warn('Warning: option "--mapping" is deprecated and will be removed in the next major version.');
                 }
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -357,7 +357,7 @@ export function datapointsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -460,7 +460,7 @@ export function datapointsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -523,7 +523,7 @@ export function datapointsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

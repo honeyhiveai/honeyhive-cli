@@ -41,7 +41,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -84,14 +84,14 @@ export function metricsCommand() {
     ]))
         .option('--enabled-in-prod', 'enabled_in_prod')
         .option('--no-enabled-in-prod', 'enabled_in_prod')
-        .option('--needs-ground-truth', 'needs_ground_truth')
-        .option('--no-needs-ground-truth', 'needs_ground_truth')
         .option('--sampling-percentage <value>', 'sampling_percentage')
         .option('--model-provider <value>', 'model_provider')
         .option('--model-name <value>', 'model_name')
         .option('--scale <value>', 'scale')
         .option('--threshold <json>', 'threshold')
         .option('--categories <json>', 'categories')
+        .option('--needs-ground-truth', '(deprecated) Deprecated and ignored. Ground-truth use is inferred from the evaluator definition.')
+        .option('--no-needs-ground-truth', '(deprecated) Deprecated and ignored. Ground-truth use is inferred from the evaluator definition.')
         .option('--child-metrics <json>', '(deprecated) Deprecated and ignored. Composite metrics are no longer supported.')
         .option('--filters <json>', 'filters')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -107,14 +107,14 @@ export function metricsCommand() {
                 ['--return-type', 'returnType'],
                 ['--enabled-in-prod', 'enabledInProd'],
                 ['--no-enabled-in-prod', 'enabledInProd'],
-                ['--needs-ground-truth', 'needsGroundTruth'],
-                ['--no-needs-ground-truth', 'needsGroundTruth'],
                 ['--sampling-percentage', 'samplingPercentage'],
                 ['--model-provider', 'modelProvider'],
                 ['--model-name', 'modelName'],
                 ['--scale', 'scale'],
                 ['--threshold', 'threshold'],
                 ['--categories', 'categories'],
+                ['--needs-ground-truth', 'needsGroundTruth'],
+                ['--no-needs-ground-truth', 'needsGroundTruth'],
                 ['--child-metrics', 'childMetrics'],
                 ['--filters', 'filters'],
             ];
@@ -151,10 +151,6 @@ export function metricsCommand() {
       "default": "float"
     },
     "enabled_in_prod": {
-      "type": "boolean",
-      "default": false
-    },
-    "needs_ground_truth": {
       "type": "boolean",
       "default": false
     },
@@ -239,6 +235,11 @@ export function metricsCommand() {
           "type": "null"
         }
       ]
+    },
+    "needs_ground_truth": {
+      "type": "boolean",
+      "deprecated": true,
+      "description": "Deprecated and ignored. Ground-truth use is inferred from the evaluator definition."
     },
     "child_metrics": {
       "anyOf": [
@@ -354,13 +355,13 @@ export function metricsCommand() {
                 description: 'description',
                 'return-type': 'return_type',
                 'enabled-in-prod': 'enabled_in_prod',
-                'needs-ground-truth': 'needs_ground_truth',
                 'sampling-percentage': 'sampling_percentage',
                 'model-provider': 'model_provider',
                 'model-name': 'model_name',
                 scale: 'scale',
                 threshold: 'threshold',
                 categories: 'categories',
+                'needs-ground-truth': 'needs_ground_truth',
                 'child-metrics': 'child_metrics',
                 filters: 'filters',
             };
@@ -371,11 +372,14 @@ export function metricsCommand() {
                 return;
             }
             if (opts.filename === undefined) {
+                if (opts.needsGroundTruth !== undefined) {
+                    console.warn('Warning: option "--needs-ground-truth" is deprecated and will be removed in the next major version.');
+                }
                 if (opts.childMetrics !== undefined) {
                     console.warn('Warning: option "--child-metrics" is deprecated and will be removed in the next major version.');
                 }
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -394,9 +398,6 @@ export function metricsCommand() {
                     ...(opts.description !== undefined && { description: opts.description }),
                     ...(opts.returnType !== undefined && { return_type: opts.returnType }),
                     ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
-                    ...(opts.needsGroundTruth !== undefined && {
-                        needs_ground_truth: opts.needsGroundTruth,
-                    }),
                     ...(opts.samplingPercentage !== undefined && {
                         sampling_percentage: parseNumber(opts.samplingPercentage),
                     }),
@@ -405,6 +406,9 @@ export function metricsCommand() {
                     ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
                     ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
                     ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
+                    ...(opts.needsGroundTruth !== undefined && {
+                        needs_ground_truth: opts.needsGroundTruth,
+                    }),
                     ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
                     ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
                 };
@@ -436,14 +440,14 @@ export function metricsCommand() {
     ]))
         .option('--enabled-in-prod', 'enabled_in_prod')
         .option('--no-enabled-in-prod', 'enabled_in_prod')
-        .option('--needs-ground-truth', 'needs_ground_truth')
-        .option('--no-needs-ground-truth', 'needs_ground_truth')
         .option('--sampling-percentage <value>', 'sampling_percentage')
         .option('--model-provider <value>', 'model_provider')
         .option('--model-name <value>', 'model_name')
         .option('--scale <value>', 'scale')
         .option('--threshold <json>', 'threshold')
         .option('--categories <json>', 'categories')
+        .option('--needs-ground-truth', '(deprecated) Deprecated and ignored. Ground-truth use is inferred from the evaluator definition.')
+        .option('--no-needs-ground-truth', '(deprecated) Deprecated and ignored. Ground-truth use is inferred from the evaluator definition.')
         .option('--child-metrics <json>', '(deprecated) Deprecated and ignored. Composite metrics are no longer supported.')
         .option('--filters <json>', 'filters')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -460,14 +464,14 @@ export function metricsCommand() {
                 ['--return-type', 'returnType'],
                 ['--enabled-in-prod', 'enabledInProd'],
                 ['--no-enabled-in-prod', 'enabledInProd'],
-                ['--needs-ground-truth', 'needsGroundTruth'],
-                ['--no-needs-ground-truth', 'needsGroundTruth'],
                 ['--sampling-percentage', 'samplingPercentage'],
                 ['--model-provider', 'modelProvider'],
                 ['--model-name', 'modelName'],
                 ['--scale', 'scale'],
                 ['--threshold', 'threshold'],
                 ['--categories', 'categories'],
+                ['--needs-ground-truth', 'needsGroundTruth'],
+                ['--no-needs-ground-truth', 'needsGroundTruth'],
                 ['--child-metrics', 'childMetrics'],
                 ['--filters', 'filters'],
             ];
@@ -509,9 +513,6 @@ export function metricsCommand() {
       ]
     },
     "enabled_in_prod": {
-      "type": "boolean"
-    },
-    "needs_ground_truth": {
       "type": "boolean"
     },
     "sampling_percentage": {
@@ -580,6 +581,11 @@ export function metricsCommand() {
         ],
         "additionalProperties": false
       }
+    },
+    "needs_ground_truth": {
+      "type": "boolean",
+      "deprecated": true,
+      "description": "Deprecated and ignored. Ground-truth use is inferred from the evaluator definition."
     },
     "child_metrics": {
       "anyOf": [
@@ -691,13 +697,13 @@ export function metricsCommand() {
                 description: 'description',
                 'return-type': 'return_type',
                 'enabled-in-prod': 'enabled_in_prod',
-                'needs-ground-truth': 'needs_ground_truth',
                 'sampling-percentage': 'sampling_percentage',
                 'model-provider': 'model_provider',
                 'model-name': 'model_name',
                 scale: 'scale',
                 threshold: 'threshold',
                 categories: 'categories',
+                'needs-ground-truth': 'needs_ground_truth',
                 'child-metrics': 'child_metrics',
                 filters: 'filters',
             };
@@ -708,11 +714,14 @@ export function metricsCommand() {
                 return;
             }
             if (opts.filename === undefined) {
+                if (opts.needsGroundTruth !== undefined) {
+                    console.warn('Warning: option "--needs-ground-truth" is deprecated and will be removed in the next major version.');
+                }
                 if (opts.childMetrics !== undefined) {
                     console.warn('Warning: option "--child-metrics" is deprecated and will be removed in the next major version.');
                 }
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -728,9 +737,6 @@ export function metricsCommand() {
                     ...(opts.description !== undefined && { description: opts.description }),
                     ...(opts.returnType !== undefined && { return_type: opts.returnType }),
                     ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
-                    ...(opts.needsGroundTruth !== undefined && {
-                        needs_ground_truth: opts.needsGroundTruth,
-                    }),
                     ...(opts.samplingPercentage !== undefined && {
                         sampling_percentage: parseNumber(opts.samplingPercentage),
                     }),
@@ -739,6 +745,9 @@ export function metricsCommand() {
                     ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
                     ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
                     ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
+                    ...(opts.needsGroundTruth !== undefined && {
+                        needs_ground_truth: opts.needsGroundTruth,
+                    }),
                     ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
                     ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
                 };
@@ -786,7 +795,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -857,10 +866,6 @@ export function metricsCommand() {
           "default": "float"
         },
         "enabled_in_prod": {
-          "type": "boolean",
-          "default": false
-        },
-        "needs_ground_truth": {
           "type": "boolean",
           "default": false
         },
@@ -945,6 +950,11 @@ export function metricsCommand() {
               "type": "null"
             }
           ]
+        },
+        "needs_ground_truth": {
+          "type": "boolean",
+          "deprecated": true,
+          "description": "Deprecated and ignored. Ground-truth use is inferred from the evaluator definition."
         },
         "child_metrics": {
           "anyOf": [
@@ -1071,7 +1081,9 @@ export function metricsCommand() {
           "additionalProperties": {}
         },
         "workspace_id": {
-          "type": "string"
+          "type": "string",
+          "deprecated": true,
+          "description": "Deprecated: ignored. The workspace whose provider credentials run the metric is derived from the caller’s authenticated scope."
         },
         "feedback": {
           "type": "object",
@@ -1098,7 +1110,7 @@ export function metricsCommand() {
             ])) {
                 return;
             }
-            const client = createDataPlaneClient(command);
+            const client = createDataPlaneClient(command, 'BearerAuth');
             let request;
             if (opts.filename !== undefined) {
                 assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');

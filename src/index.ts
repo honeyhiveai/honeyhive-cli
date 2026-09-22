@@ -11,6 +11,10 @@ program
   .version(CLI_VERSION)
   .option('--project-api-key <key>', 'Project API key (overrides HH_PROJECT_API_KEY env var)')
   .option('--api-key <key>', '(Deprecated, use --project-api-key) Project API key')
+  .option(
+    '--ingestion-api-key <key>',
+    'Ingestion API key for sending traces and events (overrides HH_INGESTION_API_KEY env var)',
+  )
   .option('--data-plane-url <url>', 'Data plane URL (overrides HH_DATA_PLANE_URL env var)')
   .option('--base-url <url>', '(Deprecated, use --data-plane-url) Data plane URL')
   .option(

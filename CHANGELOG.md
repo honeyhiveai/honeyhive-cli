@@ -1,5 +1,22 @@
 # CLI Changelog
 
+## [1.7.0] - 2026-09-22
+
+### What's New
+- Added `--ingestion-api-key` and `HH_INGESTION_API_KEY` for the commands that send traces and events: `sessions create`, `sessions create-event-batch`, `events create`, `events update`, and `events create-batch`. These take an ingestion API key (`hh_ingst_...`), created at project scope on the **API Keys** page under **Settings**. They still accept a project API key, so a shell that exports only `HH_PROJECT_API_KEY` keeps working. Give ingestion its own key in a new setup. Every other command is unchanged.
+- Added `--slug` to `workspaces create` and `virtual-dataplanes create`. A slug takes letters, digits, and underscores only, and must be globally unique. Omit it and the server derives a slug from the name with a random suffix, exactly as before. Supply it when the identifier has to match a value maintained outside HoneyHive, such as an identity provider group that grants access to the scope. A slug already in use fails with a `409` naming the slug.
+
+### Fixes & Improvements
+- API keys are now trimmed before the CLI checks their shape. A key pasted with surrounding whitespace or a trailing newline is no longer rejected locally when the API would have accepted it.
+- The pre-flight key check now judges the exact credential each command sends, rather than assuming one key per API. Its error names the key and the flag or environment variable that command needs.
+- `metrics run` no longer fails with a `400` when the metric reads `ground_truth` and the event carries none. The command now exits 0 and prints `success: false` with `result: null` and the reason in `explanation`. A script that read the non-zero exit code as the signal must read `success` in the printed JSON instead.
+
+### Compatibility & Deprecations
+- Every command now gets a `404` where the API used to answer a permission failure with `403` or a rejected API key with `401`. A rejected key is one that is invalid, revoked, or expired. The response does not say which case applies, and the error no longer names the check that refused. A script that branched on `401` or `403` must read the not-found error as covering all three cases. These are server changes, so they apply to every CLI version.
+- `--needs-ground-truth` and `--no-needs-ground-truth` on `metrics create` and `metrics update` are deprecated and ignored, and now log a deprecation warning to stderr. The server infers ground-truth use from the metric definition. A Python metric that reads `ground_truth` needs it, and so does an LLM metric whose template references it. The same field inside a `metric-versions create --content` payload, and inside any `--filename` payload, is likewise accepted and ignored. The flags will be removed in the next major version. Stop passing them.
+- `workspace_id` inside the `--event` payload of `metrics run` is deprecated and ignored. The workspace whose provider credentials run the metric is derived from the authenticated key's scope, so naming a different workspace has no effect.
+- The bundled YAML parser used for `--filename` input now bounds recursive merge aliases. A YAML file with deeply chained merge keys no longer expands unchecked.
+
 ## [1.6.0] - 2026-08-14
 
 ### What's New

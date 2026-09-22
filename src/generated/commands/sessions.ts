@@ -149,7 +149,7 @@ export function sessionsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'IngestionApiKey');
         let request: Parameters<typeof client.sessions.create>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
@@ -343,7 +343,7 @@ export function sessionsCommand(): Command {
         ) {
           return;
         }
-        const client = createDataPlaneClient(command);
+        const client = createDataPlaneClient(command, 'IngestionApiKey');
         let request: Parameters<typeof client.sessions.createEventBatch>[0];
         if (opts.filename !== undefined) {
           assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
