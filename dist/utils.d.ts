@@ -1,23 +1,32 @@
 import { Client as DataPlaneClient } from '@honeyhive/api-client';
 import { Client as ControlPlaneClient } from '@honeyhive/control-plane-sdk';
 import { type Command } from 'commander';
-import { type ControlPlaneSecurityScheme, type DataPlaneSecurityScheme } from './generated/security.js';
 /**
- * Builds the data plane client for a generated command, after judging the
- * credential the command's operation will be sent with. `scheme` is the
- * security scheme the operation declares in the OpenAPI spec, baked into the
- * generated call.
+ * The CLI's wording for an SDK's missing-key error, naming the flag and the
+ * environment variable that supply the key, or `undefined` for any other error.
  */
-export declare function createDataPlaneClient(command: Command, scheme: DataPlaneSecurityScheme): DataPlaneClient;
+export declare function describeMissingApiKey(error: unknown): string | undefined;
+/**
+ * The CLI's wording for an SDK's malformed-key error, or `undefined` for any
+ * other error. A value from an environment variable keeps the SDK's message,
+ * which names the variable; a value from a flag reaches the SDK as an option,
+ * so its message is reworded to name the flag instead.
+ */
+export declare function describeMalformedApiKey(error: unknown): string | undefined;
+/**
+ * Builds the data plane client for a generated command. Only flag values are
+ * passed in; the SDK reads the environment variables itself and decides, per
+ * call, whether the command's operation has a key it can use.
+ */
+export declare function createDataPlaneClient(command: Command): DataPlaneClient;
 /**
  * The control plane counterpart of {@link createDataPlaneClient}. Kept as a
  * separate factory rather than one parameterized builder because the two planes
  * agree on almost nothing at this layer: different option names, different
- * environment variables, different accepted key kinds, and a set of deprecated
- * aliases that exists on one side only. The credential pre-flight is the part
- * they genuinely share, and that is shared.
+ * environment variables, and a set of deprecated aliases that exists on one
+ * side only.
  */
-export declare function createControlPlaneClient(command: Command, scheme: ControlPlaneSecurityScheme): ControlPlaneClient;
+export declare function createControlPlaneClient(command: Command): ControlPlaneClient;
 export declare function parseJson(value: unknown): unknown;
 export declare function parseNumber(value: unknown): number;
 /**

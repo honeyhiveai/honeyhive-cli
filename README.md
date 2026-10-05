@@ -21,7 +21,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.7.0/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.8.0/install.sh | sh
 ```
 <!-- install-script-end -->
 
@@ -31,19 +31,34 @@ Homebrew on Linux is also supported — if you already use Homebrew, the macOS c
 
 ## Authorization
 
-Both HoneyHive APIs authenticate requests using an API key sent as a Bearer token in the `Authorization` header, but they take **different keys**, and the data plane takes a different key for sending traces and events than for everything else. Each has its own environment variable and flag:
+Both HoneyHive APIs authenticate requests using an API key sent as a Bearer token in the `Authorization` header. Each command selects its credential, supplied through an environment variable or a root-level flag:
 
 | Commands | Key | Environment variable | Flag |
 | --- | --- | --- | --- |
+| `charts` with `--project-id` | A fine-grained data plane API key (`hh_fgdp_...`) | `HH_DATA_PLANE_API_KEY` | `--data-plane-api-key` |
 | `sessions create`, `sessions create-event-batch`, `events create`, `events update`, `events create-batch` | An ingestion API key (`hh_ingst_...`) | `HH_INGESTION_API_KEY` | `--ingestion-api-key` |
-| Every other `sessions` and `events` command, and `charts`, `metrics`, `metric-versions`, `datapoints`, `datasets`, `experiments` | A project API key (`hh_...`) or a read-only project API key (`hh_ro_...`) | `HH_PROJECT_API_KEY` | `--project-api-key` |
+| Every other `sessions` and `events` command, `charts` without `--project-id`, and `metrics`, `metric-versions`, `datapoints`, `datasets`, `experiments` | A classic project API key (`hh_...`), or a read-only project API key (`hh_ro_...`) for reads | `HH_PROJECT_API_KEY` | `--project-api-key` |
 | `virtual-dataplanes`, `workspaces`, `projects`, `alerts` | A fine-grained control plane API key (`hh_fgcp_...`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` |
 
-A key is only required by the commands that use it. If you hold a project API key and no control plane key, every data plane command works exactly as before; nothing is checked until you run a command that needs the key you don't have.
+Configure the credentials needed by the commands you run. See [API Keys](https://docs.honeyhive.ai/v2/workspace/api-keys) to create them in the HoneyHive app.
 
 > **Compatibility:** the ingestion commands still accept a project API key, so a shell that exports only `HH_PROJECT_API_KEY` keeps working. New setups should give ingestion its own key.
 
-All three kinds are created in the HoneyHive app, on an **API keys** page under **Settings**, at different scopes: a project API key and an ingestion API key at project scope, and a fine-grained control plane API key at workspace or organization scope. A key of a kind the command can't use is rejected before any request is sent, with a message naming what the command needed.
+The CLI checks the configured typed keys when it creates the client for a command's plane. A wrong key type or incomplete value is rejected, even if that command does not use the key, with an error naming its flag or environment variable. A command with no usable credential stops before sending a request, naming the key it needs. The classic project-key option forwards its value without checking its format.
+
+### Data plane API key
+
+Set `HH_DATA_PLANE_API_KEY` to a complete `hh_fgdp_` key. Supported project-scoped commands currently cover charts. Pass `--project-id` even when the key is rooted at that project. This example requires `project.chart.list`:
+
+```sh
+export HH_DATA_PLANE_API_KEY="your-data-plane-key"
+export PROJECT_ID="your-project-id"
+honeyhive charts list --project-id "$PROJECT_ID"
+```
+
+Copy the project ID and data plane URL from **Settings > Project > API Keys > Data Plane**. Set `HH_DATA_PLANE_URL` if the URL differs from the default. You can also pass the key with `honeyhive --data-plane-api-key "$MY_DATA_PLANE_KEY" charts list --project-id "$PROJECT_ID"`.
+
+For commands with both legacy and scoped routes, `--project-id` selects the scoped route and data plane key. Without it, the command selects the legacy route and project key, even if a data plane key is configured. Legacy chart calls are deprecated. A project key cannot substitute for a data plane key on the scoped route. See the [credential matrix](https://docs.honeyhive.ai/v2/workspace/api-keys#using-a-data-plane-key).
 
 ### Environment variable (recommended)
 
@@ -56,6 +71,10 @@ honeyhive sessions create --session-name my-session
 export HH_PROJECT_API_KEY=...
 honeyhive datasets list
 
+export HH_DATA_PLANE_API_KEY=...
+export PROJECT_ID="your-project-id"
+honeyhive charts list --project-id "$PROJECT_ID"
+
 export HH_CONTROL_PLANE_API_KEY=...
 honeyhive projects get --project-id ...
 ```
@@ -67,6 +86,7 @@ Pass the key directly on the command line. **Never hard-code a key or commit one
 ```sh
 honeyhive --ingestion-api-key "$MY_HONEYHIVE_INGESTION_KEY" sessions create --session-name my-session
 honeyhive --project-api-key "$MY_HONEYHIVE_KEY" datasets list
+honeyhive --data-plane-api-key "$MY_DATA_PLANE_KEY" charts list --project-id "$PROJECT_ID"
 honeyhive --control-plane-api-key "$MY_HONEYHIVE_CP_KEY" projects get --project-id ...
 ```
 
@@ -94,12 +114,14 @@ honeyhive --control-plane-url https://cp.honeyhive.example.com projects get --pr
 
 ## Verbose logging
 
-Pass `--verbose` (or set `HH_VERBOSE=true`) to log the resolved URL for the API the command talks to, a masked API key, and the CLI version on startup. Useful when debugging "is this hitting prod or staging?" or "did the right key get picked up?".
+Pass `--verbose` (or set `HH_VERBOSE=true`) to log the resolved URL for the API the command talks to, its masked API keys, and the CLI version on startup. Useful when debugging "is this hitting prod or staging?" or "did the right key get picked up?".
 
 ```sh
 honeyhive --verbose datasets list
 # Data plane URL: https://api.dp1.us.honeyhive.ai
-# Project API key: hh_****XXX
+# Project API key: hh_****XXXX
+# Ingestion API key: (none)
+# Data plane API key: (none)
 # Package: @honeyhive/cli vX.Y.Z
 
 honeyhive --verbose projects get --project-id ...
@@ -108,9 +130,9 @@ honeyhive --verbose projects get --project-id ...
 # Package: @honeyhive/cli vX.Y.Z
 ```
 
-Output is written to stderr and only fires once per invocation. An explicit `--verbose` flag matches the precedence of the other flags. A command talks to one API, so it logs that API's URL and the key it used, never both.
+Output is written to stderr and only fires once per invocation. An explicit `--verbose` flag matches the precedence of the other flags. Data plane commands log all three data plane credential slots, including `(none)` for unset keys. Control plane commands log only the control plane URL and key.
 
-Keys are masked. A project API key shows a recognized prefix and the last 4 characters. A fine-grained control plane key shows its key id and none of its secret, which is character-for-character the masked form the HoneyHive app displays, so you can match a log line against a key in your account. Anything unrecognized is replaced with asterisks.
+Keys are masked. A classic project API key shows a recognized prefix and the last 4 characters. Ingestion and fine-grained keys show their prefix and key id with the secret replaced by `******`: `hh_ingst_<key id>_******`, `hh_fgdp_<key id>_******`, or `hh_fgcp_<key id>_******`. These match the masked forms shown in the HoneyHive app. A typed key with a missing or malformed key id is replaced entirely with asterisks.
 
 ## Schema introspection
 
@@ -167,5 +189,4 @@ You can get the JSON Schema for the file by running:
 honeyhive datapoints create --show-file-schema
 ```
 
-This file contains the entire request (request body + url params + query params) flattened into a single object. Aside from this flattening, properties exactly follow the format of our [OpenAPI spec](https://docs.honeyhive.ai/v2/api-reference-autogen/), so be aware that top level properties are either `snake_case` or `camelCase`, not `--kebab-case` like the CLI flags.
-
+This file contains the entire request (request body + URL params + query params) flattened into a single object. Properties follow the format of the [OpenAPI spec](https://docs.honeyhive.ai/v2/sdk-reference/openapi-sdks), so top-level properties use `snake_case` or `camelCase`, not `--kebab-case` like the CLI flags.

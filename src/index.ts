@@ -4,6 +4,7 @@ import { program } from 'commander';
 
 import { registerCommands } from './generated/commands/index.js';
 import { CLI_VERSION } from './generated/version.js';
+import { describeMalformedApiKey, describeMissingApiKey } from './utils.js';
 
 program
   .name('honeyhive')
@@ -14,6 +15,10 @@ program
   .option(
     '--ingestion-api-key <key>',
     'Ingestion API key for sending traces and events (overrides HH_INGESTION_API_KEY env var)',
+  )
+  .option(
+    '--data-plane-api-key <key>',
+    'Fine-grained data plane API key (overrides HH_DATA_PLANE_API_KEY env var)',
   )
   .option('--data-plane-url <url>', 'Data plane URL (overrides HH_DATA_PLANE_URL env var)')
   .option('--base-url <url>', '(Deprecated, use --data-plane-url) Data plane URL')
@@ -34,7 +39,10 @@ program.action(() => {
 });
 
 program.parseAsync(process.argv).catch((err: unknown) => {
-  const message = err instanceof Error ? err.message : String(err);
+  const message =
+    describeMissingApiKey(err) ??
+    describeMalformedApiKey(err) ??
+    (err instanceof Error ? err.message : String(err));
   console.error(message);
   process.exit(1);
 });

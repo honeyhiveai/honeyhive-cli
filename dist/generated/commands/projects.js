@@ -14,14 +14,13 @@ export function projectsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--workspace-id', 'workspaceId'],
-                ['--name', 'name'],
-                ['--description', 'description'],
-                ['--project-creator', 'projectCreator'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--workspace-id', 'workspaceId'],
+            ['--name', 'name'],
+            ['--description', 'description'],
+            ['--project-creator', 'projectCreator'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "workspace_id": {
@@ -47,45 +46,39 @@ export function projectsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'workspace-id': 'workspace_id',
-                name: 'name',
-                description: 'description',
-                'project-creator': 'project_creator',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [
-                    ['--workspace-id', 'workspaceId'],
-                    ['--name', 'name'],
-                ]);
-                request = {
-                    workspace_id: opts.workspaceId,
-                    name: opts.name,
-                    ...(opts.description !== undefined && { description: opts.description }),
-                    ...(opts.projectCreator !== undefined && { project_creator: opts.projectCreator }),
-                };
-            }
-            const result = await client.projects.create(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'workspace-id': 'workspace_id',
+            name: 'name',
+            description: 'description',
+            'project-creator': 'project_creator',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [
+                ['--workspace-id', 'workspaceId'],
+                ['--name', 'name'],
+            ]);
+            request = {
+                workspace_id: opts.workspaceId,
+                name: opts.name,
+                ...(opts.description !== undefined && { description: opts.description }),
+                ...(opts.projectCreator !== undefined && { project_creator: opts.projectCreator }),
+            };
+        }
+        const result = await client.projects.create(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -96,9 +89,8 @@ export function projectsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -111,36 +103,30 @@ export function projectsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'project-id': 'project_id',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--project-id', 'projectId']]);
-                request = {
-                    project_id: opts.projectId,
-                };
-            }
-            const result = await client.projects.get(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--project-id', 'projectId']]);
+            request = {
+                project_id: opts.projectId,
+            };
+        }
+        const result = await client.projects.get(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -153,13 +139,12 @@ export function projectsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--project-id', 'projectId'],
-                ['--name', 'name'],
-                ['--description', 'description'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--name', 'name'],
+            ['--description', 'description'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -180,40 +165,34 @@ export function projectsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'project-id': 'project_id',
-                name: 'name',
-                description: 'description',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--project-id', 'projectId']]);
-                request = {
-                    project_id: opts.projectId,
-                    ...(opts.name !== undefined && { name: opts.name }),
-                    ...(opts.description !== undefined && { description: opts.description }),
-                };
-            }
-            const result = await client.projects.update(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
+            name: 'name',
+            description: 'description',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--project-id', 'projectId']]);
+            request = {
+                project_id: opts.projectId,
+                ...(opts.name !== undefined && { name: opts.name }),
+                ...(opts.description !== undefined && { description: opts.description }),
+            };
+        }
+        const result = await client.projects.update(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -224,9 +203,8 @@ export function projectsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -239,36 +217,30 @@ export function projectsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'project-id': 'project_id',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--project-id', 'projectId']]);
-                request = {
-                    project_id: opts.projectId,
-                };
-            }
-            const result = await client.projects.delete(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--project-id', 'projectId']]);
+            request = {
+                project_id: opts.projectId,
+            };
+        }
+        const result = await client.projects.delete(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd.action(() => {

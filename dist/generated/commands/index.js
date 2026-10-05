@@ -1,10 +1,12 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate.
 import { alertsCommand } from './alerts.js';
 import { chartsCommand } from './charts.js';
+import { dataPlaneApiKeysCommand } from './data-plane-api-keys.js';
 import { datapointsCommand } from './datapoints.js';
 import { datasetsCommand } from './datasets.js';
 import { eventsCommand } from './events.js';
 import { experimentsCommand } from './experiments.js';
+import { ingestionApiKeysCommand } from './ingestion-api-keys.js';
 import { metricVersionsCommand } from './metric-versions.js';
 import { metricsCommand } from './metrics.js';
 import { projectsCommand } from './projects.js';
@@ -15,6 +17,8 @@ export function registerCommands(program) {
     program.addCommand(sessionsCommand());
     program.addCommand(eventsCommand());
     program.addCommand(chartsCommand());
+    program.addCommand(dataPlaneApiKeysCommand());
+    program.addCommand(ingestionApiKeysCommand());
     program.addCommand(metricsCommand());
     program.addCommand(metricVersionsCommand());
     program.addCommand(datapointsCommand());

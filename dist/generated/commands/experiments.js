@@ -30,19 +30,18 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--dataset-id', 'datasetId'],
-                ['--page', 'page'],
-                ['--limit', 'limit'],
-                ['--run-ids', 'runIds'],
-                ['--name', 'name'],
-                ['--status', 'status'],
-                ['--date-range', 'dateRange'],
-                ['--sort-by', 'sortBy'],
-                ['--sort-order', 'sortOrder'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--dataset-id', 'datasetId'],
+            ['--page', 'page'],
+            ['--limit', 'limit'],
+            ['--run-ids', 'runIds'],
+            ['--name', 'name'],
+            ['--status', 'status'],
+            ['--date-range', 'dateRange'],
+            ['--sort-by', 'sortBy'],
+            ['--sort-order', 'sortOrder'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "dataset_id": {
@@ -126,51 +125,45 @@ export function experimentsCommand() {
   },
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'dataset-id': 'dataset_id',
-                page: 'page',
-                limit: 'limit',
-                'run-ids': 'run_ids',
-                name: 'name',
-                status: 'status',
-                'date-range': 'dateRange',
-                'sort-by': 'sort_by',
-                'sort-order': 'sort_order',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                request = {
-                    ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
-                    ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
-                    ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
-                    ...(opts.runIds !== undefined && { run_ids: parseJson(opts.runIds) }),
-                    ...(opts.name !== undefined && { name: opts.name }),
-                    ...(opts.status !== undefined && { status: opts.status }),
-                    ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
-                    ...(opts.sortBy !== undefined && { sort_by: opts.sortBy }),
-                    ...(opts.sortOrder !== undefined && { sort_order: opts.sortOrder }),
-                };
-            }
-            const result = await client.experiments.listRuns(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'dataset-id': 'dataset_id',
+            page: 'page',
+            limit: 'limit',
+            'run-ids': 'run_ids',
+            name: 'name',
+            status: 'status',
+            'date-range': 'dateRange',
+            'sort-by': 'sort_by',
+            'sort-order': 'sort_order',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            request = {
+                ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
+                ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
+                ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
+                ...(opts.runIds !== undefined && { run_ids: parseJson(opts.runIds) }),
+                ...(opts.name !== undefined && { name: opts.name }),
+                ...(opts.status !== undefined && { status: opts.status }),
+                ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
+                ...(opts.sortBy !== undefined && { sort_by: opts.sortBy }),
+                ...(opts.sortOrder !== undefined && { sort_order: opts.sortOrder }),
+            };
+        }
+        const result = await client.experiments.listRuns(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -199,23 +192,22 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--run-id', 'runId'],
-                ['--name', 'name'],
-                ['--description', 'description'],
-                ['--status', 'status'],
-                ['--metadata', 'metadata'],
-                ['--results', 'results'],
-                ['--dataset-id', 'datasetId'],
-                ['--event-ids', 'eventIds'],
-                ['--configuration', 'configuration'],
-                ['--evaluators', 'evaluators'],
-                ['--session-ids', 'sessionIds'],
-                ['--datapoint-ids', 'datapointIds'],
-                ['--passing-ranges', 'passingRanges'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--run-id', 'runId'],
+            ['--name', 'name'],
+            ['--description', 'description'],
+            ['--status', 'status'],
+            ['--metadata', 'metadata'],
+            ['--results', 'results'],
+            ['--dataset-id', 'datasetId'],
+            ['--event-ids', 'eventIds'],
+            ['--configuration', 'configuration'],
+            ['--evaluators', 'evaluators'],
+            ['--session-ids', 'sessionIds'],
+            ['--datapoint-ids', 'datapointIds'],
+            ['--passing-ranges', 'passingRanges'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "run_id": {
@@ -301,63 +293,55 @@ export function experimentsCommand() {
   },
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'run-id': 'run_id',
-                name: 'name',
-                description: 'description',
-                status: 'status',
-                metadata: 'metadata',
-                results: 'results',
-                'dataset-id': 'dataset_id',
-                'event-ids': 'event_ids',
-                configuration: 'configuration',
-                evaluators: 'evaluators',
-                'session-ids': 'session_ids',
-                'datapoint-ids': 'datapoint_ids',
-                'passing-ranges': 'passing_ranges',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                request = {
-                    ...(opts.runId !== undefined && { run_id: opts.runId }),
-                    ...(opts.name !== undefined && { name: opts.name }),
-                    ...(opts.description !== undefined && { description: opts.description }),
-                    ...(opts.status !== undefined && { status: opts.status }),
-                    ...(opts.metadata !== undefined && { metadata: parseJson(opts.metadata) }),
-                    ...(opts.results !== undefined && { results: parseJson(opts.results) }),
-                    ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
-                    ...(opts.eventIds !== undefined && { event_ids: parseJson(opts.eventIds) }),
-                    ...(opts.configuration !== undefined && {
-                        configuration: parseJson(opts.configuration),
-                    }),
-                    ...(opts.evaluators !== undefined && { evaluators: parseJson(opts.evaluators) }),
-                    ...(opts.sessionIds !== undefined && { session_ids: parseJson(opts.sessionIds) }),
-                    ...(opts.datapointIds !== undefined && { datapoint_ids: parseJson(opts.datapointIds) }),
-                    ...(opts.passingRanges !== undefined && {
-                        passing_ranges: parseJson(opts.passingRanges),
-                    }),
-                };
-            }
-            const result = await client.experiments.createRun(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'run-id': 'run_id',
+            name: 'name',
+            description: 'description',
+            status: 'status',
+            metadata: 'metadata',
+            results: 'results',
+            'dataset-id': 'dataset_id',
+            'event-ids': 'event_ids',
+            configuration: 'configuration',
+            evaluators: 'evaluators',
+            'session-ids': 'session_ids',
+            'datapoint-ids': 'datapoint_ids',
+            'passing-ranges': 'passing_ranges',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            request = {
+                ...(opts.runId !== undefined && { run_id: opts.runId }),
+                ...(opts.name !== undefined && { name: opts.name }),
+                ...(opts.description !== undefined && { description: opts.description }),
+                ...(opts.status !== undefined && { status: opts.status }),
+                ...(opts.metadata !== undefined && { metadata: parseJson(opts.metadata) }),
+                ...(opts.results !== undefined && { results: parseJson(opts.results) }),
+                ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
+                ...(opts.eventIds !== undefined && { event_ids: parseJson(opts.eventIds) }),
+                ...(opts.configuration !== undefined && { configuration: parseJson(opts.configuration) }),
+                ...(opts.evaluators !== undefined && { evaluators: parseJson(opts.evaluators) }),
+                ...(opts.sessionIds !== undefined && { session_ids: parseJson(opts.sessionIds) }),
+                ...(opts.datapointIds !== undefined && { datapoint_ids: parseJson(opts.datapointIds) }),
+                ...(opts.passingRanges !== undefined && {
+                    passing_ranges: parseJson(opts.passingRanges),
+                }),
+            };
+        }
+        const result = await client.experiments.createRun(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -368,9 +352,8 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [['--date-range', 'dateRange']];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [['--date-range', 'dateRange']];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "dateRange": {
@@ -402,35 +385,29 @@ export function experimentsCommand() {
   },
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'date-range': 'dateRange',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                request = {
-                    ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
-                };
-            }
-            const result = await client.experiments.getRunsSchema(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'date-range': 'dateRange',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            request = {
+                ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
+            };
+        }
+        const result = await client.experiments.getRunsSchema(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -441,9 +418,8 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [['--run-id', 'runId']];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [['--run-id', 'runId']];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "run_id": {
@@ -455,36 +431,30 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'run-id': 'run_id',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--run-id', 'runId']]);
-                request = {
-                    run_id: opts.runId,
-                };
-            }
-            const result = await client.experiments.getRun(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'run-id': 'run_id',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--run-id', 'runId']]);
+            request = {
+                run_id: opts.runId,
+            };
+        }
+        const result = await client.experiments.getRun(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -512,22 +482,21 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--run-id', 'runId'],
-                ['--name', 'name'],
-                ['--description', 'description'],
-                ['--status', 'status'],
-                ['--metadata', 'metadata'],
-                ['--results', 'results'],
-                ['--event-ids', 'eventIds'],
-                ['--configuration', 'configuration'],
-                ['--evaluators', 'evaluators'],
-                ['--session-ids', 'sessionIds'],
-                ['--datapoint-ids', 'datapointIds'],
-                ['--passing-ranges', 'passingRanges'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--run-id', 'runId'],
+            ['--name', 'name'],
+            ['--description', 'description'],
+            ['--status', 'status'],
+            ['--metadata', 'metadata'],
+            ['--results', 'results'],
+            ['--event-ids', 'eventIds'],
+            ['--configuration', 'configuration'],
+            ['--evaluators', 'evaluators'],
+            ['--session-ids', 'sessionIds'],
+            ['--datapoint-ids', 'datapointIds'],
+            ['--passing-ranges', 'passingRanges'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "run_id": {
@@ -605,62 +574,54 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'run-id': 'run_id',
-                name: 'name',
-                description: 'description',
-                status: 'status',
-                metadata: 'metadata',
-                results: 'results',
-                'event-ids': 'event_ids',
-                configuration: 'configuration',
-                evaluators: 'evaluators',
-                'session-ids': 'session_ids',
-                'datapoint-ids': 'datapoint_ids',
-                'passing-ranges': 'passing_ranges',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--run-id', 'runId']]);
-                request = {
-                    run_id: opts.runId,
-                    ...(opts.name !== undefined && { name: opts.name }),
-                    ...(opts.description !== undefined && { description: opts.description }),
-                    ...(opts.status !== undefined && { status: opts.status }),
-                    ...(opts.metadata !== undefined && { metadata: parseJson(opts.metadata) }),
-                    ...(opts.results !== undefined && { results: parseJson(opts.results) }),
-                    ...(opts.eventIds !== undefined && { event_ids: parseJson(opts.eventIds) }),
-                    ...(opts.configuration !== undefined && {
-                        configuration: parseJson(opts.configuration),
-                    }),
-                    ...(opts.evaluators !== undefined && { evaluators: parseJson(opts.evaluators) }),
-                    ...(opts.sessionIds !== undefined && { session_ids: parseJson(opts.sessionIds) }),
-                    ...(opts.datapointIds !== undefined && { datapoint_ids: parseJson(opts.datapointIds) }),
-                    ...(opts.passingRanges !== undefined && {
-                        passing_ranges: parseJson(opts.passingRanges),
-                    }),
-                };
-            }
-            const result = await client.experiments.updateRun(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'run-id': 'run_id',
+            name: 'name',
+            description: 'description',
+            status: 'status',
+            metadata: 'metadata',
+            results: 'results',
+            'event-ids': 'event_ids',
+            configuration: 'configuration',
+            evaluators: 'evaluators',
+            'session-ids': 'session_ids',
+            'datapoint-ids': 'datapoint_ids',
+            'passing-ranges': 'passing_ranges',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--run-id', 'runId']]);
+            request = {
+                run_id: opts.runId,
+                ...(opts.name !== undefined && { name: opts.name }),
+                ...(opts.description !== undefined && { description: opts.description }),
+                ...(opts.status !== undefined && { status: opts.status }),
+                ...(opts.metadata !== undefined && { metadata: parseJson(opts.metadata) }),
+                ...(opts.results !== undefined && { results: parseJson(opts.results) }),
+                ...(opts.eventIds !== undefined && { event_ids: parseJson(opts.eventIds) }),
+                ...(opts.configuration !== undefined && { configuration: parseJson(opts.configuration) }),
+                ...(opts.evaluators !== undefined && { evaluators: parseJson(opts.evaluators) }),
+                ...(opts.sessionIds !== undefined && { session_ids: parseJson(opts.sessionIds) }),
+                ...(opts.datapointIds !== undefined && { datapoint_ids: parseJson(opts.datapointIds) }),
+                ...(opts.passingRanges !== undefined && {
+                    passing_ranges: parseJson(opts.passingRanges),
+                }),
+            };
+        }
+        const result = await client.experiments.updateRun(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -671,9 +632,8 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [['--run-id', 'runId']];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [['--run-id', 'runId']];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "run_id": {
@@ -685,36 +645,30 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'run-id': 'run_id',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--run-id', 'runId']]);
-                request = {
-                    run_id: opts.runId,
-                };
-            }
-            const result = await client.experiments.deleteRun(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'run-id': 'run_id',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--run-id', 'runId']]);
+            request = {
+                run_id: opts.runId,
+            };
+        }
+        const result = await client.experiments.deleteRun(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -726,12 +680,11 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--run-id', 'runId'],
-                ['--date-range', 'dateRange'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--run-id', 'runId'],
+            ['--date-range', 'dateRange'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "run_id": {
@@ -770,38 +723,32 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'run-id': 'run_id',
-                'date-range': 'dateRange',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--run-id', 'runId']]);
-                request = {
-                    run_id: opts.runId,
-                    ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
-                };
-            }
-            const result = await client.experiments.getRunSchema(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'run-id': 'run_id',
+            'date-range': 'dateRange',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--run-id', 'runId']]);
+            request = {
+                run_id: opts.runId,
+                ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
+            };
+        }
+        const result = await client.experiments.getRunSchema(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -814,13 +761,12 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--run-id', 'runId'],
-                ['--date-range', 'dateRange'],
-                ['--filters', 'filters'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--run-id', 'runId'],
+            ['--date-range', 'dateRange'],
+            ['--filters', 'filters'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "run_id": {
@@ -854,40 +800,34 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'run-id': 'run_id',
-                'date-range': 'dateRange',
-                filters: 'filters',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--run-id', 'runId']]);
-                request = {
-                    run_id: opts.runId,
-                    ...(opts.dateRange !== undefined && { dateRange: opts.dateRange }),
-                    ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-                };
-            }
-            const result = await client.experiments.getRunMetrics(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'run-id': 'run_id',
+            'date-range': 'dateRange',
+            filters: 'filters',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--run-id', 'runId']]);
+            request = {
+                run_id: opts.runId,
+                ...(opts.dateRange !== undefined && { dateRange: opts.dateRange }),
+                ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
+            };
+        }
+        const result = await client.experiments.getRunMetrics(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -900,13 +840,12 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--run-id', 'runId'],
-                ['--aggregate-function', 'aggregateFunction'],
-                ['--filters', 'filters'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--run-id', 'runId'],
+            ['--aggregate-function', 'aggregateFunction'],
+            ['--filters', 'filters'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "run_id": {
@@ -951,42 +890,36 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'run-id': 'run_id',
-                'aggregate-function': 'aggregate_function',
-                filters: 'filters',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--run-id', 'runId']]);
-                request = {
-                    run_id: opts.runId,
-                    ...(opts.aggregateFunction !== undefined && {
-                        aggregate_function: opts.aggregateFunction,
-                    }),
-                    ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-                };
-            }
-            const result = await client.experiments.getSummary(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'run-id': 'run_id',
+            'aggregate-function': 'aggregate_function',
+            filters: 'filters',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--run-id', 'runId']]);
+            request = {
+                run_id: opts.runId,
+                ...(opts.aggregateFunction !== undefined && {
+                    aggregate_function: opts.aggregateFunction,
+                }),
+                ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
+            };
+        }
+        const result = await client.experiments.getSummary(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -1000,14 +933,13 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--new-run-id', 'newRunId'],
-                ['--old-run-id', 'oldRunId'],
-                ['--aggregate-function', 'aggregateFunction'],
-                ['--filters', 'filters'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--new-run-id', 'newRunId'],
+            ['--old-run-id', 'oldRunId'],
+            ['--aggregate-function', 'aggregateFunction'],
+            ['--filters', 'filters'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "new_run_id": {
@@ -1057,47 +989,41 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'new-run-id': 'new_run_id',
-                'old-run-id': 'old_run_id',
-                'aggregate-function': 'aggregate_function',
-                filters: 'filters',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [
-                    ['--new-run-id', 'newRunId'],
-                    ['--old-run-id', 'oldRunId'],
-                ]);
-                request = {
-                    new_run_id: opts.newRunId,
-                    old_run_id: opts.oldRunId,
-                    ...(opts.aggregateFunction !== undefined && {
-                        aggregate_function: opts.aggregateFunction,
-                    }),
-                    ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-                };
-            }
-            const result = await client.experiments.compareRuns(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'new-run-id': 'new_run_id',
+            'old-run-id': 'old_run_id',
+            'aggregate-function': 'aggregate_function',
+            filters: 'filters',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [
+                ['--new-run-id', 'newRunId'],
+                ['--old-run-id', 'oldRunId'],
+            ]);
+            request = {
+                new_run_id: opts.newRunId,
+                old_run_id: opts.oldRunId,
+                ...(opts.aggregateFunction !== undefined && {
+                    aggregate_function: opts.aggregateFunction,
+                }),
+                ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
+            };
+        }
+        const result = await client.experiments.compareRuns(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -1114,17 +1040,16 @@ export function experimentsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--new-run-id', 'newRunId'],
-                ['--old-run-id', 'oldRunId'],
-                ['--event-name', 'eventName'],
-                ['--event-type', 'eventType'],
-                ['--filter', 'filter'],
-                ['--limit', 'limit'],
-                ['--page', 'page'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--new-run-id', 'newRunId'],
+            ['--old-run-id', 'oldRunId'],
+            ['--event-name', 'eventName'],
+            ['--event-type', 'eventType'],
+            ['--filter', 'filter'],
+            ['--limit', 'limit'],
+            ['--page', 'page'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "new_run_id": {
@@ -1172,51 +1097,45 @@ export function experimentsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'new-run-id': 'new_run_id',
-                'old-run-id': 'old_run_id',
-                'event-name': 'event_name',
-                'event-type': 'event_type',
-                filter: 'filter',
-                limit: 'limit',
-                page: 'page',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createDataPlaneClient(command, 'BearerAuth');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [
-                    ['--new-run-id', 'newRunId'],
-                    ['--old-run-id', 'oldRunId'],
-                ]);
-                request = {
-                    new_run_id: opts.newRunId,
-                    old_run_id: opts.oldRunId,
-                    ...(opts.eventName !== undefined && { event_name: opts.eventName }),
-                    ...(opts.eventType !== undefined && { event_type: opts.eventType }),
-                    ...(opts.filter !== undefined && { filter: parseJson(opts.filter) }),
-                    ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
-                    ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
-                };
-            }
-            const result = await client.experiments.compareRunEvents(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'new-run-id': 'new_run_id',
+            'old-run-id': 'old_run_id',
+            'event-name': 'event_name',
+            'event-type': 'event_type',
+            filter: 'filter',
+            limit: 'limit',
+            page: 'page',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createDataPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [
+                ['--new-run-id', 'newRunId'],
+                ['--old-run-id', 'oldRunId'],
+            ]);
+            request = {
+                new_run_id: opts.newRunId,
+                old_run_id: opts.oldRunId,
+                ...(opts.eventName !== undefined && { event_name: opts.eventName }),
+                ...(opts.eventType !== undefined && { event_type: opts.eventType }),
+                ...(opts.filter !== undefined && { filter: parseJson(opts.filter) }),
+                ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
+                ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
+            };
+        }
+        const result = await client.experiments.compareRunEvents(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd.action(() => {

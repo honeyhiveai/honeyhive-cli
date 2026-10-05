@@ -15,15 +15,14 @@ export function virtualDataplanesCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--org-id', 'orgId'],
-                ['--name', 'name'],
-                ['--slug', 'slug'],
-                ['--cluster-id', 'clusterId'],
-                ['--dataplane-creator', 'dataplaneCreator'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--org-id', 'orgId'],
+            ['--name', 'name'],
+            ['--slug', 'slug'],
+            ['--cluster-id', 'clusterId'],
+            ['--dataplane-creator', 'dataplaneCreator'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "org_id": {
@@ -53,49 +52,41 @@ export function virtualDataplanesCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'org-id': 'org_id',
-                name: 'name',
-                slug: 'slug',
-                'cluster-id': 'cluster_id',
-                'dataplane-creator': 'dataplane_creator',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [
-                    ['--org-id', 'orgId'],
-                    ['--name', 'name'],
-                ]);
-                request = {
-                    org_id: opts.orgId,
-                    name: opts.name,
-                    ...(opts.slug !== undefined && { slug: opts.slug }),
-                    ...(opts.clusterId !== undefined && { cluster_id: opts.clusterId }),
-                    ...(opts.dataplaneCreator !== undefined && {
-                        dataplane_creator: opts.dataplaneCreator,
-                    }),
-                };
-            }
-            const result = await client.virtualDataplanes.create(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'org-id': 'org_id',
+            name: 'name',
+            slug: 'slug',
+            'cluster-id': 'cluster_id',
+            'dataplane-creator': 'dataplane_creator',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [
+                ['--org-id', 'orgId'],
+                ['--name', 'name'],
+            ]);
+            request = {
+                org_id: opts.orgId,
+                name: opts.name,
+                ...(opts.slug !== undefined && { slug: opts.slug }),
+                ...(opts.clusterId !== undefined && { cluster_id: opts.clusterId }),
+                ...(opts.dataplaneCreator !== undefined && { dataplane_creator: opts.dataplaneCreator }),
+            };
+        }
+        const result = await client.virtualDataplanes.create(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -106,9 +97,8 @@ export function virtualDataplanesCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [['--virtual-dataplane-id', 'virtualDataplaneId']];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [['--virtual-dataplane-id', 'virtualDataplaneId']];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "virtual_dataplane_id": {
@@ -121,36 +111,30 @@ export function virtualDataplanesCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'virtual-dataplane-id': 'virtual_dataplane_id',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--virtual-dataplane-id', 'virtualDataplaneId']]);
-                request = {
-                    virtual_dataplane_id: opts.virtualDataplaneId,
-                };
-            }
-            const result = await client.virtualDataplanes.get(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'virtual-dataplane-id': 'virtual_dataplane_id',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--virtual-dataplane-id', 'virtualDataplaneId']]);
+            request = {
+                virtual_dataplane_id: opts.virtualDataplaneId,
+            };
+        }
+        const result = await client.virtualDataplanes.get(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -162,12 +146,11 @@ export function virtualDataplanesCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--virtual-dataplane-id', 'virtualDataplaneId'],
-                ['--name', 'name'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--virtual-dataplane-id', 'virtualDataplaneId'],
+            ['--name', 'name'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "virtual_dataplane_id": {
@@ -184,38 +167,32 @@ export function virtualDataplanesCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'virtual-dataplane-id': 'virtual_dataplane_id',
-                name: 'name',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--virtual-dataplane-id', 'virtualDataplaneId']]);
-                request = {
-                    virtual_dataplane_id: opts.virtualDataplaneId,
-                    ...(opts.name !== undefined && { name: opts.name }),
-                };
-            }
-            const result = await client.virtualDataplanes.update(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'virtual-dataplane-id': 'virtual_dataplane_id',
+            name: 'name',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--virtual-dataplane-id', 'virtualDataplaneId']]);
+            request = {
+                virtual_dataplane_id: opts.virtualDataplaneId,
+                ...(opts.name !== undefined && { name: opts.name }),
+            };
+        }
+        const result = await client.virtualDataplanes.update(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -228,13 +205,12 @@ export function virtualDataplanesCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--virtual-dataplane-id', 'virtualDataplaneId'],
-                ['--dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
-                ['--no-dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--virtual-dataplane-id', 'virtualDataplaneId'],
+            ['--dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
+            ['--no-dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "virtual_dataplane_id": {
@@ -251,40 +227,34 @@ export function virtualDataplanesCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'virtual-dataplane-id': 'virtual_dataplane_id',
-                'dangerously-delete-child-scopes': 'dangerously_delete_child_scopes',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--virtual-dataplane-id', 'virtualDataplaneId']]);
-                request = {
-                    virtual_dataplane_id: opts.virtualDataplaneId,
-                    ...(opts.dangerouslyDeleteChildScopes !== undefined && {
-                        dangerously_delete_child_scopes: opts.dangerouslyDeleteChildScopes,
-                    }),
-                };
-            }
-            const result = await client.virtualDataplanes.delete(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'virtual-dataplane-id': 'virtual_dataplane_id',
+            'dangerously-delete-child-scopes': 'dangerously_delete_child_scopes',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--virtual-dataplane-id', 'virtualDataplaneId']]);
+            request = {
+                virtual_dataplane_id: opts.virtualDataplaneId,
+                ...(opts.dangerouslyDeleteChildScopes !== undefined && {
+                    dangerously_delete_child_scopes: opts.dangerouslyDeleteChildScopes,
+                }),
+            };
+        }
+        const result = await client.virtualDataplanes.delete(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd.action(() => {

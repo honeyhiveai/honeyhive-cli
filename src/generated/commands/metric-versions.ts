@@ -34,9 +34,8 @@ export function metricVersionsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--metric-id', 'metricId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [['--metric-id', 'metricId']] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "metric_id": {
@@ -49,38 +48,33 @@ export function metricVersionsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'metric-id': 'metric_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metricVersions.list>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.metricVersions.list
-          >[0];
-        } else {
-          assertRequiredFields(opts, [['--metric-id', 'metricId']]);
-          request = {
-            metric_id: opts.metricId,
-          } as Parameters<typeof client.metricVersions.list>[0];
-        }
-        const result = await client.metricVersions.list(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'metric-id': 'metric_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metricVersions.list>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<
+          typeof client.metricVersions.list
+        >[0];
+      } else {
+        assertRequiredFields(opts, [['--metric-id', 'metricId']]);
+        request = {
+          metric_id: opts.metricId,
+        } as Parameters<typeof client.metricVersions.list>[0];
+      }
+      const result = await client.metricVersions.list(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -108,15 +102,14 @@ export function metricVersionsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--metric-id', 'metricId'],
-          ['--message', 'message'],
-          ['--content', 'content'],
-          ['--deploy-immediately', 'deployImmediately'],
-          ['--no-deploy-immediately', 'deployImmediately'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--metric-id', 'metricId'],
+        ['--message', 'message'],
+        ['--content', 'content'],
+        ['--deploy-immediately', 'deployImmediately'],
+        ['--no-deploy-immediately', 'deployImmediately'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "metric_id": {
@@ -373,50 +366,45 @@ export function metricVersionsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'metric-id': 'metric_id',
-          message: 'message',
-          content: 'content',
-          'deploy-immediately': 'deploy_immediately',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metricVersions.create>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.metricVersions.create
-          >[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--metric-id', 'metricId'],
-            ['--message', 'message'],
-            ['--content', 'content'],
-          ]);
-          request = {
-            metric_id: opts.metricId,
-            message: opts.message,
-            content: parseJson(opts.content),
-            ...(opts.deployImmediately !== undefined && {
-              deploy_immediately: opts.deployImmediately,
-            }),
-          } as Parameters<typeof client.metricVersions.create>[0];
-        }
-        const result = await client.metricVersions.create(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'metric-id': 'metric_id',
+        message: 'message',
+        content: 'content',
+        'deploy-immediately': 'deploy_immediately',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metricVersions.create>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<
+          typeof client.metricVersions.create
+        >[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--metric-id', 'metricId'],
+          ['--message', 'message'],
+          ['--content', 'content'],
+        ]);
+        request = {
+          metric_id: opts.metricId,
+          message: opts.message,
+          content: parseJson(opts.content),
+          ...(opts.deployImmediately !== undefined && {
+            deploy_immediately: opts.deployImmediately,
+          }),
+        } as Parameters<typeof client.metricVersions.create>[0];
+      }
+      const result = await client.metricVersions.create(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -438,12 +426,11 @@ export function metricVersionsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--metric-id', 'metricId'],
-          ['--version-name', 'versionName'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--metric-id', 'metricId'],
+        ['--version-name', 'versionName'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "metric_id": {
@@ -461,43 +448,38 @@ export function metricVersionsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'metric-id': 'metric_id',
-          'version-name': 'version_name',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metricVersions.deploy>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.metricVersions.deploy
-          >[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--metric-id', 'metricId'],
-            ['--version-name', 'versionName'],
-          ]);
-          request = {
-            metric_id: opts.metricId,
-            version_name: opts.versionName,
-          } as Parameters<typeof client.metricVersions.deploy>[0];
-        }
-        const result = await client.metricVersions.deploy(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'metric-id': 'metric_id',
+        'version-name': 'version_name',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metricVersions.deploy>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<
+          typeof client.metricVersions.deploy
+        >[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--metric-id', 'metricId'],
+          ['--version-name', 'versionName'],
+        ]);
+        request = {
+          metric_id: opts.metricId,
+          version_name: opts.versionName,
+        } as Parameters<typeof client.metricVersions.deploy>[0];
+      }
+      const result = await client.metricVersions.deploy(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 

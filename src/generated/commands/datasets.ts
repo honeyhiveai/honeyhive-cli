@@ -32,12 +32,11 @@ export function datasetsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--dataset-id', 'datasetId'],
-          ['--name', 'name'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--dataset-id', 'datasetId'],
+        ['--name', 'name'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "dataset_id": {
@@ -51,37 +50,32 @@ export function datasetsCommand(): Command {
   },
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'dataset-id': 'dataset_id',
-          name: 'name',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.datasets.list>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.list>[0];
-        } else {
-          request = {
-            ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
-            ...(opts.name !== undefined && { name: opts.name }),
-          } as Parameters<typeof client.datasets.list>[0];
-        }
-        const result = await client.datasets.list(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'dataset-id': 'dataset_id',
+        name: 'name',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.datasets.list>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.list>[0];
+      } else {
+        request = {
+          ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
+          ...(opts.name !== undefined && { name: opts.name }),
+        } as Parameters<typeof client.datasets.list>[0];
+      }
+      const result = await client.datasets.list(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -104,13 +98,12 @@ export function datasetsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--name', 'name'],
-          ['--description', 'description'],
-          ['--datapoints', 'datapoints'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--name', 'name'],
+        ['--description', 'description'],
+        ['--datapoints', 'datapoints'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "name": {
@@ -133,39 +126,34 @@ export function datasetsCommand(): Command {
   },
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          name: 'name',
-          description: 'description',
-          datapoints: 'datapoints',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.datasets.create>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.create>[0];
-        } else {
-          request = {
-            ...(opts.name !== undefined && { name: opts.name }),
-            ...(opts.description !== undefined && { description: opts.description }),
-            ...(opts.datapoints !== undefined && { datapoints: parseJson(opts.datapoints) }),
-          } as Parameters<typeof client.datasets.create>[0];
-        }
-        const result = await client.datasets.create(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        name: 'name',
+        description: 'description',
+        datapoints: 'datapoints',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.datasets.create>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.create>[0];
+      } else {
+        request = {
+          ...(opts.name !== undefined && { name: opts.name }),
+          ...(opts.description !== undefined && { description: opts.description }),
+          ...(opts.datapoints !== undefined && { datapoints: parseJson(opts.datapoints) }),
+        } as Parameters<typeof client.datasets.create>[0];
+      }
+      const result = await client.datasets.create(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -192,14 +180,13 @@ export function datasetsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--dataset-id', 'datasetId'],
-          ['--name', 'name'],
-          ['--description', 'description'],
-          ['--datapoints', 'datapoints'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--dataset-id', 'datasetId'],
+        ['--name', 'name'],
+        ['--description', 'description'],
+        ['--datapoints', 'datapoints'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "dataset_id": {
@@ -227,42 +214,37 @@ export function datasetsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'dataset-id': 'dataset_id',
-          name: 'name',
-          description: 'description',
-          datapoints: 'datapoints',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.datasets.update>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.update>[0];
-        } else {
-          assertRequiredFields(opts, [['--dataset-id', 'datasetId']]);
-          request = {
-            dataset_id: opts.datasetId,
-            ...(opts.name !== undefined && { name: opts.name }),
-            ...(opts.description !== undefined && { description: opts.description }),
-            ...(opts.datapoints !== undefined && { datapoints: parseJson(opts.datapoints) }),
-          } as Parameters<typeof client.datasets.update>[0];
-        }
-        const result = await client.datasets.update(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'dataset-id': 'dataset_id',
+        name: 'name',
+        description: 'description',
+        datapoints: 'datapoints',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.datasets.update>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.update>[0];
+      } else {
+        assertRequiredFields(opts, [['--dataset-id', 'datasetId']]);
+        request = {
+          dataset_id: opts.datasetId,
+          ...(opts.name !== undefined && { name: opts.name }),
+          ...(opts.description !== undefined && { description: opts.description }),
+          ...(opts.datapoints !== undefined && { datapoints: parseJson(opts.datapoints) }),
+        } as Parameters<typeof client.datasets.update>[0];
+      }
+      const result = await client.datasets.update(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -286,9 +268,8 @@ export function datasetsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--dataset-id', 'datasetId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [['--dataset-id', 'datasetId']] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "dataset_id": {
@@ -301,36 +282,31 @@ export function datasetsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'dataset-id': 'dataset_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.datasets.delete>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.delete>[0];
-        } else {
-          assertRequiredFields(opts, [['--dataset-id', 'datasetId']]);
-          request = {
-            dataset_id: opts.datasetId,
-          } as Parameters<typeof client.datasets.delete>[0];
-        }
-        const result = await client.datasets.delete(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'dataset-id': 'dataset_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.datasets.delete>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.datasets.delete>[0];
+      } else {
+        assertRequiredFields(opts, [['--dataset-id', 'datasetId']]);
+        request = {
+          dataset_id: opts.datasetId,
+        } as Parameters<typeof client.datasets.delete>[0];
+      }
+      const result = await client.datasets.delete(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -356,13 +332,12 @@ export function datasetsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--dataset-id', 'datasetId'],
-          ['--data', 'data'],
-          ['--mapping', 'mapping'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--dataset-id', 'datasetId'],
+        ['--data', 'data'],
+        ['--mapping', 'mapping'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "dataset_id": {
@@ -412,46 +387,41 @@ export function datasetsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'dataset-id': 'dataset_id',
-          data: 'data',
-          mapping: 'mapping',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.datasets.addDatapoints>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.datasets.addDatapoints
-          >[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--dataset-id', 'datasetId'],
-            ['--data', 'data'],
-            ['--mapping', 'mapping'],
-          ]);
-          request = {
-            dataset_id: opts.datasetId,
-            data: parseJson(opts.data),
-            mapping: parseJson(opts.mapping),
-          } as Parameters<typeof client.datasets.addDatapoints>[0];
-        }
-        const result = await client.datasets.addDatapoints(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'dataset-id': 'dataset_id',
+        data: 'data',
+        mapping: 'mapping',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.datasets.addDatapoints>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<
+          typeof client.datasets.addDatapoints
+        >[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--dataset-id', 'datasetId'],
+          ['--data', 'data'],
+          ['--mapping', 'mapping'],
+        ]);
+        request = {
+          dataset_id: opts.datasetId,
+          data: parseJson(opts.data),
+          mapping: parseJson(opts.mapping),
+        } as Parameters<typeof client.datasets.addDatapoints>[0];
+      }
+      const result = await client.datasets.addDatapoints(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -473,12 +443,11 @@ export function datasetsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--dataset-id', 'datasetId'],
-          ['--datapoint-id', 'datapointId'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--dataset-id', 'datasetId'],
+        ['--datapoint-id', 'datapointId'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "dataset_id": {
@@ -496,43 +465,38 @@ export function datasetsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'dataset-id': 'dataset_id',
-          'datapoint-id': 'datapoint_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.datasets.removeDatapoint>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.datasets.removeDatapoint
-          >[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--dataset-id', 'datasetId'],
-            ['--datapoint-id', 'datapointId'],
-          ]);
-          request = {
-            dataset_id: opts.datasetId,
-            datapoint_id: opts.datapointId,
-          } as Parameters<typeof client.datasets.removeDatapoint>[0];
-        }
-        const result = await client.datasets.removeDatapoint(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'dataset-id': 'dataset_id',
+        'datapoint-id': 'datapoint_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.datasets.removeDatapoint>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<
+          typeof client.datasets.removeDatapoint
+        >[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--dataset-id', 'datasetId'],
+          ['--datapoint-id', 'datapointId'],
+        ]);
+        request = {
+          dataset_id: opts.datasetId,
+          datapoint_id: opts.datapointId,
+        } as Parameters<typeof client.datasets.removeDatapoint>[0];
+      }
+      const result = await client.datasets.removeDatapoint(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 

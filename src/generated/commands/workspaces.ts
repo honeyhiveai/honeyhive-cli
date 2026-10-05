@@ -46,15 +46,14 @@ export function workspacesCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--virtual-dataplane-id', 'virtualDataplaneId'],
-          ['--name', 'name'],
-          ['--slug', 'slug'],
-          ['--description', 'description'],
-          ['--workspace-creator', 'workspaceCreator'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--virtual-dataplane-id', 'virtualDataplaneId'],
+        ['--name', 'name'],
+        ['--slug', 'slug'],
+        ['--description', 'description'],
+        ['--workspace-creator', 'workspaceCreator'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "virtual_dataplane_id": {
@@ -84,51 +83,42 @@ export function workspacesCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'virtual-dataplane-id': 'virtual_dataplane_id',
-          name: 'name',
-          slug: 'slug',
-          description: 'description',
-          'workspace-creator': 'workspace_creator',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.workspaces.create>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.workspaces.create
-          >[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--virtual-dataplane-id', 'virtualDataplaneId'],
-            ['--name', 'name'],
-          ]);
-          request = {
-            virtual_dataplane_id: opts.virtualDataplaneId,
-            name: opts.name,
-            ...(opts.slug !== undefined && { slug: opts.slug }),
-            ...(opts.description !== undefined && { description: opts.description }),
-            ...(opts.workspaceCreator !== undefined && {
-              workspace_creator: opts.workspaceCreator,
-            }),
-          } as Parameters<typeof client.workspaces.create>[0];
-        }
-        const result = await client.workspaces.create(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'virtual-dataplane-id': 'virtual_dataplane_id',
+        name: 'name',
+        slug: 'slug',
+        description: 'description',
+        'workspace-creator': 'workspace_creator',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.workspaces.create>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.workspaces.create>[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--virtual-dataplane-id', 'virtualDataplaneId'],
+          ['--name', 'name'],
+        ]);
+        request = {
+          virtual_dataplane_id: opts.virtualDataplaneId,
+          name: opts.name,
+          ...(opts.slug !== undefined && { slug: opts.slug }),
+          ...(opts.description !== undefined && { description: opts.description }),
+          ...(opts.workspaceCreator !== undefined && { workspace_creator: opts.workspaceCreator }),
+        } as Parameters<typeof client.workspaces.create>[0];
+      }
+      const result = await client.workspaces.create(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -152,9 +142,8 @@ export function workspacesCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--workspace-id', 'workspaceId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [['--workspace-id', 'workspaceId']] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "workspace_id": {
@@ -167,36 +156,31 @@ export function workspacesCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'workspace-id': 'workspace_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.workspaces.get>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.workspaces.get>[0];
-        } else {
-          assertRequiredFields(opts, [['--workspace-id', 'workspaceId']]);
-          request = {
-            workspace_id: opts.workspaceId,
-          } as Parameters<typeof client.workspaces.get>[0];
-        }
-        const result = await client.workspaces.get(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'workspace-id': 'workspace_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.workspaces.get>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.workspaces.get>[0];
+      } else {
+        assertRequiredFields(opts, [['--workspace-id', 'workspaceId']]);
+        request = {
+          workspace_id: opts.workspaceId,
+        } as Parameters<typeof client.workspaces.get>[0];
+      }
+      const result = await client.workspaces.get(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -222,13 +206,12 @@ export function workspacesCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--workspace-id', 'workspaceId'],
-          ['--name', 'name'],
-          ['--description', 'description'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--workspace-id', 'workspaceId'],
+        ['--name', 'name'],
+        ['--description', 'description'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "workspace_id": {
@@ -249,42 +232,35 @@ export function workspacesCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'workspace-id': 'workspace_id',
-          name: 'name',
-          description: 'description',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.workspaces.update>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.workspaces.update
-          >[0];
-        } else {
-          assertRequiredFields(opts, [['--workspace-id', 'workspaceId']]);
-          request = {
-            workspace_id: opts.workspaceId,
-            ...(opts.name !== undefined && { name: opts.name }),
-            ...(opts.description !== undefined && { description: opts.description }),
-          } as Parameters<typeof client.workspaces.update>[0];
-        }
-        const result = await client.workspaces.update(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'workspace-id': 'workspace_id',
+        name: 'name',
+        description: 'description',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.workspaces.update>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.workspaces.update>[0];
+      } else {
+        assertRequiredFields(opts, [['--workspace-id', 'workspaceId']]);
+        request = {
+          workspace_id: opts.workspaceId,
+          ...(opts.name !== undefined && { name: opts.name }),
+          ...(opts.description !== undefined && { description: opts.description }),
+        } as Parameters<typeof client.workspaces.update>[0];
+      }
+      const result = await client.workspaces.update(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -313,13 +289,12 @@ export function workspacesCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--workspace-id', 'workspaceId'],
-          ['--dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
-          ['--no-dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--workspace-id', 'workspaceId'],
+        ['--dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
+        ['--no-dangerously-delete-child-scopes', 'dangerouslyDeleteChildScopes'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "workspace_id": {
@@ -336,42 +311,35 @@ export function workspacesCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'workspace-id': 'workspace_id',
-          'dangerously-delete-child-scopes': 'dangerously_delete_child_scopes',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.workspaces.delete>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<
-            typeof client.workspaces.delete
-          >[0];
-        } else {
-          assertRequiredFields(opts, [['--workspace-id', 'workspaceId']]);
-          request = {
-            workspace_id: opts.workspaceId,
-            ...(opts.dangerouslyDeleteChildScopes !== undefined && {
-              dangerously_delete_child_scopes: opts.dangerouslyDeleteChildScopes,
-            }),
-          } as Parameters<typeof client.workspaces.delete>[0];
-        }
-        const result = await client.workspaces.delete(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'workspace-id': 'workspace_id',
+        'dangerously-delete-child-scopes': 'dangerously_delete_child_scopes',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.workspaces.delete>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.workspaces.delete>[0];
+      } else {
+        assertRequiredFields(opts, [['--workspace-id', 'workspaceId']]);
+        request = {
+          workspace_id: opts.workspaceId,
+          ...(opts.dangerouslyDeleteChildScopes !== undefined && {
+            dangerously_delete_child_scopes: opts.dangerouslyDeleteChildScopes,
+          }),
+        } as Parameters<typeof client.workspaces.delete>[0];
+      }
+      const result = await client.workspaces.delete(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 

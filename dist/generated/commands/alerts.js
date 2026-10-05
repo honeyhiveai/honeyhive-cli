@@ -28,16 +28,15 @@ export function alertsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--project-id', 'projectId'],
-                ['--page', 'page'],
-                ['--limit', 'limit'],
-                ['--status', 'status'],
-                ['--sort-by', 'sortBy'],
-                ['--sort-order', 'sortOrder'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--page', 'page'],
+            ['--limit', 'limit'],
+            ['--status', 'status'],
+            ['--sort-by', 'sortBy'],
+            ['--sort-order', 'sortOrder'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -88,46 +87,40 @@ export function alertsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'project-id': 'project_id',
-                page: 'page',
-                limit: 'limit',
-                status: 'status',
-                'sort-by': 'sort_by',
-                'sort-order': 'sort_order',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [['--project-id', 'projectId']]);
-                request = {
-                    project_id: opts.projectId,
-                    ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
-                    ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
-                    ...(opts.status !== undefined && { status: opts.status }),
-                    ...(opts.sortBy !== undefined && { sort_by: opts.sortBy }),
-                    ...(opts.sortOrder !== undefined && { sort_order: opts.sortOrder }),
-                };
-            }
-            const result = await client.alerts.list(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
+            page: 'page',
+            limit: 'limit',
+            status: 'status',
+            'sort-by': 'sort_by',
+            'sort-order': 'sort_order',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [['--project-id', 'projectId']]);
+            request = {
+                project_id: opts.projectId,
+                ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
+                ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
+                ...(opts.status !== undefined && { status: opts.status }),
+                ...(opts.sortBy !== undefined && { sort_by: opts.sortBy }),
+                ...(opts.sortOrder !== undefined && { sort_order: opts.sortOrder }),
+            };
+        }
+        const result = await client.alerts.list(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -169,22 +162,21 @@ export function alertsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--project-id', 'projectId'],
-                ['--name', 'name'],
-                ['--description', 'description'],
-                ['--frequency', 'frequency'],
-                ['--minimum-sample-size', 'minimumSampleSize'],
-                ['--alert-type', 'alertType'],
-                ['--aggregation', 'aggregation'],
-                ['--thresholds', 'thresholds'],
-                ['--filters', 'filters'],
-                ['--projections', 'projections'],
-                ['--notification-details', 'notificationDetails'],
-                ['--status', 'status'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--name', 'name'],
+            ['--description', 'description'],
+            ['--frequency', 'frequency'],
+            ['--minimum-sample-size', 'minimumSampleSize'],
+            ['--alert-type', 'alertType'],
+            ['--aggregation', 'aggregation'],
+            ['--thresholds', 'thresholds'],
+            ['--filters', 'filters'],
+            ['--projections', 'projections'],
+            ['--notification-details', 'notificationDetails'],
+            ['--status', 'status'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -445,68 +437,62 @@ export function alertsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'project-id': 'project_id',
-                name: 'name',
-                description: 'description',
-                frequency: 'frequency',
-                'minimum-sample-size': 'minimum_sample_size',
-                'alert-type': 'alert_type',
-                aggregation: 'aggregation',
-                thresholds: 'thresholds',
-                filters: 'filters',
-                projections: 'projections',
-                'notification-details': 'notification_details',
-                status: 'status',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [
-                    ['--project-id', 'projectId'],
-                    ['--name', 'name'],
-                    ['--frequency', 'frequency'],
-                    ['--thresholds', 'thresholds'],
-                    ['--filters', 'filters'],
-                    ['--projections', 'projections'],
-                    ['--notification-details', 'notificationDetails'],
-                ]);
-                request = {
-                    project_id: opts.projectId,
-                    name: opts.name,
-                    ...(opts.description !== undefined && { description: opts.description }),
-                    frequency: opts.frequency,
-                    ...(opts.minimumSampleSize !== undefined && {
-                        minimum_sample_size: parseNumber(opts.minimumSampleSize),
-                    }),
-                    ...(opts.alertType !== undefined && { alert_type: opts.alertType }),
-                    ...(opts.aggregation !== undefined && { aggregation: opts.aggregation }),
-                    thresholds: parseJson(opts.thresholds),
-                    filters: parseJson(opts.filters),
-                    projections: parseJson(opts.projections),
-                    notification_details: parseJson(opts.notificationDetails),
-                    ...(opts.status !== undefined && { status: opts.status }),
-                };
-            }
-            const result = await client.alerts.create(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
+            name: 'name',
+            description: 'description',
+            frequency: 'frequency',
+            'minimum-sample-size': 'minimum_sample_size',
+            'alert-type': 'alert_type',
+            aggregation: 'aggregation',
+            thresholds: 'thresholds',
+            filters: 'filters',
+            projections: 'projections',
+            'notification-details': 'notification_details',
+            status: 'status',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [
+                ['--project-id', 'projectId'],
+                ['--name', 'name'],
+                ['--frequency', 'frequency'],
+                ['--thresholds', 'thresholds'],
+                ['--filters', 'filters'],
+                ['--projections', 'projections'],
+                ['--notification-details', 'notificationDetails'],
+            ]);
+            request = {
+                project_id: opts.projectId,
+                name: opts.name,
+                ...(opts.description !== undefined && { description: opts.description }),
+                frequency: opts.frequency,
+                ...(opts.minimumSampleSize !== undefined && {
+                    minimum_sample_size: parseNumber(opts.minimumSampleSize),
+                }),
+                ...(opts.alertType !== undefined && { alert_type: opts.alertType }),
+                ...(opts.aggregation !== undefined && { aggregation: opts.aggregation }),
+                thresholds: parseJson(opts.thresholds),
+                filters: parseJson(opts.filters),
+                projections: parseJson(opts.projections),
+                notification_details: parseJson(opts.notificationDetails),
+                ...(opts.status !== undefined && { status: opts.status }),
+            };
+        }
+        const result = await client.alerts.create(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd
@@ -518,12 +504,11 @@ export function alertsCommand() {
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        try {
-            const FIELD_FLAG_PAIRS = [
-                ['--project-id', 'projectId'],
-                ['--alert-id', 'alertId'],
-            ];
-            const FILE_SCHEMA_JSON = `{
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--alert-id', 'alertId'],
+        ];
+        const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -541,41 +526,35 @@ export function alertsCommand() {
   ],
   "additionalProperties": false
 }`;
-            const KEBAB_TO_SPEC = {
-                'project-id': 'project_id',
-                'alert-id': 'alert_id',
-            };
-            if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-                ['--filename', 'filename'],
-                ...FIELD_FLAG_PAIRS,
-            ])) {
-                return;
-            }
-            const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-            let request;
-            if (opts.filename !== undefined) {
-                assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-                request = readRequestFile(opts.filename);
-            }
-            else {
-                assertRequiredFields(opts, [
-                    ['--project-id', 'projectId'],
-                    ['--alert-id', 'alertId'],
-                ]);
-                request = {
-                    project_id: opts.projectId,
-                    alert_id: opts.alertId,
-                };
-            }
-            const result = await client.alerts.get(request);
-            if (result !== undefined) {
-                process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-            }
+        const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
+            'alert-id': 'alert_id',
+        };
+        if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+            ['--filename', 'filename'],
+            ...FIELD_FLAG_PAIRS,
+        ])) {
+            return;
         }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(message);
-            process.exit(1);
+        const client = createControlPlaneClient(command);
+        let request;
+        if (opts.filename !== undefined) {
+            assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+            request = readRequestFile(opts.filename);
+        }
+        else {
+            assertRequiredFields(opts, [
+                ['--project-id', 'projectId'],
+                ['--alert-id', 'alertId'],
+            ]);
+            request = {
+                project_id: opts.projectId,
+                alert_id: opts.alertId,
+            };
+        }
+        const result = await client.alerts.get(request);
+        if (result !== undefined) {
+            process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
     });
     cmd.action(() => {

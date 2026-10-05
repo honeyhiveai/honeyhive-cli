@@ -17,17 +17,58 @@ export function chartsCommand(): Command {
   cmd
     .command('list')
     .description('List charts')
-    .action(async (_opts: Record<string, unknown>, command: Command) => {
-      try {
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        const result = await client.charts.list();
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project whose charts are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
+    .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
+    )
+    .action(async (opts: Record<string, unknown>, command: Command) => {
+      const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']] as const;
+      const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose charts are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    }
+  },
+  "additionalProperties": false
+}`;
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.charts.list>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.charts.list>[0];
+      } else {
+        request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
+        } as Parameters<typeof client.charts.list>[0];
+      }
+      const result = await client.charts.list(request, {});
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -36,16 +77,22 @@ export function chartsCommand(): Command {
     .description('Create a new chart')
     .option('--name <value>', 'Display name for the chart (required)')
     .option('--metric <value>', 'Name of the metric to visualize (required)')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project the chart is created in. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
     .option('--description <value>', 'Description of what the chart shows')
     .option('--func <value>', 'Aggregation function to apply (e.g. sum, avg, median, min, max)')
     .option('--group-by <value>', 'Field to group results by')
     .addOption(
       new Option('--bucketing <value>', 'Time bucket granularity for aggregation').choices([
         'minute',
+        'five_minute',
         'hour',
         'day',
         'week',
         'month',
+        'auto',
       ]),
     )
     .option('--date-range <json>', 'Time range to query')
@@ -64,21 +111,25 @@ export function chartsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--name', 'name'],
-          ['--description', 'description'],
-          ['--metric', 'metric'],
-          ['--func', 'func'],
-          ['--group-by', 'groupBy'],
-          ['--bucketing', 'bucketing'],
-          ['--date-range', 'dateRange'],
-          ['--query', 'query'],
-          ['--owner-id', 'ownerId'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--name', 'name'],
+        ['--description', 'description'],
+        ['--metric', 'metric'],
+        ['--func', 'func'],
+        ['--group-by', 'groupBy'],
+        ['--bucketing', 'bucketing'],
+        ['--date-range', 'dateRange'],
+        ['--query', 'query'],
+        ['--owner-id', 'ownerId'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project the chart is created in. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "name": {
       "type": "string",
       "description": "Display name for the chart"
@@ -106,10 +157,12 @@ export function chartsCommand(): Command {
       "type": "string",
       "enum": [
         "minute",
+        "five_minute",
         "hour",
         "day",
         "week",
-        "month"
+        "month",
+        "auto"
       ],
       "description": "Time bucket granularity for aggregation",
       "default": "day"
@@ -199,55 +252,52 @@ export function chartsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          name: 'name',
-          description: 'description',
-          metric: 'metric',
-          func: 'func',
-          'group-by': 'groupBy',
-          bucketing: 'bucketing',
-          'date-range': 'dateRange',
-          query: 'query',
-          'owner-id': 'owner_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.charts.create>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.charts.create>[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--name', 'name'],
-            ['--metric', 'metric'],
-          ]);
-          request = {
-            name: opts.name,
-            ...(opts.description !== undefined && { description: opts.description }),
-            metric: opts.metric,
-            ...(opts.func !== undefined && { func: opts.func }),
-            ...(opts.groupBy !== undefined && { groupBy: opts.groupBy }),
-            ...(opts.bucketing !== undefined && { bucketing: opts.bucketing }),
-            ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
-            ...(opts.query !== undefined && { query: parseJson(opts.query) }),
-            ...(opts.ownerId !== undefined && { owner_id: opts.ownerId }),
-          } as Parameters<typeof client.charts.create>[0];
-        }
-        const result = await client.charts.create(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        name: 'name',
+        description: 'description',
+        metric: 'metric',
+        func: 'func',
+        'group-by': 'groupBy',
+        bucketing: 'bucketing',
+        'date-range': 'dateRange',
+        query: 'query',
+        'owner-id': 'owner_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.charts.create>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.charts.create>[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--name', 'name'],
+          ['--metric', 'metric'],
+        ]);
+        request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
+          name: opts.name,
+          ...(opts.description !== undefined && { description: opts.description }),
+          metric: opts.metric,
+          ...(opts.func !== undefined && { func: opts.func }),
+          ...(opts.groupBy !== undefined && { groupBy: opts.groupBy }),
+          ...(opts.bucketing !== undefined && { bucketing: opts.bucketing }),
+          ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
+          ...(opts.query !== undefined && { query: parseJson(opts.query) }),
+          ...(opts.ownerId !== undefined && { owner_id: opts.ownerId }),
+        } as Parameters<typeof client.charts.create>[0];
+      }
+      const result = await client.charts.create(request, {});
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -255,6 +305,10 @@ export function chartsCommand(): Command {
     .command('get')
     .description('Get a chart')
     .option('--chart-id <value>', 'The unique identifier of the chart to retrieve (required)')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project that owns the chart. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
     .option(
       '--show-file-schema',
       'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
@@ -268,11 +322,17 @@ export function chartsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--chart-id', 'chartId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--chart-id', 'chartId'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the chart. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "chart_id": {
       "type": "string",
       "description": "The unique identifier of the chart to retrieve"
@@ -283,36 +343,33 @@ export function chartsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'chart-id': 'chart_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.charts.get>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.charts.get>[0];
-        } else {
-          assertRequiredFields(opts, [['--chart-id', 'chartId']]);
-          request = {
-            chart_id: opts.chartId,
-          } as Parameters<typeof client.charts.get>[0];
-        }
-        const result = await client.charts.get(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        'chart-id': 'chart_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.charts.get>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.charts.get>[0];
+      } else {
+        assertRequiredFields(opts, [['--chart-id', 'chartId']]);
+        request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
+          chart_id: opts.chartId,
+        } as Parameters<typeof client.charts.get>[0];
+      }
+      const result = await client.charts.get(request, {});
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -320,6 +377,10 @@ export function chartsCommand(): Command {
     .command('update')
     .description('Update a chart')
     .option('--chart-id <value>', 'The unique identifier of the chart to update (required)')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project that owns the chart. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
     .option('--name <value>', 'Display name for the chart')
     .option('--description <value>', 'Description of what the chart shows')
     .option('--metric <value>', 'Name of the metric to visualize')
@@ -328,10 +389,12 @@ export function chartsCommand(): Command {
     .addOption(
       new Option('--bucketing <value>', 'Time bucket granularity for aggregation').choices([
         'minute',
+        'five_minute',
         'hour',
         'day',
         'week',
         'month',
+        'auto',
       ]),
     )
     .option('--date-range <json>', 'Time range to query')
@@ -350,22 +413,26 @@ export function chartsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--chart-id', 'chartId'],
-          ['--name', 'name'],
-          ['--description', 'description'],
-          ['--metric', 'metric'],
-          ['--func', 'func'],
-          ['--group-by', 'groupBy'],
-          ['--bucketing', 'bucketing'],
-          ['--date-range', 'dateRange'],
-          ['--query', 'query'],
-          ['--owner-id', 'ownerId'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--chart-id', 'chartId'],
+        ['--name', 'name'],
+        ['--description', 'description'],
+        ['--metric', 'metric'],
+        ['--func', 'func'],
+        ['--group-by', 'groupBy'],
+        ['--bucketing', 'bucketing'],
+        ['--date-range', 'dateRange'],
+        ['--query', 'query'],
+        ['--owner-id', 'ownerId'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the chart. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "chart_id": {
       "type": "string",
       "description": "The unique identifier of the chart to update"
@@ -397,10 +464,12 @@ export function chartsCommand(): Command {
       "type": "string",
       "enum": [
         "minute",
+        "five_minute",
         "hour",
         "day",
         "week",
-        "month"
+        "month",
+        "auto"
       ],
       "description": "Time bucket granularity for aggregation"
     },
@@ -488,54 +557,51 @@ export function chartsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'chart-id': 'chart_id',
-          name: 'name',
-          description: 'description',
-          metric: 'metric',
-          func: 'func',
-          'group-by': 'groupBy',
-          bucketing: 'bucketing',
-          'date-range': 'dateRange',
-          query: 'query',
-          'owner-id': 'owner_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.charts.update>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.charts.update>[0];
-        } else {
-          assertRequiredFields(opts, [['--chart-id', 'chartId']]);
-          request = {
-            chart_id: opts.chartId,
-            ...(opts.name !== undefined && { name: opts.name }),
-            ...(opts.description !== undefined && { description: opts.description }),
-            ...(opts.metric !== undefined && { metric: opts.metric }),
-            ...(opts.func !== undefined && { func: opts.func }),
-            ...(opts.groupBy !== undefined && { groupBy: opts.groupBy }),
-            ...(opts.bucketing !== undefined && { bucketing: opts.bucketing }),
-            ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
-            ...(opts.query !== undefined && { query: parseJson(opts.query) }),
-            ...(opts.ownerId !== undefined && { owner_id: opts.ownerId }),
-          } as Parameters<typeof client.charts.update>[0];
-        }
-        const result = await client.charts.update(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        'chart-id': 'chart_id',
+        name: 'name',
+        description: 'description',
+        metric: 'metric',
+        func: 'func',
+        'group-by': 'groupBy',
+        bucketing: 'bucketing',
+        'date-range': 'dateRange',
+        query: 'query',
+        'owner-id': 'owner_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.charts.update>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.charts.update>[0];
+      } else {
+        assertRequiredFields(opts, [['--chart-id', 'chartId']]);
+        request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
+          chart_id: opts.chartId,
+          ...(opts.name !== undefined && { name: opts.name }),
+          ...(opts.description !== undefined && { description: opts.description }),
+          ...(opts.metric !== undefined && { metric: opts.metric }),
+          ...(opts.func !== undefined && { func: opts.func }),
+          ...(opts.groupBy !== undefined && { groupBy: opts.groupBy }),
+          ...(opts.bucketing !== undefined && { bucketing: opts.bucketing }),
+          ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
+          ...(opts.query !== undefined && { query: parseJson(opts.query) }),
+          ...(opts.ownerId !== undefined && { owner_id: opts.ownerId }),
+        } as Parameters<typeof client.charts.update>[0];
+      }
+      const result = await client.charts.update(request, {});
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -543,6 +609,10 @@ export function chartsCommand(): Command {
     .command('delete')
     .description('Delete a chart')
     .option('--chart-id <value>', 'The unique identifier of the chart to delete (required)')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project that owns the chart. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
     .option(
       '--show-file-schema',
       'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
@@ -556,11 +626,17 @@ export function chartsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--chart-id', 'chartId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--chart-id', 'chartId'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the chart. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "chart_id": {
       "type": "string",
       "description": "The unique identifier of the chart to delete"
@@ -571,36 +647,33 @@ export function chartsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'chart-id': 'chart_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.charts.delete>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.charts.delete>[0];
-        } else {
-          assertRequiredFields(opts, [['--chart-id', 'chartId']]);
-          request = {
-            chart_id: opts.chartId,
-          } as Parameters<typeof client.charts.delete>[0];
-        }
-        const result = await client.charts.delete(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        'chart-id': 'chart_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.charts.delete>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.charts.delete>[0];
+      } else {
+        assertRequiredFields(opts, [['--chart-id', 'chartId']]);
+        request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
+          chart_id: opts.chartId,
+        } as Parameters<typeof client.charts.delete>[0];
+      }
+      const result = await client.charts.delete(request, {});
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 

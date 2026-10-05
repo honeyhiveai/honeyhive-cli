@@ -1,5 +1,23 @@
 # CLI Changelog
 
+## [1.8.0] - 2026-10-05
+
+### What's New
+- Added `--data-plane-api-key` and `HH_DATA_PLANE_API_KEY` for fine-grained data plane API keys (`hh_fgdp_...`). Create one in the HoneyHive app under project, workspace, or organization **Settings → API keys**, on the **Data Plane** tab.
+- Added `--project-id` to `charts list`, `charts create`, `charts get`, and `charts update`. With `--project-id`, the command calls the project-scoped route and authenticates with the data plane API key. Pass `--project-id` even when the key is rooted at that project. Without it, the command calls the legacy route with the project API key, even when a data plane key is configured. A project API key cannot stand in for a data plane key on the scoped route.
+- Added `data-plane-api-keys create`, which creates a data plane API key. It takes `--project-id`, `--name`, `--permissions` (a JSON array such as `["project.chart.get"]`), `--expires-at` (ISO 8601), and an optional `--description`.
+- Added `ingestion-api-keys create`, which creates an ingestion API key. It takes `--project-id`, `--name`, and an optional `--description`.
+- `charts create` and `charts update` now accept `five_minute` and `auto` for `--bucketing`.
+
+### Fixes & Improvements
+- An error for a missing API key now names the key the command needs and the flag and environment variable that supply it. For data plane and control plane keys, the error also says where in the app to create one. An error for a malformed key names the flag or environment variable the bad value came from.
+- `--verbose` on data plane commands now logs all three data plane keys (project, ingestion, and data plane), and prints `(none)` for any that are unset. A masked ingestion or fine-grained key shows its prefix and key id with the secret replaced by `******`, which matches the masked form in the HoneyHive app.
+
+### Compatibility & Deprecations
+- Calling `charts` commands without `--project-id` is deprecated. `--project-id` becomes required in the next major version. Pass it with a data plane API key.
+- The CLI now checks every typed key you have configured (ingestion, data plane, control plane) when a command starts, including keys that command does not use. A key of the wrong type or an incomplete key in `HH_INGESTION_API_KEY`, `HH_DATA_PLANE_API_KEY`, or the matching flag now fails the command before it sends a request. The error names the flag or environment variable that holds the bad value. Fix or unset the stale value.
+- The CLI no longer checks the format of the project API key (`--project-api-key` / `HH_PROJECT_API_KEY`) locally. It sends the value as given, and the server decides whether to accept it.
+
 ## [1.7.0] - 2026-09-22
 
 ### What's New

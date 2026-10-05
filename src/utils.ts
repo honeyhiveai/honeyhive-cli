@@ -1,334 +1,121 @@
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 
-import { Client as DataPlaneClient } from '@honeyhive/api-client';
-import { Client as ControlPlaneClient } from '@honeyhive/control-plane-sdk';
+import {
+  type ApiKeyKind as DataPlaneApiKeyKind,
+  Client as DataPlaneClient,
+  MalformedApiKeyError as DataPlaneMalformedApiKeyError,
+  MissingApiKeyError as DataPlaneMissingApiKeyError,
+} from '@honeyhive/api-client';
+import {
+  Client as ControlPlaneClient,
+  MalformedApiKeyError as ControlPlaneMalformedApiKeyError,
+  MissingApiKeyError as ControlPlaneMissingApiKeyError,
+} from '@honeyhive/control-plane-sdk';
 import { type Command } from 'commander';
 import { parse as parseJsonc, type ParseError, printParseErrorCode } from 'jsonc-parser';
 import { parse as parseYaml } from 'yaml';
 
-import {
-  type ControlPlaneSecurityScheme,
-  type DataPlaneSecurityScheme,
-} from './generated/security.js';
 import { CLI_VERSION } from './generated/version.js';
 
 const CLI_PACKAGE_NAME = '@honeyhive/cli';
 
 const SUPPORTED_FILE_EXTENSIONS = new Set<string>(['.json', '.jsonc', '.yaml', '.yml']);
 
-// ── Credential pre-flight ───────────────────────────────────────────────────
+// ── Key errors ──────────────────────────────────────────────────────────────
 //
-// Both planes take an API key, but they take *different* API keys, and the two
-// are easy to mix up because they share a prefix and arrive through
-// similar-looking flags and environment variables. Handing an API the wrong
-// kind of key gets a 404 that says nothing about which key was wrong, so the
-// CLI checks the kind locally before it ever opens a connection.
-//
-// Nothing here runs until a command actually needs a client: both factories are
-// called from inside a command's action body, so a data plane command never
-// looks at control plane credentials and vice versa.
+// Each SDK decides whether a key is usable: it throws `MalformedApiKeyError`
+// when a typed key is not a key of its kind, and `MissingApiKeyError` when a
+// call has no key it can use. The CLI only rewords those errors in terms of its
+// own flags; the decisions stay the SDK's.
 
 /**
- * Length of the secret that follows the prefix of a coarse-grained API key.
- *
- * Prefix plus this length is the API's entire recognition test for a
- * coarse-grained key, and the checks below reproduce exactly that test rather
- * than a stricter one, so the CLI can never reject a key the API would have
- * accepted. In particular there is no alphabet check on the secret, because the
- * API doesn't perform one either.
+ * Where the CLI takes each kind of data plane key from, and where in the app a
+ * missing or wrong key of that kind is created, when the kind has a sentence
+ * worth adding.
  */
-const COARSE_KEY_SECRET_LENGTH = 32;
-
-/**
- * A kind of HoneyHive API key, used both to decide whether a plane can accept a
- * given key and to tell the user what they appear to have supplied instead.
- */
-interface KeyKind {
-  /** The wire prefix, e.g. `hh_ro_`. */
-  readonly prefix: string;
-  /** Name for error messages, including its article, e.g. `a workspace API key`. */
-  readonly label: string;
-  /** Whether a value is a complete, well-formed key of this kind. */
-  readonly isWellFormed: (value: string) => boolean;
-}
-
-function coarseKeyKind(prefix: string, label: string): KeyKind {
-  return {
-    prefix,
-    label,
-    isWellFormed: (value) =>
-      value.startsWith(prefix) && value.length === prefix.length + COARSE_KEY_SECRET_LENGTH,
-  };
-}
-
-const PROJECT_KEY = coarseKeyKind('hh_', 'a project API key');
-const READONLY_PROJECT_KEY = coarseKeyKind('hh_ro_', 'a read-only project API key');
-const ORGANIZATION_KEY = coarseKeyKind('hh_org_', 'an organization API key');
-const WORKSPACE_KEY = coarseKeyKind('hh_ws_', 'a workspace API key');
-const COARSE_CONTROL_PLANE_KEY = coarseKeyKind('hh_cp_', 'a control plane API key');
-
-/**
- * A fine-grained control plane key is `hh_fgcp_<key id>_<key secret>`, where the
- * id is exactly 24 characters with `_` and `-` excluded so it can never read as
- * two segments, and the secret is exactly 64 characters over an alphabet that
- * does include them. Both lengths are fixed properties of the format.
- */
-const FINE_GRAINED_CONTROL_PLANE_KEY: KeyKind = {
-  prefix: 'hh_fgcp_',
-  label: 'a fine-grained control plane API key',
-  isWellFormed: (value) => /^hh_fgcp_[A-Za-z0-9]{24}_[A-Za-z0-9_-]{64}$/.test(value),
+const DATA_PLANE_KEY_SOURCES: Readonly<
+  Record<DataPlaneApiKeyKind, { noun: string; flag: string; envVar: string; remedy?: string }>
+> = {
+  project: { noun: 'project API key', flag: '--project-api-key', envVar: 'HH_PROJECT_API_KEY' },
+  ingestion: {
+    noun: 'ingestion API key',
+    flag: '--ingestion-api-key',
+    envVar: 'HH_INGESTION_API_KEY',
+  },
+  dataPlane: {
+    noun: 'data plane API key',
+    flag: '--data-plane-api-key',
+    envVar: 'HH_DATA_PLANE_API_KEY',
+    remedy:
+      'Create one in the HoneyHive app under project, workspace, or organization Settings → API keys, on the Data Plane tab.',
+  },
 };
 
-/**
- * An ingestion key is `hh_ingst_<key id>_<key secret>`, the same hashed-key
- * format as the fine-grained control plane key with its own prefix. It is the
- * credential for the operations that send traces and events, arriving through
- * `--ingestion-api-key` or `HH_INGESTION_API_KEY`; in a project key flag it is
- * named and refused.
- */
-const INGESTION_KEY: KeyKind = {
-  prefix: 'hh_ingst_',
-  label: 'an ingestion API key',
-  isWellFormed: (value) => /^hh_ingst_[A-Za-z0-9]{24}_[A-Za-z0-9_-]{64}$/.test(value),
-};
+const CONTROL_PLANE_KEY_FLAG = '--control-plane-api-key';
+const CONTROL_PLANE_KEY_ENV_VAR = 'HH_CONTROL_PLANE_API_KEY';
+
+// The scope matters and can't be dropped for brevity: the app has an "API keys"
+// page at project, workspace, and organization scope, and only the last two
+// mint control plane keys. Sending a reader to the unqualified path sends half
+// of them to the project page, which has no control plane keys to offer.
+const CONTROL_PLANE_KEY_REMEDY =
+  'Create one in the HoneyHive app under workspace or organization Settings → API keys.';
 
 /**
- * Every kind of key the CLI can recognize, longest prefix first so that
- * detection picks the most specific match. Kinds no plane below accepts are
- * listed anyway: recognizing them is what lets a rejection say "that looks like
- * an organization API key" instead of just "that isn't valid".
- *
- * The coarse-grained kinds are a closed set: fine-grained keys are replacing
- * them, so that list only ever shrinks. What will grow is the fine-grained
- * side, which is per-plane. A fine-grained data plane key with its own prefix
- * is the expected next one, and when it arrives it needs an entry here *and* a
- * place in the data plane's `accepts`, or a holder of a perfectly good key is
- * told their key doesn't match any shape. Nothing links this list to the
- * services that mint these keys, so that has to be done by hand.
+ * The CLI's wording for an SDK's missing-key error, naming the flag and the
+ * environment variable that supply the key, or `undefined` for any other error.
  */
-const ALL_KEY_KINDS: readonly KeyKind[] = [
-  INGESTION_KEY,
-  FINE_GRAINED_CONTROL_PLANE_KEY,
-  ORGANIZATION_KEY,
-  READONLY_PROJECT_KEY,
-  WORKSPACE_KEY,
-  COARSE_CONTROL_PLANE_KEY,
-  PROJECT_KEY,
-];
-
-/**
- * Every HoneyHive key value starts with this, coarse and fine-grained alike.
- * It is the one part of the format that holds across every kind and every
- * plane, so its absence is the only thing the CLI can say for certain about a
- * value it doesn't otherwise recognize: whatever it is, no HoneyHive API will
- * take it.
- */
-const HONEYHIVE_KEY_PREFIX = 'hh_';
-
-/** A flag a key can be passed through, and whatever the user passed to it. */
-interface KeyFlag {
-  readonly name: string;
-  readonly value: string | undefined;
-}
-
-/** What one plane needs in order to make a call, for the pre-flight below. */
-interface PlaneCredential {
-  /** How this plane's commands are described in errors, e.g. `Data plane commands`. */
-  readonly commandLabel: string;
-  /** What to call the credential in the missing-key error, e.g. `project API key`. */
-  readonly noun: string;
-  /**
-   * The flags this key can arrive on, preferred name first, then any deprecated
-   * aliases. Non-empty, and the head is the name errors advertise.
-   */
-  readonly flags: readonly [KeyFlag, ...KeyFlag[]];
-  /** The environment variables it can arrive in, same ordering rule. */
-  readonly envVars: readonly [string, ...string[]];
-  /** The kinds of key this plane's API admits, most common first. */
-  readonly accepts: readonly KeyKind[];
-  /** Guidance appended to a rejection, when there is something useful to say. */
-  readonly remedy?: string;
-  /**
-   * Whether the SDK that receives this credential treats a *flag* value as no
-   * value at all, in which case it reads the next source instead. Stated per
-   * credential because each SDK has its own rule and the pre-flight has to
-   * judge the value that SDK will actually use: approving a state the SDK then
-   * rejects produces an error naming a source the user did not choose.
-   *
-   * The rules, each mirroring one SDK expression:
-   *
-   * - Project key: no rule. The value is passed through as given, so an
-   *   explicitly empty flag reaches the SDK and fails its missing-key check.
-   * - Ingestion key: the api-client compares against the exact string `''`
-   *   *before* trimming, so a whitespace-only flag is a supplied value there
-   *   and fails the shape check. Only `''` is unset.
-   * - Control plane key: the control-plane SDK takes any `!== undefined`
-   *   option, so no flag value is ever unset; an empty one wins over a set
-   *   environment variable and fails the SDK's missing-key check.
-   *
-   * Environment variables are not covered: every SDK reads them through the
-   * same `getEnv`, where unset and empty-string are both no value, which the
-   * loop below applies uniformly.
-   */
-  readonly flagValueIsUnset?: (value: string) => boolean;
-}
-
-/** The api-client's rule for `ingestionApiKey`: the empty string, untrimmed. */
-function isEmptyString(value: string): boolean {
-  return value === '';
-}
-
-/**
- * Resolves the key the SDK is about to use, along with the name of where it
- * came from so an error can point at it. Every flag beats every environment
- * variable, which is the order both SDKs resolve in.
- *
- * The empty-string-is-unset rule for environment variables mirrors the SDKs'
- * shared `getEnv`, so this agrees with what they will do: `HH_PROJECT_API_KEY=""`
- * is "no key" on both sides. A flag is treated as supplied whenever it is
- * present, unless the credential's own {@link PlaneCredential.flagValueIsUnset}
- * says its SDK would skip it.
- *
- * Values are judged exactly as supplied. Every shape check downstream trims
- * before matching, so a whitespace-wrapped key passes both here and there.
- */
-function resolveApiKey(
-  credential: Pick<PlaneCredential, 'flags' | 'envVars' | 'flagValueIsUnset'>,
-): { value: string; source: string } | undefined {
-  for (const flag of credential.flags) {
-    if (flag.value !== undefined && !(credential.flagValueIsUnset?.(flag.value) ?? false)) {
-      return { value: flag.value, source: flag.name };
-    }
+export function describeMissingApiKey(error: unknown): string | undefined {
+  if (error instanceof DataPlaneMissingApiKeyError) {
+    const { noun, flag, envVar, remedy } = DATA_PLANE_KEY_SOURCES[error.keyKind];
+    // The sentence only takes a full stop when a remedy follows it, so a kind
+    // with nothing more to add keeps the message it has always had.
+    const remedySentence = remedy === undefined ? '' : `. ${remedy}`;
+    return `Missing ${noun}: provide ${flag} or set the ${envVar} environment variable${remedySentence}`;
   }
-  for (const envVar of credential.envVars) {
-    const value = process.env[envVar];
-    if (value !== undefined && value !== '') {
-      return { value, source: envVar };
-    }
+  if (error instanceof ControlPlaneMissingApiKeyError) {
+    return (
+      `Missing control plane API key: provide ${CONTROL_PLANE_KEY_FLAG} or set the ` +
+      `${CONTROL_PLANE_KEY_ENV_VAR} environment variable. ${CONTROL_PLANE_KEY_REMEDY}`
+    );
   }
   return undefined;
 }
 
 /**
- * The first credential in preference order that actually resolves, falling back
- * to the head when none does.
- *
- * This is how a compatibility fallback is expressed: an operation whose typed
- * key is absent is judged against the coarse key the API still accepts for it,
- * so the pre-flight always judges the credential the SDK will send. Falling
- * back to the head when nothing resolves makes the missing-key error name the
- * credential the command is *for*, rather than the one it tolerates.
- *
- * Delete a candidate from a call site when its API stops accepting that key.
+ * The CLI's wording for an SDK's malformed-key error, or `undefined` for any
+ * other error. A value from an environment variable keeps the SDK's message,
+ * which names the variable; a value from a flag reaches the SDK as an option,
+ * so its message is reworded to name the flag instead.
  */
-function preferredCredential(
-  ...candidates: readonly [PlaneCredential, ...PlaneCredential[]]
-): PlaneCredential {
-  return candidates.find((candidate) => resolveApiKey(candidate) !== undefined) ?? candidates[0];
-}
-
-/** `a project API key (hh_...) or a read-only project API key (hh_ro_...)`. */
-function describeAccepted(accepts: readonly KeyKind[]): string {
-  return accepts.map((kind) => `${kind.label} (${kind.prefix}...)`).join(' or ');
-}
-
-/**
- * Fails the command unless the plane has a key that could plausibly work.
- *
- * The rule is *reject what is known not to work*, never *accept only what is
- * known to work*, and the difference is the whole design. The CLI ships as a
- * pinned binary, and what the APIs accept is a moving target it can only mirror
- * by hand. An allowlist would mean that the day a new kind of key ships, every
- * installed copy refuses a perfectly good key and tells its holder to check for
- * a typo, with no fix but an upgrade. A denylist degrades the other way: the
- * worst an out-of-date copy does is skip a diagnostic and let the API answer.
- *
- * So there are three rejections, all exiting with code 1 (no return) to match
- * the rest of the helpers:
- *
- * - No key at all. The SDK would throw here too, but its message names the SDK
- *   option rather than the flag the user typed, so the CLI gets there first.
- * - A key of a kind this plane's API cannot accept. This is the case the whole
- *   pre-flight exists for: with two planes taking two kinds of key, they get
- *   mixed up, and the API's answer is a 404 that doesn't say which of the two
- *   was wrong.
- * - A value that isn't a HoneyHive key at all, which every API will refuse; see
- *   {@link HONEYHIVE_KEY_PREFIX}.
- *
- * What is deliberately *not* rejected is a value that carries the HoneyHive
- * prefix but matches no kind this build knows. That is either a mangled key or
- * a kind that shipped after this build did, and the CLI cannot tell which, so
- * it forwards the value and lets the API decide. Not even a warning: a warning
- * would fire on every command for the holder of a valid newer key, which is
- * noise printed against a credential that works.
- *
- * Note that this reads environment variables to *judge* a key, never to forward
- * one. The factories still pass only flag values to the SDK, so there is exactly
- * one resolver at runtime and no chance of the CLI and the SDK disagreeing about
- * which key is in play: each generated command names the security scheme its
- * operation declares, the factory judges the credential that scheme selects,
- * and the SDK sends that same credential.
- */
-function assertUsableApiKey(credential: PlaneCredential): void {
-  const { commandLabel, noun, flags, envVars, accepts, remedy } = credential;
-  const suffix = remedy === undefined ? '' : ` ${remedy}`;
-
-  const resolved = resolveApiKey(credential);
-  if (resolved === undefined) {
-    // Advertise the preferred names, never a deprecated alias: both lists put
-    // the name they want callers to use at the head. The sentence only takes a
-    // full stop when a remedy follows it, so a plane with nothing more to add
-    // keeps the message it has always had.
-    const remedySentence = remedy === undefined ? '' : `. ${remedy}`;
-    console.error(
-      `Missing ${noun}: provide ${flags[0].name} or set the ${envVars[0]} ` +
-        `environment variable${remedySentence}`,
-    );
-    process.exit(1);
+export function describeMalformedApiKey(error: unknown): string | undefined {
+  if (error instanceof DataPlaneMalformedApiKeyError) {
+    const { flag, envVar, remedy } = DATA_PLANE_KEY_SOURCES[error.keyKind];
+    const message = error.source === envVar ? error.message : error.messageFor(flag);
+    return remedy === undefined ? message : `${message} ${remedy}`;
   }
-
-  // Judged trimmed, because every shape check the value will meet downstream
-  // trims first: both SDKs' construction-time checks, and the APIs themselves.
-  // Judging the raw value would refuse a key those all accept.
-  const { source } = resolved;
-  const value = resolved.value.trim();
-  if (accepts.some((kind) => kind.isWellFormed(value))) {
-    return;
+  if (error instanceof ControlPlaneMalformedApiKeyError) {
+    const message =
+      error.source === CONTROL_PLANE_KEY_ENV_VAR
+        ? error.message
+        : error.messageFor(CONTROL_PLANE_KEY_FLAG);
+    return `${message} ${CONTROL_PLANE_KEY_REMEDY}`;
   }
-
-  const supplied = ALL_KEY_KINDS.find((kind) => kind.isWellFormed(value));
-  if (supplied !== undefined) {
-    console.error(
-      `${commandLabel} require ${describeAccepted(accepts)}. The key supplied via ` +
-        `${source} looks like ${supplied.label}.${suffix}`,
-    );
-    process.exit(1);
-  }
-  if (!value.startsWith(HONEYHIVE_KEY_PREFIX)) {
-    console.error(
-      `${commandLabel} require ${describeAccepted(accepts)}. The key supplied via ` +
-        `${source} is not a HoneyHive API key; every one of them starts with ` +
-        `${HONEYHIVE_KEY_PREFIX}.${suffix}`,
-    );
-    process.exit(1);
-  }
+  return undefined;
 }
 
 /**
- * Builds the data plane client for a generated command, after judging the
- * credential the command's operation will be sent with. `scheme` is the
- * security scheme the operation declares in the OpenAPI spec, baked into the
- * generated call.
+ * Builds the data plane client for a generated command. Only flag values are
+ * passed in; the SDK reads the environment variables itself and decides, per
+ * call, whether the command's operation has a key it can use.
  */
-export function createDataPlaneClient(
-  command: Command,
-  scheme: DataPlaneSecurityScheme,
-): DataPlaneClient {
+export function createDataPlaneClient(command: Command): DataPlaneClient {
   const globalOpts = command.optsWithGlobals<{
     projectApiKey?: string;
     apiKey?: string;
     ingestionApiKey?: string;
+    dataPlaneApiKey?: string;
     dataPlaneUrl?: string;
     baseUrl?: string;
     verbose?: boolean;
@@ -336,9 +123,8 @@ export function createDataPlaneClient(
 
   // Warn on any deprecated flag the user actually passed, even if its
   // replacement also wins resolution — we want callers to drop the old flag
-  // from their scripts. These warnings run BEFORE the missing-key check below
-  // so they still fire when the key is absent (e.g. `honeyhive --base-url X
-  // ...` with no key).
+  // from their scripts. These warnings run before the client is built, so they
+  // still fire when the command then fails for a missing key.
   //
   // The chassis (`console.warn`, `Warning: option "--<flag>" is deprecated
   // and will be removed in the next major version.`) matches the wording the
@@ -359,64 +145,6 @@ export function createDataPlaneClient(
     );
   }
 
-  // The key resolution order below mirrors the SDK's own, because the
-  // pre-flight has to judge the same value the SDK will use. Resolution for
-  // everything the CLI *forwards* still belongs to the SDK chassis: only flag
-  // values are passed into the constructor, and the URL isn't read from the
-  // environment here at all (the CLI passes --data-plane-url/--base-url and
-  // lets the SDK read HH_DATA_PLANE_URL/HH_API_URL). The HH_API_KEY
-  // deprecation warning likewise stays the SDK's to emit.
-  const projectKey: PlaneCredential = {
-    commandLabel: 'Data plane commands',
-    noun: 'project API key',
-    flags: [
-      { name: '--project-api-key', value: globalOpts.projectApiKey },
-      { name: '--api-key', value: globalOpts.apiKey },
-    ],
-    envVars: ['HH_PROJECT_API_KEY', 'HH_API_KEY'],
-    // Both project key kinds are accepted because the data plane accepts both.
-    // Whether a given key is *permitted* to run a given command is a separate
-    // question the CLI deliberately stays out of: a read-only key reaching a
-    // write command is refused by the API's permission gate, the same way an
-    // invalid id or a deleted resource is. Key *type* is a closed set the CLI
-    // can check exhaustively; permissions are an open one (a fine-grained key
-    // carries any combination of grants), and checking or documenting part of
-    // an open set implies coverage that cannot exist. Don't special-case the
-    // read-only kind here without a story for the rest of that set.
-    //
-    // The data plane also admits a workspace-scoped key, which is missing here
-    // on purpose: no such key can be minted today, because both mint routes gate
-    // on project scope. That makes this list agree with reality rather than with
-    // the server's actor list, and it keeps a credential nobody can hold out of
-    // the rejection message. If workspace-scoped minting ever opens, add the
-    // kind here or the CLI will refuse a key the API would have taken.
-    accepts: [PROJECT_KEY, READONLY_PROJECT_KEY],
-  };
-
-  // The credential for the operations that send traces and events. The
-  // ingestion endpoints still accept a project key while coarse-grained keys
-  // exist, and the SDK falls back to it when no ingestion key is configured,
-  // so the pre-flight below judges whichever of the two the SDK will send. The
-  // messages name only the ingestion key: it is the credential these commands
-  // are for, and the fallback is compatibility, not guidance.
-  const ingestionKey: PlaneCredential = {
-    commandLabel: 'Ingestion commands',
-    noun: 'ingestion API key',
-    flags: [{ name: '--ingestion-api-key', value: globalOpts.ingestionApiKey }],
-    envVars: ['HH_INGESTION_API_KEY'],
-    accepts: [INGESTION_KEY],
-    flagValueIsUnset: isEmptyString,
-  };
-
-  // Keyed by the schemes the data plane spec defines, so a scheme added to or
-  // removed from the spec fails to compile here until this table says which
-  // credential it takes.
-  const preflight: Record<DataPlaneSecurityScheme, PlaneCredential> = {
-    BearerAuth: projectKey,
-    IngestionApiKey: preferredCredential(ingestionKey, projectKey),
-  };
-  assertUsableApiKey(preflight[scheme]);
-
   const apiKeyFromFlags = globalOpts.projectApiKey ?? globalOpts.apiKey;
   const resolvedDataPlaneUrl = globalOpts.dataPlaneUrl ?? globalOpts.baseUrl;
 
@@ -424,6 +152,9 @@ export function createDataPlaneClient(
     ...(apiKeyFromFlags !== undefined && { projectApiKey: apiKeyFromFlags }),
     ...(globalOpts.ingestionApiKey !== undefined && {
       ingestionApiKey: globalOpts.ingestionApiKey,
+    }),
+    ...(globalOpts.dataPlaneApiKey !== undefined && {
+      dataPlaneApiKey: globalOpts.dataPlaneApiKey,
     }),
     ...(resolvedDataPlaneUrl !== undefined && { dataPlaneUrl: resolvedDataPlaneUrl }),
     ...(globalOpts.verbose !== undefined && { verbose: globalOpts.verbose }),
@@ -438,41 +169,15 @@ export function createDataPlaneClient(
  * The control plane counterpart of {@link createDataPlaneClient}. Kept as a
  * separate factory rather than one parameterized builder because the two planes
  * agree on almost nothing at this layer: different option names, different
- * environment variables, different accepted key kinds, and a set of deprecated
- * aliases that exists on one side only. The credential pre-flight is the part
- * they genuinely share, and that is shared.
+ * environment variables, and a set of deprecated aliases that exists on one
+ * side only.
  */
-export function createControlPlaneClient(
-  command: Command,
-  scheme: ControlPlaneSecurityScheme,
-): ControlPlaneClient {
+export function createControlPlaneClient(command: Command): ControlPlaneClient {
   const globalOpts = command.optsWithGlobals<{
     controlPlaneApiKey?: string;
     controlPlaneUrl?: string;
     verbose?: boolean;
   }>();
-
-  // One credential for the one scheme the control plane spec defines; keyed by
-  // scheme so a second scheme fails to compile here until it is given one.
-  const preflight: Record<ControlPlaneSecurityScheme, PlaneCredential> = {
-    ControlPlaneApiKey: {
-      commandLabel: 'Control plane commands',
-      noun: 'control plane API key',
-      flags: [{ name: '--control-plane-api-key', value: globalOpts.controlPlaneApiKey }],
-      envVars: ['HH_CONTROL_PLANE_API_KEY'],
-      accepts: [FINE_GRAINED_CONTROL_PLANE_KEY],
-      // The scope matters and can't be dropped for brevity: the app has an "API
-      // keys" page at project, workspace, and organization scope, and only the
-      // last two mint fine-grained keys. Sending a reader to the unqualified path
-      // sends half of them to the project page, which mints exactly the coarse
-      // key they were just told not to use.
-      remedy:
-        'Create one in the HoneyHive app under workspace or organization Settings → API keys.',
-      // No `flagValueIsUnset`: the control-plane SDK takes any defined option,
-      // so an empty flag is a supplied value there and must be judged as one.
-    },
-  };
-  assertUsableApiKey(preflight[scheme]);
 
   return new ControlPlaneClient({
     ...(globalOpts.controlPlaneApiKey !== undefined && { apiKey: globalOpts.controlPlaneApiKey }),

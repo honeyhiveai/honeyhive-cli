@@ -39,14 +39,13 @@ export function projectsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--workspace-id', 'workspaceId'],
-          ['--name', 'name'],
-          ['--description', 'description'],
-          ['--project-creator', 'projectCreator'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--workspace-id', 'workspaceId'],
+        ['--name', 'name'],
+        ['--description', 'description'],
+        ['--project-creator', 'projectCreator'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "workspace_id": {
@@ -72,45 +71,40 @@ export function projectsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'workspace-id': 'workspace_id',
-          name: 'name',
-          description: 'description',
-          'project-creator': 'project_creator',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.projects.create>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.projects.create>[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--workspace-id', 'workspaceId'],
-            ['--name', 'name'],
-          ]);
-          request = {
-            workspace_id: opts.workspaceId,
-            name: opts.name,
-            ...(opts.description !== undefined && { description: opts.description }),
-            ...(opts.projectCreator !== undefined && { project_creator: opts.projectCreator }),
-          } as Parameters<typeof client.projects.create>[0];
-        }
-        const result = await client.projects.create(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'workspace-id': 'workspace_id',
+        name: 'name',
+        description: 'description',
+        'project-creator': 'project_creator',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.projects.create>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.projects.create>[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--workspace-id', 'workspaceId'],
+          ['--name', 'name'],
+        ]);
+        request = {
+          workspace_id: opts.workspaceId,
+          name: opts.name,
+          ...(opts.description !== undefined && { description: opts.description }),
+          ...(opts.projectCreator !== undefined && { project_creator: opts.projectCreator }),
+        } as Parameters<typeof client.projects.create>[0];
+      }
+      const result = await client.projects.create(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -131,9 +125,8 @@ export function projectsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -146,36 +139,31 @@ export function projectsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'project-id': 'project_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.projects.get>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.projects.get>[0];
-        } else {
-          assertRequiredFields(opts, [['--project-id', 'projectId']]);
-          request = {
-            project_id: opts.projectId,
-          } as Parameters<typeof client.projects.get>[0];
-        }
-        const result = await client.projects.get(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.projects.get>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.projects.get>[0];
+      } else {
+        assertRequiredFields(opts, [['--project-id', 'projectId']]);
+        request = {
+          project_id: opts.projectId,
+        } as Parameters<typeof client.projects.get>[0];
+      }
+      const result = await client.projects.get(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -198,13 +186,12 @@ export function projectsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--project-id', 'projectId'],
-          ['--name', 'name'],
-          ['--description', 'description'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--name', 'name'],
+        ['--description', 'description'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -225,40 +212,35 @@ export function projectsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'project-id': 'project_id',
-          name: 'name',
-          description: 'description',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.projects.update>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.projects.update>[0];
-        } else {
-          assertRequiredFields(opts, [['--project-id', 'projectId']]);
-          request = {
-            project_id: opts.projectId,
-            ...(opts.name !== undefined && { name: opts.name }),
-            ...(opts.description !== undefined && { description: opts.description }),
-          } as Parameters<typeof client.projects.update>[0];
-        }
-        const result = await client.projects.update(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        name: 'name',
+        description: 'description',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.projects.update>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.projects.update>[0];
+      } else {
+        assertRequiredFields(opts, [['--project-id', 'projectId']]);
+        request = {
+          project_id: opts.projectId,
+          ...(opts.name !== undefined && { name: opts.name }),
+          ...(opts.description !== undefined && { description: opts.description }),
+        } as Parameters<typeof client.projects.update>[0];
+      }
+      const result = await client.projects.update(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -279,9 +261,8 @@ export function projectsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [['--project-id', 'projectId']] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "project_id": {
@@ -294,36 +275,31 @@ export function projectsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'project-id': 'project_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createControlPlaneClient(command, 'ControlPlaneApiKey');
-        let request: Parameters<typeof client.projects.delete>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.projects.delete>[0];
-        } else {
-          assertRequiredFields(opts, [['--project-id', 'projectId']]);
-          request = {
-            project_id: opts.projectId,
-          } as Parameters<typeof client.projects.delete>[0];
-        }
-        const result = await client.projects.delete(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createControlPlaneClient(command);
+      let request: Parameters<typeof client.projects.delete>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.projects.delete>[0];
+      } else {
+        assertRequiredFields(opts, [['--project-id', 'projectId']]);
+        request = {
+          project_id: opts.projectId,
+        } as Parameters<typeof client.projects.delete>[0];
+      }
+      const result = await client.projects.delete(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 

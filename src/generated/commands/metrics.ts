@@ -33,12 +33,11 @@ export function metricsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--type', 'type'],
-          ['--id', 'id'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--type', 'type'],
+        ['--id', 'id'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "type": {
@@ -52,37 +51,32 @@ export function metricsCommand(): Command {
   },
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          type: 'type',
-          id: 'id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metrics.list>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.list>[0];
-        } else {
-          request = {
-            ...(opts.type !== undefined && { type: opts.type }),
-            ...(opts.id !== undefined && { id: opts.id }),
-          } as Parameters<typeof client.metrics.list>[0];
-        }
-        const result = await client.metrics.list(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        type: 'type',
+        id: 'id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metrics.list>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.list>[0];
+      } else {
+        request = {
+          ...(opts.type !== undefined && { type: opts.type }),
+          ...(opts.id !== undefined && { id: opts.id }),
+        } as Parameters<typeof client.metrics.list>[0];
+      }
+      const result = await client.metrics.list(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -142,27 +136,26 @@ export function metricsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--name', 'name'],
-          ['--type', 'type'],
-          ['--criteria', 'criteria'],
-          ['--description', 'description'],
-          ['--return-type', 'returnType'],
-          ['--enabled-in-prod', 'enabledInProd'],
-          ['--no-enabled-in-prod', 'enabledInProd'],
-          ['--sampling-percentage', 'samplingPercentage'],
-          ['--model-provider', 'modelProvider'],
-          ['--model-name', 'modelName'],
-          ['--scale', 'scale'],
-          ['--threshold', 'threshold'],
-          ['--categories', 'categories'],
-          ['--needs-ground-truth', 'needsGroundTruth'],
-          ['--no-needs-ground-truth', 'needsGroundTruth'],
-          ['--child-metrics', 'childMetrics'],
-          ['--filters', 'filters'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--name', 'name'],
+        ['--type', 'type'],
+        ['--criteria', 'criteria'],
+        ['--description', 'description'],
+        ['--return-type', 'returnType'],
+        ['--enabled-in-prod', 'enabledInProd'],
+        ['--no-enabled-in-prod', 'enabledInProd'],
+        ['--sampling-percentage', 'samplingPercentage'],
+        ['--model-provider', 'modelProvider'],
+        ['--model-name', 'modelName'],
+        ['--scale', 'scale'],
+        ['--threshold', 'threshold'],
+        ['--categories', 'categories'],
+        ['--needs-ground-truth', 'needsGroundTruth'],
+        ['--no-needs-ground-truth', 'needsGroundTruth'],
+        ['--child-metrics', 'childMetrics'],
+        ['--filters', 'filters'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "name": {
@@ -392,84 +385,77 @@ export function metricsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          name: 'name',
-          type: 'type',
-          criteria: 'criteria',
-          description: 'description',
-          'return-type': 'return_type',
-          'enabled-in-prod': 'enabled_in_prod',
-          'sampling-percentage': 'sampling_percentage',
-          'model-provider': 'model_provider',
-          'model-name': 'model_name',
-          scale: 'scale',
-          threshold: 'threshold',
-          categories: 'categories',
-          'needs-ground-truth': 'needs_ground_truth',
-          'child-metrics': 'child_metrics',
-          filters: 'filters',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
+      const KEBAB_TO_SPEC = {
+        name: 'name',
+        type: 'type',
+        criteria: 'criteria',
+        description: 'description',
+        'return-type': 'return_type',
+        'enabled-in-prod': 'enabled_in_prod',
+        'sampling-percentage': 'sampling_percentage',
+        'model-provider': 'model_provider',
+        'model-name': 'model_name',
+        scale: 'scale',
+        threshold: 'threshold',
+        categories: 'categories',
+        'needs-ground-truth': 'needs_ground_truth',
+        'child-metrics': 'child_metrics',
+        filters: 'filters',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      if (opts.filename === undefined) {
+        if (opts.needsGroundTruth !== undefined) {
+          console.warn(
+            'Warning: option "--needs-ground-truth" is deprecated and will be removed in the next major version.',
+          );
         }
-        if (opts.filename === undefined) {
-          if (opts.needsGroundTruth !== undefined) {
-            console.warn(
-              'Warning: option "--needs-ground-truth" is deprecated and will be removed in the next major version.',
-            );
-          }
-          if (opts.childMetrics !== undefined) {
-            console.warn(
-              'Warning: option "--child-metrics" is deprecated and will be removed in the next major version.',
-            );
-          }
+        if (opts.childMetrics !== undefined) {
+          console.warn(
+            'Warning: option "--child-metrics" is deprecated and will be removed in the next major version.',
+          );
         }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metrics.create>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.create>[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--name', 'name'],
-            ['--type', 'type'],
-            ['--criteria', 'criteria'],
-          ]);
-          request = {
-            name: opts.name,
-            type: opts.type,
-            criteria: opts.criteria,
-            ...(opts.description !== undefined && { description: opts.description }),
-            ...(opts.returnType !== undefined && { return_type: opts.returnType }),
-            ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
-            ...(opts.samplingPercentage !== undefined && {
-              sampling_percentage: parseNumber(opts.samplingPercentage),
-            }),
-            ...(opts.modelProvider !== undefined && { model_provider: opts.modelProvider }),
-            ...(opts.modelName !== undefined && { model_name: opts.modelName }),
-            ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
-            ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
-            ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
-            ...(opts.needsGroundTruth !== undefined && {
-              needs_ground_truth: opts.needsGroundTruth,
-            }),
-            ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
-            ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-          } as Parameters<typeof client.metrics.create>[0];
-        }
-        const result = await client.metrics.create(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metrics.create>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.create>[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--name', 'name'],
+          ['--type', 'type'],
+          ['--criteria', 'criteria'],
+        ]);
+        request = {
+          name: opts.name,
+          type: opts.type,
+          criteria: opts.criteria,
+          ...(opts.description !== undefined && { description: opts.description }),
+          ...(opts.returnType !== undefined && { return_type: opts.returnType }),
+          ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
+          ...(opts.samplingPercentage !== undefined && {
+            sampling_percentage: parseNumber(opts.samplingPercentage),
+          }),
+          ...(opts.modelProvider !== undefined && { model_provider: opts.modelProvider }),
+          ...(opts.modelName !== undefined && { model_name: opts.modelName }),
+          ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
+          ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
+          ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
+          ...(opts.needsGroundTruth !== undefined && { needs_ground_truth: opts.needsGroundTruth }),
+          ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
+          ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
+        } as Parameters<typeof client.metrics.create>[0];
+      }
+      const result = await client.metrics.create(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -525,28 +511,27 @@ export function metricsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--metric-id', 'metricId'],
-          ['--name', 'name'],
-          ['--type', 'type'],
-          ['--criteria', 'criteria'],
-          ['--description', 'description'],
-          ['--return-type', 'returnType'],
-          ['--enabled-in-prod', 'enabledInProd'],
-          ['--no-enabled-in-prod', 'enabledInProd'],
-          ['--sampling-percentage', 'samplingPercentage'],
-          ['--model-provider', 'modelProvider'],
-          ['--model-name', 'modelName'],
-          ['--scale', 'scale'],
-          ['--threshold', 'threshold'],
-          ['--categories', 'categories'],
-          ['--needs-ground-truth', 'needsGroundTruth'],
-          ['--no-needs-ground-truth', 'needsGroundTruth'],
-          ['--child-metrics', 'childMetrics'],
-          ['--filters', 'filters'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--metric-id', 'metricId'],
+        ['--name', 'name'],
+        ['--type', 'type'],
+        ['--criteria', 'criteria'],
+        ['--description', 'description'],
+        ['--return-type', 'returnType'],
+        ['--enabled-in-prod', 'enabledInProd'],
+        ['--no-enabled-in-prod', 'enabledInProd'],
+        ['--sampling-percentage', 'samplingPercentage'],
+        ['--model-provider', 'modelProvider'],
+        ['--model-name', 'modelName'],
+        ['--scale', 'scale'],
+        ['--threshold', 'threshold'],
+        ['--categories', 'categories'],
+        ['--needs-ground-truth', 'needsGroundTruth'],
+        ['--no-needs-ground-truth', 'needsGroundTruth'],
+        ['--child-metrics', 'childMetrics'],
+        ['--filters', 'filters'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "metric_id": {
@@ -760,82 +745,75 @@ export function metricsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'metric-id': 'metric_id',
-          name: 'name',
-          type: 'type',
-          criteria: 'criteria',
-          description: 'description',
-          'return-type': 'return_type',
-          'enabled-in-prod': 'enabled_in_prod',
-          'sampling-percentage': 'sampling_percentage',
-          'model-provider': 'model_provider',
-          'model-name': 'model_name',
-          scale: 'scale',
-          threshold: 'threshold',
-          categories: 'categories',
-          'needs-ground-truth': 'needs_ground_truth',
-          'child-metrics': 'child_metrics',
-          filters: 'filters',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
+      const KEBAB_TO_SPEC = {
+        'metric-id': 'metric_id',
+        name: 'name',
+        type: 'type',
+        criteria: 'criteria',
+        description: 'description',
+        'return-type': 'return_type',
+        'enabled-in-prod': 'enabled_in_prod',
+        'sampling-percentage': 'sampling_percentage',
+        'model-provider': 'model_provider',
+        'model-name': 'model_name',
+        scale: 'scale',
+        threshold: 'threshold',
+        categories: 'categories',
+        'needs-ground-truth': 'needs_ground_truth',
+        'child-metrics': 'child_metrics',
+        filters: 'filters',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      if (opts.filename === undefined) {
+        if (opts.needsGroundTruth !== undefined) {
+          console.warn(
+            'Warning: option "--needs-ground-truth" is deprecated and will be removed in the next major version.',
+          );
         }
-        if (opts.filename === undefined) {
-          if (opts.needsGroundTruth !== undefined) {
-            console.warn(
-              'Warning: option "--needs-ground-truth" is deprecated and will be removed in the next major version.',
-            );
-          }
-          if (opts.childMetrics !== undefined) {
-            console.warn(
-              'Warning: option "--child-metrics" is deprecated and will be removed in the next major version.',
-            );
-          }
+        if (opts.childMetrics !== undefined) {
+          console.warn(
+            'Warning: option "--child-metrics" is deprecated and will be removed in the next major version.',
+          );
         }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metrics.update>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.update>[0];
-        } else {
-          assertRequiredFields(opts, [['--metric-id', 'metricId']]);
-          request = {
-            metric_id: opts.metricId,
-            ...(opts.name !== undefined && { name: opts.name }),
-            ...(opts.type !== undefined && { type: opts.type }),
-            ...(opts.criteria !== undefined && { criteria: opts.criteria }),
-            ...(opts.description !== undefined && { description: opts.description }),
-            ...(opts.returnType !== undefined && { return_type: opts.returnType }),
-            ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
-            ...(opts.samplingPercentage !== undefined && {
-              sampling_percentage: parseNumber(opts.samplingPercentage),
-            }),
-            ...(opts.modelProvider !== undefined && { model_provider: opts.modelProvider }),
-            ...(opts.modelName !== undefined && { model_name: opts.modelName }),
-            ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
-            ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
-            ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
-            ...(opts.needsGroundTruth !== undefined && {
-              needs_ground_truth: opts.needsGroundTruth,
-            }),
-            ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
-            ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
-          } as Parameters<typeof client.metrics.update>[0];
-        }
-        const result = await client.metrics.update(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metrics.update>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.update>[0];
+      } else {
+        assertRequiredFields(opts, [['--metric-id', 'metricId']]);
+        request = {
+          metric_id: opts.metricId,
+          ...(opts.name !== undefined && { name: opts.name }),
+          ...(opts.type !== undefined && { type: opts.type }),
+          ...(opts.criteria !== undefined && { criteria: opts.criteria }),
+          ...(opts.description !== undefined && { description: opts.description }),
+          ...(opts.returnType !== undefined && { return_type: opts.returnType }),
+          ...(opts.enabledInProd !== undefined && { enabled_in_prod: opts.enabledInProd }),
+          ...(opts.samplingPercentage !== undefined && {
+            sampling_percentage: parseNumber(opts.samplingPercentage),
+          }),
+          ...(opts.modelProvider !== undefined && { model_provider: opts.modelProvider }),
+          ...(opts.modelName !== undefined && { model_name: opts.modelName }),
+          ...(opts.scale !== undefined && { scale: parseNumber(opts.scale) }),
+          ...(opts.threshold !== undefined && { threshold: parseJson(opts.threshold) }),
+          ...(opts.categories !== undefined && { categories: parseJson(opts.categories) }),
+          ...(opts.needsGroundTruth !== undefined && { needs_ground_truth: opts.needsGroundTruth }),
+          ...(opts.childMetrics !== undefined && { child_metrics: parseJson(opts.childMetrics) }),
+          ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
+        } as Parameters<typeof client.metrics.update>[0];
+      }
+      const result = await client.metrics.update(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -856,9 +834,8 @@ export function metricsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [['--metric-id', 'metricId']] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [['--metric-id', 'metricId']] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "metric_id": {
@@ -871,36 +848,31 @@ export function metricsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          'metric-id': 'metric_id',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metrics.delete>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.delete>[0];
-        } else {
-          assertRequiredFields(opts, [['--metric-id', 'metricId']]);
-          request = {
-            metric_id: opts.metricId,
-          } as Parameters<typeof client.metrics.delete>[0];
-        }
-        const result = await client.metrics.delete(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        'metric-id': 'metric_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metrics.delete>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.delete>[0];
+      } else {
+        assertRequiredFields(opts, [['--metric-id', 'metricId']]);
+        request = {
+          metric_id: opts.metricId,
+        } as Parameters<typeof client.metrics.delete>[0];
+      }
+      const result = await client.metrics.delete(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 
@@ -922,12 +894,11 @@ export function metricsCommand(): Command {
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      try {
-        const FIELD_FLAG_PAIRS = [
-          ['--metric', 'metric'],
-          ['--event', 'event'],
-        ] as const;
-        const FILE_SCHEMA_JSON = `{
+      const FIELD_FLAG_PAIRS = [
+        ['--metric', 'metric'],
+        ['--event', 'event'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
     "metric": {
@@ -1195,41 +1166,36 @@ export function metricsCommand(): Command {
   ],
   "additionalProperties": false
 }`;
-        const KEBAB_TO_SPEC = {
-          metric: 'metric',
-          event: 'event',
-        } as const;
-        if (
-          handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
-            ['--filename', 'filename'],
-            ...FIELD_FLAG_PAIRS,
-          ])
-        ) {
-          return;
-        }
-        const client = createDataPlaneClient(command, 'BearerAuth');
-        let request: Parameters<typeof client.metrics.run>[0];
-        if (opts.filename !== undefined) {
-          assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
-          request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.run>[0];
-        } else {
-          assertRequiredFields(opts, [
-            ['--metric', 'metric'],
-            ['--event', 'event'],
-          ]);
-          request = {
-            metric: parseJson(opts.metric),
-            event: parseJson(opts.event),
-          } as Parameters<typeof client.metrics.run>[0];
-        }
-        const result = await client.metrics.run(request);
-        if (result !== undefined) {
-          process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(message);
-        process.exit(1);
+      const KEBAB_TO_SPEC = {
+        metric: 'metric',
+        event: 'event',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.metrics.run>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.run>[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--metric', 'metric'],
+          ['--event', 'event'],
+        ]);
+        request = {
+          metric: parseJson(opts.metric),
+          event: parseJson(opts.event),
+        } as Parameters<typeof client.metrics.run>[0];
+      }
+      const result = await client.metrics.run(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
     });
 

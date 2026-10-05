@@ -2,6 +2,7 @@
 import { program } from 'commander';
 import { registerCommands } from './generated/commands/index.js';
 import { CLI_VERSION } from './generated/version.js';
+import { describeMalformedApiKey, describeMissingApiKey } from './utils.js';
 program
     .name('honeyhive')
     .description('HoneyHive CLI')
@@ -9,6 +10,7 @@ program
     .option('--project-api-key <key>', 'Project API key (overrides HH_PROJECT_API_KEY env var)')
     .option('--api-key <key>', '(Deprecated, use --project-api-key) Project API key')
     .option('--ingestion-api-key <key>', 'Ingestion API key for sending traces and events (overrides HH_INGESTION_API_KEY env var)')
+    .option('--data-plane-api-key <key>', 'Fine-grained data plane API key (overrides HH_DATA_PLANE_API_KEY env var)')
     .option('--data-plane-url <url>', 'Data plane URL (overrides HH_DATA_PLANE_URL env var)')
     .option('--base-url <url>', '(Deprecated, use --data-plane-url) Data plane URL')
     .option('--control-plane-api-key <key>', 'Control plane API key (overrides HH_CONTROL_PLANE_API_KEY env var)')
@@ -22,7 +24,9 @@ program.action(() => {
     program.help();
 });
 program.parseAsync(process.argv).catch((err) => {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = describeMissingApiKey(err) ??
+        describeMalformedApiKey(err) ??
+        (err instanceof Error ? err.message : String(err));
     console.error(message);
     process.exit(1);
 });
