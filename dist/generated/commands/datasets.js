@@ -6,6 +6,7 @@ export function datasetsCommand() {
     cmd
         .command('list')
         .description('Get datasets')
+        .option('--project-id <value>', 'The unique identifier of the project whose datasets are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--dataset-id <value>', 'Unique dataset ID for filtering specific dataset')
         .option('--name <value>', 'Dataset name to filter by')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -13,12 +14,17 @@ export function datasetsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--dataset-id', 'datasetId'],
             ['--name', 'name'],
         ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose datasets are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "dataset_id": {
       "type": "string",
       "description": "Unique dataset ID for filtering specific dataset"
@@ -31,6 +37,7 @@ export function datasetsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'dataset-id': 'dataset_id',
             name: 'name',
         };
@@ -48,11 +55,12 @@ export function datasetsCommand() {
         }
         else {
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
                 ...(opts.name !== undefined && { name: opts.name }),
             };
         }
-        const result = await client.datasets.list(request);
+        const result = await client.datasets.list(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -60,6 +68,7 @@ export function datasetsCommand() {
     cmd
         .command('create')
         .description('Create a dataset')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--name <value>', 'Name of the dataset')
         .option('--description <value>', 'Description of the dataset')
         .option('--datapoints <json>', 'Initial datapoint IDs to include')
@@ -68,6 +77,7 @@ export function datasetsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--name', 'name'],
             ['--description', 'description'],
             ['--datapoints', 'datapoints'],
@@ -75,6 +85,10 @@ export function datasetsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "name": {
       "type": "string",
       "description": "Name of the dataset",
@@ -96,6 +110,7 @@ export function datasetsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             name: 'name',
             description: 'description',
             datapoints: 'datapoints',
@@ -114,12 +129,13 @@ export function datasetsCommand() {
         }
         else {
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 ...(opts.name !== undefined && { name: opts.name }),
                 ...(opts.description !== undefined && { description: opts.description }),
                 ...(opts.datapoints !== undefined && { datapoints: parseJson(opts.datapoints) }),
             };
         }
-        const result = await client.datasets.create(request);
+        const result = await client.datasets.create(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -128,6 +144,7 @@ export function datasetsCommand() {
         .command('update')
         .description('Update a dataset')
         .option('--dataset-id <value>', 'The unique identifier of the dataset to update like `663876ec4611c47f4970f0c3` (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--name <value>', 'New dataset name')
         .option('--description <value>', 'New dataset description')
         .option('--datapoints <json>', 'Updated list of datapoint IDs')
@@ -136,6 +153,7 @@ export function datasetsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--dataset-id', 'datasetId'],
             ['--name', 'name'],
             ['--description', 'description'],
@@ -144,6 +162,10 @@ export function datasetsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "dataset_id": {
       "type": "string",
       "description": "The unique identifier of the dataset to update like \`663876ec4611c47f4970f0c3\`"
@@ -170,6 +192,7 @@ export function datasetsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'dataset-id': 'dataset_id',
             name: 'name',
             description: 'description',
@@ -190,13 +213,14 @@ export function datasetsCommand() {
         else {
             assertRequiredFields(opts, [['--dataset-id', 'datasetId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 dataset_id: opts.datasetId,
                 ...(opts.name !== undefined && { name: opts.name }),
                 ...(opts.description !== undefined && { description: opts.description }),
                 ...(opts.datapoints !== undefined && { datapoints: parseJson(opts.datapoints) }),
             };
         }
-        const result = await client.datasets.update(request);
+        const result = await client.datasets.update(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -205,14 +229,22 @@ export function datasetsCommand() {
         .command('delete')
         .description('Delete a dataset')
         .option('--dataset-id <value>', 'The unique identifier of the dataset to be deleted like `663876ec4611c47f4970f0c3` (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        const FIELD_FLAG_PAIRS = [['--dataset-id', 'datasetId']];
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--dataset-id', 'datasetId'],
+        ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "dataset_id": {
       "type": "string",
       "description": "The unique identifier of the dataset to be deleted like \`663876ec4611c47f4970f0c3\`"
@@ -224,6 +256,7 @@ export function datasetsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'dataset-id': 'dataset_id',
         };
         if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
@@ -241,10 +274,11 @@ export function datasetsCommand() {
         else {
             assertRequiredFields(opts, [['--dataset-id', 'datasetId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 dataset_id: opts.datasetId,
             };
         }
-        const result = await client.datasets.delete(request);
+        const result = await client.datasets.delete(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -255,11 +289,13 @@ export function datasetsCommand() {
         .option('--dataset-id <value>', 'The unique identifier of the dataset to add datapoints to like  `663876ec4611c47f4970f0c3` (required)')
         .option('--data <json>', 'Array of datapoint data objects to add (required)')
         .option('--mapping <json>', 'mapping (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--dataset-id', 'datasetId'],
             ['--data', 'data'],
             ['--mapping', 'mapping'],
@@ -267,6 +303,10 @@ export function datasetsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "dataset_id": {
       "type": "string",
       "description": "The unique identifier of the dataset to add datapoints to like  \`663876ec4611c47f4970f0c3\`"
@@ -315,6 +355,7 @@ export function datasetsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'dataset-id': 'dataset_id',
             data: 'data',
             mapping: 'mapping',
@@ -338,12 +379,13 @@ export function datasetsCommand() {
                 ['--mapping', 'mapping'],
             ]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 dataset_id: opts.datasetId,
                 data: parseJson(opts.data),
                 mapping: parseJson(opts.mapping),
             };
         }
-        const result = await client.datasets.addDatapoints(request);
+        const result = await client.datasets.addDatapoints(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -353,17 +395,23 @@ export function datasetsCommand() {
         .description('Remove a datapoint from a dataset')
         .option('--dataset-id <value>', 'The unique identifier of the dataset (required)')
         .option('--datapoint-id <value>', 'The unique identifier of the datapoint to remove (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--dataset-id', 'datasetId'],
             ['--datapoint-id', 'datapointId'],
         ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the dataset. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "dataset_id": {
       "type": "string",
       "description": "The unique identifier of the dataset"
@@ -380,6 +428,7 @@ export function datasetsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'dataset-id': 'dataset_id',
             'datapoint-id': 'datapoint_id',
         };
@@ -401,11 +450,12 @@ export function datasetsCommand() {
                 ['--datapoint-id', 'datapointId'],
             ]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 dataset_id: opts.datasetId,
                 datapoint_id: opts.datapointId,
             };
         }
-        const result = await client.datasets.removeDatapoint(request);
+        const result = await client.datasets.removeDatapoint(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }

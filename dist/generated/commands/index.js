@@ -11,6 +11,7 @@ import { metricVersionsCommand } from './metric-versions.js';
 import { metricsCommand } from './metrics.js';
 import { projectsCommand } from './projects.js';
 import { sessionsCommand } from './sessions.js';
+import { usageCommand } from './usage.js';
 import { virtualDataplanesCommand } from './virtual-dataplanes.js';
 import { workspacesCommand } from './workspaces.js';
 export function registerCommands(program) {
@@ -28,5 +29,6 @@ export function registerCommands(program) {
     program.addCommand(workspacesCommand());
     program.addCommand(projectsCommand());
     program.addCommand(virtualDataplanesCommand());
+    program.addCommand(usageCommand());
 }
 //# sourceMappingURL=index.js.map

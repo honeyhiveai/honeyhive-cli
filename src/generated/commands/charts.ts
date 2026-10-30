@@ -677,6 +677,731 @@ export function chartsCommand(): Command {
       }
     });
 
+  cmd
+    .command('query')
+    .description('Run a chart query')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project whose events are queried (required)',
+    )
+    .option('--date-range <json>', 'date_range (required)')
+    .option('--query <json>', 'query (required)')
+    .option('--filters <json>', 'Implicit AND; default none')
+    .option('--product-filters <json>', 'product_filters')
+    .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
+    )
+    .action(async (opts: Record<string, unknown>, command: Command) => {
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--date-range', 'dateRange'],
+        ['--filters', 'filters'],
+        ['--product-filters', 'productFilters'],
+        ['--query', 'query'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose events are queried"
+    },
+    "date_range": {
+      "type": "object",
+      "properties": {
+        "start_time": {
+          "type": "string",
+          "description": "RFC 3339 start of the range (inclusive); Z or explicit offset"
+        },
+        "end_time": {
+          "type": "string",
+          "description": "RFC 3339 end of the range (exclusive); Z or explicit offset"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "IANA timezone name; defaults to UTC. Affects bucket alignment only."
+        }
+      },
+      "required": [
+        "start_time",
+        "end_time"
+      ],
+      "additionalProperties": false
+    },
+    "filters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "exists",
+              "not exists",
+              "is",
+              "is not",
+              "contains",
+              "not contains",
+              "greater than",
+              "less than",
+              "after",
+              "before"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "string",
+              "number",
+              "boolean",
+              "datetime"
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "operator",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Implicit AND; default none"
+    },
+    "product_filters": {
+      "type": "object",
+      "properties": {
+        "experiment_run_id": {
+          "type": "string",
+          "description": "Restrict to one experiment run"
+        },
+        "only_experiments": {
+          "type": "boolean",
+          "description": "Restrict to events belonging to any experiment run"
+        }
+      },
+      "additionalProperties": false
+    },
+    "query": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "time_series",
+              "description": "discriminator enum property added by openapi-typescript"
+            },
+            "bucket": {
+              "type": "object",
+              "properties": {
+                "interval": {
+                  "type": "string",
+                  "enum": [
+                    "auto",
+                    "1m",
+                    "5m",
+                    "1h",
+                    "1d",
+                    "1w",
+                    "1M"
+                  ],
+                  "description": "Bucket width; default auto"
+                },
+                "max_points": {
+                  "type": "number",
+                  "description": "Ceiling on bucket count when interval is auto; widens the resolved interval, never narrows it. Default 200, max 1000"
+                }
+              },
+              "additionalProperties": false
+            },
+            "split_by": {
+              "type": "string",
+              "description": "Groupable field; one series per value"
+            },
+            "measures": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Response handle for this measure; defaults to the metric name"
+                  },
+                  "metric": {
+                    "type": "string",
+                    "description": "Field name or intrinsic metric id"
+                  },
+                  "aggregation": {
+                    "type": "string",
+                    "enum": [
+                      "count",
+                      "avg",
+                      "sum",
+                      "min",
+                      "max",
+                      "median",
+                      "p50",
+                      "p75",
+                      "p90",
+                      "p95",
+                      "p99",
+                      "percentage_true",
+                      "percentage_false",
+                      "percentage_null"
+                    ],
+                    "description": "Omit for a registry default; must be omitted for intrinsic metrics"
+                  }
+                },
+                "required": [
+                  "metric"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Display-ordered measures, same unit; exactly one when split_by is set"
+            },
+            "split_ranking": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "number",
+                  "description": "Cap on ranked items; default 10, at most 50"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Rank order; default desc"
+                },
+                "include_other": {
+                  "type": "boolean",
+                  "description": "Roll everything below the cap into an \\"Other\\" item; additive measures only"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Caps the split_by dimension"
+            }
+          },
+          "required": [
+            "kind",
+            "measures"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "categorical",
+              "description": "discriminator enum property added by openapi-typescript"
+            },
+            "group_by": {
+              "type": "string",
+              "description": "Groupable field forming the axis"
+            },
+            "split_by": {
+              "type": "string",
+              "description": "Groupable field forming stacks/groups"
+            },
+            "measures": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Response handle for this measure; defaults to the metric name"
+                  },
+                  "metric": {
+                    "type": "string",
+                    "description": "Field name or intrinsic metric id"
+                  },
+                  "aggregation": {
+                    "type": "string",
+                    "enum": [
+                      "count",
+                      "avg",
+                      "sum",
+                      "min",
+                      "max",
+                      "median",
+                      "p50",
+                      "p75",
+                      "p90",
+                      "p95",
+                      "p99",
+                      "percentage_true",
+                      "percentage_false",
+                      "percentage_null"
+                    ],
+                    "description": "Omit for a registry default; must be omitted for intrinsic metrics"
+                  }
+                },
+                "required": [
+                  "metric"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Display-ordered measures, same unit; exactly one when split_by is set"
+            },
+            "ranking": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "number",
+                  "description": "Cap on ranked items; default 10, at most 50"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Rank order; default desc"
+                },
+                "include_other": {
+                  "type": "boolean",
+                  "description": "Roll everything below the cap into an \\"Other\\" item; additive measures only"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Caps the split_by dimension"
+            },
+            "split_ranking": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "type": "number",
+                  "description": "Cap on ranked items; default 10, at most 50"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "description": "Rank order; default desc"
+                },
+                "include_other": {
+                  "type": "boolean",
+                  "description": "Roll everything below the cap into an \\"Other\\" item; additive measures only"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Caps the split_by dimension"
+            }
+          },
+          "required": [
+            "kind",
+            "group_by",
+            "measures"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "scalar",
+              "description": "discriminator enum property added by openapi-typescript"
+            },
+            "measure": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Response handle for this measure; defaults to the metric name"
+                },
+                "metric": {
+                  "type": "string",
+                  "description": "Field name or intrinsic metric id"
+                },
+                "aggregation": {
+                  "type": "string",
+                  "enum": [
+                    "count",
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "median",
+                    "p50",
+                    "p75",
+                    "p90",
+                    "p95",
+                    "p99",
+                    "percentage_true",
+                    "percentage_false",
+                    "percentage_null"
+                  ],
+                  "description": "Omit for a registry default; must be omitted for intrinsic metrics"
+                }
+              },
+              "required": [
+                "metric"
+              ],
+              "additionalProperties": false
+            },
+            "comparison": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "previous_period",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false,
+              "description": "Delta baseline; default none"
+            },
+            "sparkline": {
+              "type": "object",
+              "properties": {
+                "interval": {
+                  "type": "string",
+                  "const": "auto"
+                },
+                "max_points": {
+                  "type": "number",
+                  "description": "Default 50; sparklines are small"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Omit for no sparkline — it is a second query, so it is opt-in"
+            }
+          },
+          "required": [
+            "kind",
+            "measure"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "histogram",
+              "description": "discriminator enum property added by openapi-typescript"
+            },
+            "metric": {
+              "type": "string",
+              "description": "Numeric field name; no aggregation"
+            },
+            "bins": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "const": "count"
+                },
+                "count": {
+                  "type": "number",
+                  "description": "Default 20, at most 200"
+                },
+                "min": {
+                  "type": "number",
+                  "description": "Lower edge; discovered from the data when omitted"
+                },
+                "max": {
+                  "type": "number",
+                  "description": "Upper edge; the p99 of the data when omitted, so one outlier cannot flatten the chart"
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "additionalProperties": false
+            },
+            "markers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "p50",
+                  "p75",
+                  "p90",
+                  "p95",
+                  "p99"
+                ]
+              },
+              "description": "Percentile lines to compute on the same scan; default none"
+            }
+          },
+          "required": [
+            "kind",
+            "metric"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "table",
+              "description": "discriminator enum property added by openapi-typescript"
+            },
+            "group_by": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Groupable fields forming row identity"
+            },
+            "measures": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Response handle for this measure; defaults to the metric name"
+                  },
+                  "metric": {
+                    "type": "string",
+                    "description": "Field name or intrinsic metric id"
+                  },
+                  "aggregation": {
+                    "type": "string",
+                    "enum": [
+                      "count",
+                      "avg",
+                      "sum",
+                      "min",
+                      "max",
+                      "median",
+                      "p50",
+                      "p75",
+                      "p90",
+                      "p95",
+                      "p99",
+                      "percentage_true",
+                      "percentage_false",
+                      "percentage_null"
+                    ],
+                    "description": "Omit for a registry default; must be omitted for intrinsic metrics"
+                  }
+                },
+                "required": [
+                  "metric"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Columns, in display order; units may differ"
+            },
+            "order_by": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "description": "A measure id or a group field; a measure wins if a name is both"
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ]
+                }
+              },
+              "required": [
+                "field"
+              ],
+              "additionalProperties": false,
+              "description": "Default: first measure, descending"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Default 50, at most 100"
+            }
+          },
+          "required": [
+            "kind",
+            "group_by",
+            "measures"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "scatter",
+              "description": "discriminator enum property added by openapi-typescript"
+            },
+            "group_by": {
+              "type": "string",
+              "description": "One groupable field forming point identity"
+            },
+            "x": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Response handle for this measure; defaults to the metric name"
+                },
+                "metric": {
+                  "type": "string",
+                  "description": "Field name or intrinsic metric id"
+                },
+                "aggregation": {
+                  "type": "string",
+                  "enum": [
+                    "count",
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "median",
+                    "p50",
+                    "p75",
+                    "p90",
+                    "p95",
+                    "p99",
+                    "percentage_true",
+                    "percentage_false",
+                    "percentage_null"
+                  ],
+                  "description": "Omit for a registry default; must be omitted for intrinsic metrics"
+                }
+              },
+              "required": [
+                "metric"
+              ],
+              "additionalProperties": false
+            },
+            "y": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Response handle for this measure; defaults to the metric name"
+                },
+                "metric": {
+                  "type": "string",
+                  "description": "Field name or intrinsic metric id"
+                },
+                "aggregation": {
+                  "type": "string",
+                  "enum": [
+                    "count",
+                    "avg",
+                    "sum",
+                    "min",
+                    "max",
+                    "median",
+                    "p50",
+                    "p75",
+                    "p90",
+                    "p95",
+                    "p99",
+                    "percentage_true",
+                    "percentage_false",
+                    "percentage_null"
+                  ],
+                  "description": "Omit for a registry default; must be omitted for intrinsic metrics"
+                }
+              },
+              "required": [
+                "metric"
+              ],
+              "additionalProperties": false
+            },
+            "limit": {
+              "type": "number",
+              "description": "Default 100, clamped to 500"
+            }
+          },
+          "required": [
+            "kind",
+            "group_by",
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": [
+    "project_id",
+    "date_range",
+    "query"
+  ],
+  "additionalProperties": false
+}`;
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        'date-range': 'date_range',
+        filters: 'filters',
+        'product-filters': 'product_filters',
+        query: 'query',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.charts.query>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<typeof client.charts.query>[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--project-id', 'projectId'],
+          ['--date-range', 'dateRange'],
+          ['--query', 'query'],
+        ]);
+        request = {
+          project_id: opts.projectId,
+          date_range: parseJson(opts.dateRange),
+          ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
+          ...(opts.productFilters !== undefined && {
+            product_filters: parseJson(opts.productFilters),
+          }),
+          query: parseJson(opts.query),
+        } as Parameters<typeof client.charts.query>[0];
+      }
+      const result = await client.charts.query(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+      }
+    });
+
   cmd.action(() => {
     if (!process.argv.includes('--help') && !process.argv.includes('-h')) {
       console.error('Error: subcommand is required\n');

@@ -11,9 +11,14 @@ The CLI is generated from the same OpenAPI specifications as the [TypeScript API
 ### macOS (Homebrew)
 
 ```sh
-brew tap honeyhiveai/tap
-brew install honeyhive
+brew install honeyhiveai/tap/honeyhive
 ```
+
+> **Note:** Homebrew 6.0.0 and later only load formulae from taps or formulae you have trusted. Installing by the full name, as above, trusts the formula. If `brew upgrade` stops upgrading the CLI, trust it once:
+>
+> ```sh
+> brew trust --formula honeyhiveai/tap/honeyhive
+> ```
 
 ### Linux (install script)
 
@@ -21,24 +26,24 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.8.0/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.9.0/install.sh | sh
 ```
 <!-- install-script-end -->
 
 > **Note:** Alpine and other musl-based Linux distributions are not supported. The CLI binary is dynamically linked against glibc (it embeds the official Node.js runtime), and musl is not ABI-compatible with glibc. The install script will succeed on Alpine, but the installed binary will fail to launch with `not found` (the kernel reporting that the glibc dynamic linker is missing). Use a glibc-based distribution such as Debian, Ubuntu, Fedora, or RHEL.
 
-Homebrew on Linux is also supported — if you already use Homebrew, the macOS commands above (`brew tap honeyhiveai/tap` then `brew install honeyhive`) work on Linux as well.
+Homebrew on Linux is also supported — if you already use Homebrew, the macOS command above (`brew install honeyhiveai/tap/honeyhive`) works on Linux as well.
 
 ## Authorization
 
 Both HoneyHive APIs authenticate requests using an API key sent as a Bearer token in the `Authorization` header. Each command selects its credential, supplied through an environment variable or a root-level flag:
 
-| Commands | Key | Environment variable | Flag |
+| Key | Environment variable | Flag | Used for |
 | --- | --- | --- | --- |
-| `charts` with `--project-id` | A fine-grained data plane API key (`hh_fgdp_...`) | `HH_DATA_PLANE_API_KEY` | `--data-plane-api-key` |
-| `sessions create`, `sessions create-event-batch`, `events create`, `events update`, `events create-batch` | An ingestion API key (`hh_ingst_...`) | `HH_INGESTION_API_KEY` | `--ingestion-api-key` |
-| Every other `sessions` and `events` command, `charts` without `--project-id`, and `metrics`, `metric-versions`, `datapoints`, `datasets`, `experiments` | A classic project API key (`hh_...`), or a read-only project API key (`hh_ro_...`) for reads | `HH_PROJECT_API_KEY` | `--project-api-key` |
-| `virtual-dataplanes`, `workspaces`, `projects`, `alerts` | A fine-grained control plane API key (`hh_fgcp_...`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` |
+| Data plane fine-grained (`hh_fgdp_`) | `HH_DATA_PLANE_API_KEY` | `--data-plane-api-key` | Data plane commands on a project-scoped route (`/v1/projects/{project_id}/...`). On a command with legacy and scoped routes, passing `--project-id` selects the scoped route |
+| Ingestion (`hh_ingst_`) | `HH_INGESTION_API_KEY` | `--ingestion-api-key` | Creating sessions and writing events |
+| Classic project (`hh_`, or `hh_ro_` for reads) | `HH_PROJECT_API_KEY` | `--project-api-key` | Other data plane commands, and ingestion when no ingestion key is set |
+| Control plane fine-grained (`hh_fgcp_`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` | Control plane commands: `virtual-dataplanes`, `workspaces`, `projects`, `alerts` |
 
 Configure the credentials needed by the commands you run. See [API Keys](https://docs.honeyhive.ai/v2/workspace/api-keys) to create them in the HoneyHive app.
 
@@ -48,7 +53,7 @@ The CLI checks the configured typed keys when it creates the client for a comman
 
 ### Data plane API key
 
-Set `HH_DATA_PLANE_API_KEY` to a complete `hh_fgdp_` key. Supported project-scoped commands currently cover charts. Pass `--project-id` even when the key is rooted at that project. This example requires `project.chart.list`:
+Set `HH_DATA_PLANE_API_KEY` to a complete `hh_fgdp_` key. Pass `--project-id` even when the key is rooted at that project. On a command with legacy and scoped routes, the `--help` description of `--project-id` ends "Pass it with a data plane API key." This example requires `project.chart.list`:
 
 ```sh
 export HH_DATA_PLANE_API_KEY="your-data-plane-key"
@@ -58,7 +63,7 @@ honeyhive charts list --project-id "$PROJECT_ID"
 
 Copy the project ID and data plane URL from **Settings > Project > API Keys > Data Plane**. Set `HH_DATA_PLANE_URL` if the URL differs from the default. You can also pass the key with `honeyhive --data-plane-api-key "$MY_DATA_PLANE_KEY" charts list --project-id "$PROJECT_ID"`.
 
-For commands with both legacy and scoped routes, `--project-id` selects the scoped route and data plane key. Without it, the command selects the legacy route and project key, even if a data plane key is configured. Legacy chart calls are deprecated. A project key cannot substitute for a data plane key on the scoped route. See the [credential matrix](https://docs.honeyhive.ai/v2/workspace/api-keys#using-a-data-plane-key).
+For commands with both legacy and scoped routes, `--project-id` selects the scoped route and data plane key. Without it, the command selects the legacy route and project key, even if a data plane key is configured. Omitting `--project-id` from such a command is deprecated. A project key cannot substitute for a data plane key on the scoped route. See the [credential matrix](https://docs.honeyhive.ai/v2/workspace/api-keys#using-a-data-plane-key).
 
 ### Environment variable (recommended)
 

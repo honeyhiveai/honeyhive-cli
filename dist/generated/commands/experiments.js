@@ -6,6 +6,7 @@ export function experimentsCommand() {
     cmd
         .command('list-runs')
         .description('Get a list of evaluation runs')
+        .option('--project-id <value>', 'The unique identifier of the project whose runs are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--dataset-id <value>', 'Filter by dataset ID')
         .option('--page <value>', 'Page number for pagination')
         .option('--limit <value>', 'Number of results per page')
@@ -31,6 +32,7 @@ export function experimentsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--dataset-id', 'datasetId'],
             ['--page', 'page'],
             ['--limit', 'limit'],
@@ -44,6 +46,10 @@ export function experimentsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose runs are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "dataset_id": {
       "type": "string",
       "description": "Filter by dataset ID"
@@ -126,6 +132,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'dataset-id': 'dataset_id',
             page: 'page',
             limit: 'limit',
@@ -150,6 +157,7 @@ export function experimentsCommand() {
         }
         else {
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 ...(opts.datasetId !== undefined && { dataset_id: opts.datasetId }),
                 ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
                 ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
@@ -161,7 +169,7 @@ export function experimentsCommand() {
                 ...(opts.sortOrder !== undefined && { sort_order: opts.sortOrder }),
             };
         }
-        const result = await client.experiments.listRuns(request);
+        const result = await client.experiments.listRuns(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -169,7 +177,8 @@ export function experimentsCommand() {
     cmd
         .command('create-run')
         .description('Create a new evaluation run')
-        .option('--run-id <value>', 'run_id')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
+        .option('--run-id <value>', "Optional client-generated UUID. A value that is not a valid UUID is replaced by a generated one; the response's run_id is authoritative.")
         .option('--name <value>', 'Experiment run display name')
         .option('--description <value>', 'description')
         .addOption(new Option('--status <value>', 'status').choices([
@@ -193,6 +202,7 @@ export function experimentsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--run-id', 'runId'],
             ['--name', 'name'],
             ['--description', 'description'],
@@ -210,8 +220,13 @@ export function experimentsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "run_id": {
-      "type": "string"
+      "type": "string",
+      "description": "Optional client-generated UUID. A value that is not a valid UUID is replaced by a generated one; the response's run_id is authoritative."
     },
     "name": {
       "type": "string",
@@ -294,6 +309,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'run-id': 'run_id',
             name: 'name',
             description: 'description',
@@ -322,6 +338,7 @@ export function experimentsCommand() {
         }
         else {
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 ...(opts.runId !== undefined && { run_id: opts.runId }),
                 ...(opts.name !== undefined && { name: opts.name }),
                 ...(opts.description !== undefined && { description: opts.description }),
@@ -339,7 +356,7 @@ export function experimentsCommand() {
                 }),
             };
         }
-        const result = await client.experiments.createRun(request);
+        const result = await client.experiments.createRun(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -347,15 +364,23 @@ export function experimentsCommand() {
     cmd
         .command('get-runs-schema')
         .description('Get events schema across all experiment runs in a project')
+        .option('--project-id <value>', 'The unique identifier of the project whose runs the schema covers. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--date-range <json>', 'Filter by date range')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        const FIELD_FLAG_PAIRS = [['--date-range', 'dateRange']];
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--date-range', 'dateRange'],
+        ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose runs the schema covers. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "dateRange": {
       "anyOf": [
         {
@@ -386,6 +411,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'date-range': 'dateRange',
         };
         if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
@@ -402,10 +428,11 @@ export function experimentsCommand() {
         }
         else {
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
             };
         }
-        const result = await client.experiments.getRunsSchema(request);
+        const result = await client.experiments.getRunsSchema(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -414,14 +441,22 @@ export function experimentsCommand() {
         .command('get-run')
         .description('Get details of an evaluation run')
         .option('--run-id <value>', 'run_id (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        const FIELD_FLAG_PAIRS = [['--run-id', 'runId']];
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--run-id', 'runId'],
+        ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "run_id": {
       "type": "string"
     }
@@ -432,6 +467,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'run-id': 'run_id',
         };
         if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
@@ -449,10 +485,11 @@ export function experimentsCommand() {
         else {
             assertRequiredFields(opts, [['--run-id', 'runId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 run_id: opts.runId,
             };
         }
-        const result = await client.experiments.getRun(request);
+        const result = await client.experiments.getRun(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -461,6 +498,7 @@ export function experimentsCommand() {
         .command('update-run')
         .description('Update an evaluation run')
         .option('--run-id <value>', 'run_id (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--name <value>', 'Experiment run display name')
         .option('--description <value>', 'description')
         .addOption(new Option('--status <value>', 'status').choices([
@@ -483,6 +521,7 @@ export function experimentsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--run-id', 'runId'],
             ['--name', 'name'],
             ['--description', 'description'],
@@ -499,6 +538,10 @@ export function experimentsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "run_id": {
       "type": "string"
     },
@@ -575,6 +618,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'run-id': 'run_id',
             name: 'name',
             description: 'description',
@@ -603,6 +647,7 @@ export function experimentsCommand() {
         else {
             assertRequiredFields(opts, [['--run-id', 'runId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 run_id: opts.runId,
                 ...(opts.name !== undefined && { name: opts.name }),
                 ...(opts.description !== undefined && { description: opts.description }),
@@ -619,7 +664,7 @@ export function experimentsCommand() {
                 }),
             };
         }
-        const result = await client.experiments.updateRun(request);
+        const result = await client.experiments.updateRun(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -628,14 +673,22 @@ export function experimentsCommand() {
         .command('delete-run')
         .description('Delete an evaluation run')
         .option('--run-id <value>', 'run_id (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
-        const FIELD_FLAG_PAIRS = [['--run-id', 'runId']];
+        const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
+            ['--run-id', 'runId'],
+        ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "run_id": {
       "type": "string"
     }
@@ -646,6 +699,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'run-id': 'run_id',
         };
         if (handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
@@ -663,10 +717,11 @@ export function experimentsCommand() {
         else {
             assertRequiredFields(opts, [['--run-id', 'runId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 run_id: opts.runId,
             };
         }
-        const result = await client.experiments.deleteRun(request);
+        const result = await client.experiments.deleteRun(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -675,18 +730,24 @@ export function experimentsCommand() {
         .command('get-run-schema')
         .description('Get events schema for a single experiment run')
         .option('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that holds the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--date-range <json>', 'Filter by date range')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--run-id', 'runId'],
             ['--date-range', 'dateRange'],
         ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that holds the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "run_id": {
       "type": "string",
       "description": "Experiment run ID (UUIDv4)"
@@ -724,6 +785,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'run-id': 'run_id',
             'date-range': 'dateRange',
         };
@@ -742,11 +804,12 @@ export function experimentsCommand() {
         else {
             assertRequiredFields(opts, [['--run-id', 'runId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 run_id: opts.runId,
                 ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
             };
         }
-        const result = await client.experiments.getRunSchema(request);
+        const result = await client.experiments.getRunSchema(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -755,6 +818,7 @@ export function experimentsCommand() {
         .command('get-run-metrics')
         .description('Get event metrics for an experiment run')
         .option('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that holds the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--date-range <value>', 'Date range filter as JSON string')
         .option('--filters <json>', 'Optional filters to apply (JSON string or array of filter objects)')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -762,6 +826,7 @@ export function experimentsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--run-id', 'runId'],
             ['--date-range', 'dateRange'],
             ['--filters', 'filters'],
@@ -769,6 +834,10 @@ export function experimentsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that holds the run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "run_id": {
       "type": "string",
       "description": "Experiment run ID (UUIDv4)"
@@ -801,6 +870,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'run-id': 'run_id',
             'date-range': 'dateRange',
             filters: 'filters',
@@ -820,12 +890,13 @@ export function experimentsCommand() {
         else {
             assertRequiredFields(opts, [['--run-id', 'runId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 run_id: opts.runId,
                 ...(opts.dateRange !== undefined && { dateRange: opts.dateRange }),
                 ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
             };
         }
-        const result = await client.experiments.getRunMetrics(request);
+        const result = await client.experiments.getRunMetrics(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -834,6 +905,7 @@ export function experimentsCommand() {
         .command('get-summary')
         .description('Retrieve experiment summary')
         .option('--run-id <value>', 'Experiment run ID (UUIDv4) (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that holds the experiment run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .addOption(new Option('--aggregate-function <value>', 'Aggregation function to apply to metrics').choices(['average', 'min', 'max', 'median', 'p95', 'p99', 'p90', 'sum', 'count']))
         .option('--filters <json>', 'Optional filters to apply (JSON string or array of filter objects)')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -841,6 +913,7 @@ export function experimentsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--run-id', 'runId'],
             ['--aggregate-function', 'aggregateFunction'],
             ['--filters', 'filters'],
@@ -848,6 +921,10 @@ export function experimentsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that holds the experiment run. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "run_id": {
       "type": "string",
       "description": "Experiment run ID (UUIDv4)"
@@ -891,6 +968,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'run-id': 'run_id',
             'aggregate-function': 'aggregate_function',
             filters: 'filters',
@@ -910,6 +988,7 @@ export function experimentsCommand() {
         else {
             assertRequiredFields(opts, [['--run-id', 'runId']]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 run_id: opts.runId,
                 ...(opts.aggregateFunction !== undefined && {
                     aggregate_function: opts.aggregateFunction,
@@ -917,7 +996,7 @@ export function experimentsCommand() {
                 ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
             };
         }
-        const result = await client.experiments.getSummary(request);
+        const result = await client.experiments.getSummary(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -927,6 +1006,7 @@ export function experimentsCommand() {
         .description('Retrieve experiment comparison')
         .option('--new-run-id <value>', 'New experiment run ID to compare (UUIDv4) (required)')
         .option('--old-run-id <value>', 'Old experiment run ID to compare against (UUIDv4) (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that holds both runs. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .addOption(new Option('--aggregate-function <value>', 'Aggregation function to apply to metrics').choices(['average', 'min', 'max', 'median', 'p95', 'p99', 'p90', 'sum', 'count']))
         .option('--filters <json>', 'Optional filters to apply (JSON string or array of filter objects)')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -934,6 +1014,7 @@ export function experimentsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--new-run-id', 'newRunId'],
             ['--old-run-id', 'oldRunId'],
             ['--aggregate-function', 'aggregateFunction'],
@@ -942,6 +1023,10 @@ export function experimentsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that holds both runs. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "new_run_id": {
       "type": "string",
       "description": "New experiment run ID to compare (UUIDv4)"
@@ -990,6 +1075,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'new-run-id': 'new_run_id',
             'old-run-id': 'old_run_id',
             'aggregate-function': 'aggregate_function',
@@ -1013,6 +1099,7 @@ export function experimentsCommand() {
                 ['--old-run-id', 'oldRunId'],
             ]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 new_run_id: opts.newRunId,
                 old_run_id: opts.oldRunId,
                 ...(opts.aggregateFunction !== undefined && {
@@ -1021,7 +1108,7 @@ export function experimentsCommand() {
                 ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
             };
         }
-        const result = await client.experiments.compareRuns(request);
+        const result = await client.experiments.compareRuns(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }
@@ -1031,6 +1118,7 @@ export function experimentsCommand() {
         .description('Compare events between two experiment runs')
         .option('--new-run-id <value>', 'New experiment run ID (UUIDv4) (required)')
         .option('--old-run-id <value>', 'Old experiment run ID to compare against (UUIDv4) (required)')
+        .option('--project-id <value>', 'The unique identifier of the project that holds both runs. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--event-name <value>', 'Filter by event name')
         .option('--event-type <value>', 'Filter by event type')
         .option('--filter <json>', 'Additional filter criteria (JSON string or object)')
@@ -1041,6 +1129,7 @@ export function experimentsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--new-run-id', 'newRunId'],
             ['--old-run-id', 'oldRunId'],
             ['--event-name', 'eventName'],
@@ -1052,6 +1141,10 @@ export function experimentsCommand() {
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that holds both runs. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "new_run_id": {
       "type": "string",
       "description": "New experiment run ID (UUIDv4)"
@@ -1098,6 +1191,7 @@ export function experimentsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             'new-run-id': 'new_run_id',
             'old-run-id': 'old_run_id',
             'event-name': 'event_name',
@@ -1124,6 +1218,7 @@ export function experimentsCommand() {
                 ['--old-run-id', 'oldRunId'],
             ]);
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 new_run_id: opts.newRunId,
                 old_run_id: opts.oldRunId,
                 ...(opts.eventName !== undefined && { event_name: opts.eventName }),
@@ -1133,7 +1228,7 @@ export function experimentsCommand() {
                 ...(opts.page !== undefined && { page: parseNumber(opts.page) }),
             };
         }
-        const result = await client.experiments.compareRunEvents(request);
+        const result = await client.experiments.compareRunEvents(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }

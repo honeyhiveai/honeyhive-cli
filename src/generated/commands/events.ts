@@ -267,6 +267,10 @@ Examples:
     .description('Get an event by ID')
     .option('--event-id <value>', 'The unique identifier of the event to retrieve (required)')
     .option(
+      '--project-id <value>',
+      'The unique identifier of the project that owns the event. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
+    .option(
       '--show-file-schema',
       'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
     )
@@ -279,10 +283,17 @@ Examples:
       'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
-      const FIELD_FLAG_PAIRS = [['--event-id', 'eventId']] as const;
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--event-id', 'eventId'],
+      ] as const;
       const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project that owns the event. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "event_id": {
       "type": "string",
       "description": "The unique identifier of the event to retrieve"
@@ -294,6 +305,7 @@ Examples:
   "additionalProperties": false
 }`;
       const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
         'event-id': 'event_id',
       } as const;
       if (
@@ -312,10 +324,11 @@ Examples:
       } else {
         assertRequiredFields(opts, [['--event-id', 'eventId']]);
         request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
           event_id: opts.eventId,
         } as Parameters<typeof client.events.get>[0];
       }
-      const result = await client.events.get(request);
+      const result = await client.events.get(request, {});
       if (result !== undefined) {
         process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }
@@ -519,6 +532,10 @@ Examples:
   cmd
     .command('search')
     .description('Retrieve events based on filters')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project whose events to search. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
     .option('--filters <json>', 'filters')
     .option('--date-range <json>', 'dateRange')
     .option('--limit <value>', 'Limit number of results (default 1000, max 1000)')
@@ -546,6 +563,7 @@ Examples:
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
         ['--filters', 'filters'],
         ['--date-range', 'dateRange'],
         ['--limit', 'limit'],
@@ -557,6 +575,10 @@ Examples:
       const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose events to search. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "filters": {
       "type": "array",
       "items": {
@@ -644,6 +666,7 @@ Examples:
   "additionalProperties": false
 }`;
       const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
         filters: 'filters',
         'date-range': 'dateRange',
         limit: 'limit',
@@ -666,6 +689,7 @@ Examples:
         request = readRequestFile(opts.filename) as Parameters<typeof client.events.search>[0];
       } else {
         request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
           ...(opts.filters !== undefined && { filters: parseJson(opts.filters) }),
           ...(opts.dateRange !== undefined && { dateRange: parseJson(opts.dateRange) }),
           ...(opts.limit !== undefined && { limit: parseNumber(opts.limit) }),
@@ -674,7 +698,7 @@ Examples:
           ...(opts.evaluationId !== undefined && { evaluation_id: opts.evaluationId }),
         } as Parameters<typeof client.events.search>[0];
       }
-      const result = await client.events.search(request);
+      const result = await client.events.search(request, {});
       if (result !== undefined) {
         process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }

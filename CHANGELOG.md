@@ -1,5 +1,21 @@
 # CLI Changelog
 
+## [1.9.0] - 2026-10-30
+
+### What's New
+- Added `usage get` and `usage current` for organization usage. `usage get` takes `--org-id`, `--start-date`, and `--end-date` (`YYYY-MM-DD` in UTC, end exclusive, 1 to 92 days after the start), plus optional `--group-by` (`workspace_id` or `project_id`). `usage current` takes `--org-id`. Both use a control plane API key (`--control-plane-api-key` / `HH_CONTROL_PLANE_API_KEY`).
+- Added `charts query`, which runs a chart query over a project's events. It takes `--project-id`, `--date-range`, and `--query`, plus optional `--filters` and `--product-filters`, and authenticates with a data plane API key.
+- Added `--project-id` to `datasets list`, `create`, `update`, `delete`, `add-datapoints`, and `remove-datapoint`. Also added it to `datapoints list`, `create`, `create-batch`, `get`, `update`, and `delete`, to every `experiments` command, and to `events get` and `events search`. With `--project-id`, the command calls the project-scoped route and authenticates with a data plane API key (`--data-plane-api-key` / `HH_DATA_PLANE_API_KEY`). Without it, the command calls the legacy route with the project API key, the same as before.
+
+### Fixes & Improvements
+- `datapoints create` with more than one dataset in `linked_datasets` now fails with a `400` that explains the problem. It used to fail with a `500`. A datapoint can link to one dataset only.
+
+### Compatibility & Deprecations
+- Calling the commands listed above without `--project-id` is deprecated. `--project-id` becomes required in the next major version. Pass it with a data plane API key.
+- `--linked-event` on `datapoints update` is deprecated and ignored, and now prints a deprecation warning. Set the linked event when you create the datapoint. The flag will be removed in the next major version.
+- The standalone binaries (Homebrew and direct downloads) now embed Node.js 24, which requires macOS 13.5 or newer. The Homebrew formula now requires macOS Ventura (13) or newer. `npm` and `npx` installs are unaffected.
+- Homebrew 6.0.0 and later load formulae only from taps or formulae you have trusted. Install with `brew install honeyhiveai/tap/honeyhive`, which trusts the formula. If `brew upgrade` stops upgrading the CLI, run `brew trust --formula honeyhiveai/tap/honeyhive` once. `npm`, `npx`, and install-script installs are unaffected.
+
 ## [1.8.0] - 2026-10-05
 
 ### What's New
