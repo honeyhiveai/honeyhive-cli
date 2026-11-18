@@ -22,7 +22,7 @@ export function virtualDataplanesCommand(): Command {
     )
     .option(
       '--name <value>',
-      'Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. (required)',
+      'Virtual dataplane display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space. (required)',
     )
     .option(
       '--slug <value>',
@@ -65,7 +65,7 @@ export function virtualDataplanesCommand(): Command {
     },
     "name": {
       "type": "string",
-      "description": "Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space."
+      "description": "Virtual dataplane display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space."
     },
     "slug": {
       "type": "string",
@@ -200,7 +200,7 @@ export function virtualDataplanesCommand(): Command {
     )
     .option(
       '--name <value>',
-      'Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space.',
+      'Virtual dataplane display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space.',
     )
     .option(
       '--show-file-schema',
@@ -228,7 +228,7 @@ export function virtualDataplanesCommand(): Command {
     },
     "name": {
       "type": "string",
-      "description": "Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space."
+      "description": "Virtual dataplane display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space."
     }
   },
   "required": [

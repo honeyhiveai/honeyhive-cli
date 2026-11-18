@@ -370,6 +370,171 @@ Examples:
 `,
     );
 
+  cmd
+    .command('create-deletion-request')
+    .description('Request deletion of sessions')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project the sessions belong to (required)',
+    )
+    .option(
+      '--session-ids <json>',
+      'The sessions to delete, by session id. Up to 1000. A session id that does not exist completes as a no-op, and a repeated id counts once. (required)',
+    )
+    .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
+    )
+    .action(async (opts: Record<string, unknown>, command: Command) => {
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--session-ids', 'sessionIds'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project the sessions belong to"
+    },
+    "session_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The sessions to delete, by session id. Up to 1000. A session id that does not exist completes as a no-op, and a repeated id counts once."
+    }
+  },
+  "required": [
+    "project_id",
+    "session_ids"
+  ],
+  "additionalProperties": false
+}`;
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        'session-ids': 'session_ids',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.sessions.createDeletionRequest>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<
+          typeof client.sessions.createDeletionRequest
+        >[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--project-id', 'projectId'],
+          ['--session-ids', 'sessionIds'],
+        ]);
+        request = {
+          project_id: opts.projectId,
+          session_ids: parseJson(opts.sessionIds),
+        } as Parameters<typeof client.sessions.createDeletionRequest>[0];
+      }
+      const result = await client.sessions.createDeletionRequest(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+      }
+    });
+
+  cmd
+    .command('get-deletion-request')
+    .description('Get a session deletion request')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project the request belongs to (required)',
+    )
+    .option(
+      '--deletion-request-id <value>',
+      'The unique identifier of the deletion request (required)',
+    )
+    .option(
+      '--show-file-schema',
+      'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '--show-argument-schema <flag-name>',
+      'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.',
+    )
+    .option(
+      '-f, --filename <path>',
+      'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.',
+    )
+    .action(async (opts: Record<string, unknown>, command: Command) => {
+      const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
+        ['--deletion-request-id', 'deletionRequestId'],
+      ] as const;
+      const FILE_SCHEMA_JSON = `{
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project the request belongs to"
+    },
+    "deletion_request_id": {
+      "type": "string",
+      "description": "The unique identifier of the deletion request"
+    }
+  },
+  "required": [
+    "project_id",
+    "deletion_request_id"
+  ],
+  "additionalProperties": false
+}`;
+      const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
+        'deletion-request-id': 'deletion_request_id',
+      } as const;
+      if (
+        handleSchemaIntrospection(opts, FILE_SCHEMA_JSON, KEBAB_TO_SPEC, [
+          ['--filename', 'filename'],
+          ...FIELD_FLAG_PAIRS,
+        ])
+      ) {
+        return;
+      }
+      const client = createDataPlaneClient(command);
+      let request: Parameters<typeof client.sessions.getDeletionRequest>[0];
+      if (opts.filename !== undefined) {
+        assertNoOtherFlags(opts, FIELD_FLAG_PAIRS, '--filename');
+        request = readRequestFile(opts.filename) as Parameters<
+          typeof client.sessions.getDeletionRequest
+        >[0];
+      } else {
+        assertRequiredFields(opts, [
+          ['--project-id', 'projectId'],
+          ['--deletion-request-id', 'deletionRequestId'],
+        ]);
+        request = {
+          project_id: opts.projectId,
+          deletion_request_id: opts.deletionRequestId,
+        } as Parameters<typeof client.sessions.getDeletionRequest>[0];
+      }
+      const result = await client.sessions.getDeletionRequest(request);
+      if (result !== undefined) {
+        process.stdout.write(JSON.stringify(result, null, 2) + '\n');
+      }
+    });
+
   cmd.action(() => {
     if (!process.argv.includes('--help') && !process.argv.includes('-h')) {
       console.error('Error: subcommand is required\n');

@@ -472,8 +472,8 @@ Examples:
         .option('--date-range <json>', 'dateRange')
         .option('--limit <value>', 'Limit number of results (default 1000, max 1000)')
         .option('--page <value>', 'Page number of results (default 1)')
-        .option('--ignore-order', 'Deprecated: accepted but ignored. Results are always ordered by start_time descending.')
-        .option('--no-ignore-order', 'Deprecated: accepted but ignored. Results are always ordered by start_time descending.')
+        .option('--ignore-order', 'If true, skip result ordering for faster queries. Results are otherwise ordered by start_time descending.')
+        .option('--no-ignore-order', 'If true, skip result ordering for faster queries. Results are otherwise ordered by start_time descending.')
         .option('--evaluation-id <value>', 'Filter by evaluation/experiment run ID')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
         .option('--show-argument-schema <flag-name>', 'Print the JSON Schema for one argument. Pass the kebab flag name without the leading "--" (e.g. "dataset-id", not "--dataset-id"). Cannot be combined with other command-specific flags.')
@@ -573,7 +573,7 @@ Examples:
     },
     "ignore_order": {
       "type": "boolean",
-      "description": "Deprecated: accepted but ignored. Results are always ordered by start_time descending."
+      "description": "If true, skip result ordering for faster queries. Results are otherwise ordered by start_time descending."
     },
     "evaluation_id": {
       "type": "string",

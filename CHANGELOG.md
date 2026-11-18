@@ -1,5 +1,19 @@
 # CLI Changelog
 
+## [1.10.0] - 2026-11-18
+
+### What's New
+- Added `evaluators` commands for managing evaluators: `create`, `list`, `get`, `replace`, `archive`, `list-versions`, `get-version`, `publish`, and `unpublish`. Every command needs `--project-id` and a data plane API key (`--data-plane-api-key` / `HH_DATA_PLANE_API_KEY`). `create` and `replace` take a JSON `--definition` or a complete request through `--filename`. `--publish` / `--no-publish` controls whether the saved version is published. Commands that select a version use `--resource-version`.
+- Added `sessions create-deletion-request`, which requests deletion of up to 1000 sessions in a project. It takes `--project-id` and `--session-ids` (a JSON array). A session ID that does not exist completes as a no-op.
+- Added `orgs get` and `orgs update`. `orgs update` changes the organization's display name with `--name`.
+- Added `org-members`, `workspace-members`, and `project-members`, each with `list`, `create` (invite by `--email`), `update`, and `delete`. `update` takes `--user-id` and `--role-names` as a JSON array, such as `["OrgAdmin"]`, which replaces the member's roles at that scope. `list` takes `--page` and `--limit`.
+- Added `roles get` and `roles update` for an organization's roles manifest, and `org-templates get`/`update` and `workspace-templates get`/`update` for template manifests. Each `update` takes the manifest as a YAML string in `--yaml-content`. To pass a file, use shell substitution, for example `--yaml-content "$(cat templates.yaml)"`.
+- All of the new `orgs`, `roles`, members, and templates commands run against the control plane. They use a control plane API key (`--control-plane-api-key` / `HH_CONTROL_PLANE_API_KEY`) and honor `--control-plane-url` / `HH_CONTROL_PLANE_URL`. The `roles` and member commands work only against a self-hosted control plane. The member commands return `404` on a deployment that uses SSO group-based membership.
+
+### Fixes & Improvements
+- `--ignore-order` on `events search` now skips result ordering, which makes queries faster. Before, the flag was accepted and ignored. Without the flag, results are still ordered by `start_time` descending.
+- The `--name` help text for `workspaces` and `virtual-dataplanes` commands now says that only the unaccented letters A-Z and a-z are allowed.
+
 ## [1.9.0] - 2026-10-30
 
 ### What's New

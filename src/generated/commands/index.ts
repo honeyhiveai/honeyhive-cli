@@ -7,15 +7,23 @@ import { chartsCommand } from './charts.js';
 import { dataPlaneApiKeysCommand } from './data-plane-api-keys.js';
 import { datapointsCommand } from './datapoints.js';
 import { datasetsCommand } from './datasets.js';
+import { evaluatorsCommand } from './evaluators.js';
 import { eventsCommand } from './events.js';
 import { experimentsCommand } from './experiments.js';
 import { ingestionApiKeysCommand } from './ingestion-api-keys.js';
 import { metricVersionsCommand } from './metric-versions.js';
 import { metricsCommand } from './metrics.js';
+import { orgMembersCommand } from './org-members.js';
+import { orgTemplatesCommand } from './org-templates.js';
+import { orgsCommand } from './orgs.js';
+import { projectMembersCommand } from './project-members.js';
 import { projectsCommand } from './projects.js';
+import { rolesCommand } from './roles.js';
 import { sessionsCommand } from './sessions.js';
 import { usageCommand } from './usage.js';
 import { virtualDataplanesCommand } from './virtual-dataplanes.js';
+import { workspaceMembersCommand } from './workspace-members.js';
+import { workspaceTemplatesCommand } from './workspace-templates.js';
 import { workspacesCommand } from './workspaces.js';
 
 export function registerCommands(program: Command): void {
@@ -24,6 +32,7 @@ export function registerCommands(program: Command): void {
   program.addCommand(chartsCommand());
   program.addCommand(dataPlaneApiKeysCommand());
   program.addCommand(ingestionApiKeysCommand());
+  program.addCommand(evaluatorsCommand());
   program.addCommand(metricsCommand());
   program.addCommand(metricVersionsCommand());
   program.addCommand(datapointsCommand());
@@ -32,6 +41,13 @@ export function registerCommands(program: Command): void {
   program.addCommand(alertsCommand());
   program.addCommand(workspacesCommand());
   program.addCommand(projectsCommand());
+  program.addCommand(projectMembersCommand());
+  program.addCommand(workspaceTemplatesCommand());
+  program.addCommand(workspaceMembersCommand());
+  program.addCommand(orgsCommand());
+  program.addCommand(rolesCommand());
+  program.addCommand(orgTemplatesCommand());
+  program.addCommand(orgMembersCommand());
   program.addCommand(virtualDataplanesCommand());
   program.addCommand(usageCommand());
 }

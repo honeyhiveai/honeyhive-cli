@@ -542,11 +542,11 @@ Examples:
     .option('--page <value>', 'Page number of results (default 1)')
     .option(
       '--ignore-order',
-      'Deprecated: accepted but ignored. Results are always ordered by start_time descending.',
+      'If true, skip result ordering for faster queries. Results are otherwise ordered by start_time descending.',
     )
     .option(
       '--no-ignore-order',
-      'Deprecated: accepted but ignored. Results are always ordered by start_time descending.',
+      'If true, skip result ordering for faster queries. Results are otherwise ordered by start_time descending.',
     )
     .option('--evaluation-id <value>', 'Filter by evaluation/experiment run ID')
     .option(
@@ -656,7 +656,7 @@ Examples:
     },
     "ignore_order": {
       "type": "boolean",
-      "description": "Deprecated: accepted but ignored. Results are always ordered by start_time descending."
+      "description": "If true, skip result ordering for faster queries. Results are otherwise ordered by start_time descending."
     },
     "evaluation_id": {
       "type": "string",

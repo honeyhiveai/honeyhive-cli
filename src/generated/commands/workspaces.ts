@@ -22,7 +22,7 @@ export function workspacesCommand(): Command {
     )
     .option(
       '--name <value>',
-      'Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. (required)',
+      'Workspace display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space. (required)',
     )
     .option(
       '--slug <value>',
@@ -62,7 +62,7 @@ export function workspacesCommand(): Command {
     },
     "name": {
       "type": "string",
-      "description": "Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space."
+      "description": "Workspace display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space."
     },
     "slug": {
       "type": "string",
@@ -190,7 +190,7 @@ export function workspacesCommand(): Command {
     .option('--workspace-id <value>', 'The unique identifier of the workspace to update (required)')
     .option(
       '--name <value>',
-      'Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space.',
+      'Workspace display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space.',
     )
     .option('--description <value>', 'Workspace description')
     .option(
@@ -220,7 +220,7 @@ export function workspacesCommand(): Command {
     },
     "name": {
       "type": "string",
-      "description": "Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space."
+      "description": "Workspace display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space."
     },
     "description": {
       "type": "string",

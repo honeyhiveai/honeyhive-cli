@@ -26,7 +26,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.9.0/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.10.0/install.sh | sh
 ```
 <!-- install-script-end -->
 
@@ -43,7 +43,7 @@ Both HoneyHive APIs authenticate requests using an API key sent as a Bearer toke
 | Data plane fine-grained (`hh_fgdp_`) | `HH_DATA_PLANE_API_KEY` | `--data-plane-api-key` | Data plane commands on a project-scoped route (`/v1/projects/{project_id}/...`). On a command with legacy and scoped routes, passing `--project-id` selects the scoped route |
 | Ingestion (`hh_ingst_`) | `HH_INGESTION_API_KEY` | `--ingestion-api-key` | Creating sessions and writing events |
 | Classic project (`hh_`, or `hh_ro_` for reads) | `HH_PROJECT_API_KEY` | `--project-api-key` | Other data plane commands, and ingestion when no ingestion key is set |
-| Control plane fine-grained (`hh_fgcp_`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` | Control plane commands: `virtual-dataplanes`, `workspaces`, `projects`, `alerts` |
+| Control plane fine-grained (`hh_fgcp_`) | `HH_CONTROL_PLANE_API_KEY` | `--control-plane-api-key` | Control plane commands: `orgs`, `org-members`, `org-templates`, `roles`, `usage`, `virtual-dataplanes`, `workspaces`, `workspace-members`, `workspace-templates`, `projects`, `project-members`, `alerts` |
 
 Configure the credentials needed by the commands you run. See [API Keys](https://docs.honeyhive.ai/v2/workspace/api-keys) to create them in the HoneyHive app.
 
@@ -64,6 +64,18 @@ honeyhive charts list --project-id "$PROJECT_ID"
 Copy the project ID and data plane URL from **Settings > Project > API Keys > Data Plane**. Set `HH_DATA_PLANE_URL` if the URL differs from the default. You can also pass the key with `honeyhive --data-plane-api-key "$MY_DATA_PLANE_KEY" charts list --project-id "$PROJECT_ID"`.
 
 For commands with both legacy and scoped routes, `--project-id` selects the scoped route and data plane key. Without it, the command selects the legacy route and project key, even if a data plane key is configured. Omitting `--project-id` from such a command is deprecated. A project key cannot substitute for a data plane key on the scoped route. See the [credential matrix](https://docs.honeyhive.ai/v2/workspace/api-keys#using-a-data-plane-key).
+
+### Evaluators
+
+Evaluator commands require a data plane fine-grained key and `--project-id`:
+
+```sh
+honeyhive evaluators list --project-id "$PROJECT_ID" --page 1 --limit 20
+honeyhive evaluators get-version --project-id "$PROJECT_ID" \
+  --evaluator-id-or-slug example-evaluator --resource-version 1
+```
+
+The namespace provides `create`, `list`, `get`, `replace`, `archive`, `list-versions`, `get-version`, `publish`, and `unpublish`. Version selectors use `--resource-version`; request files still use the API field `version`. Create/replace accept a JSON `--definition` or a complete request via `--filename`. Use `--publish` / `--no-publish` to control publication when saving.
 
 ### Environment variable (recommended)
 
@@ -104,7 +116,7 @@ Each API has its own default and its own override. To point at a self-hosted dep
 | Commands | Default | Environment variable | Flag |
 | --- | --- | --- | --- |
 | Data plane commands | `https://api.dp1.us.honeyhive.ai` | `HH_DATA_PLANE_URL` | `--data-plane-url` |
-| `virtual-dataplanes`, `workspaces`, `projects`, `alerts` | `https://api.cp.us.honeyhive.ai` | `HH_CONTROL_PLANE_URL` | `--control-plane-url` |
+| `orgs`, `org-members`, `org-templates`, `roles`, `usage`, `virtual-dataplanes`, `workspaces`, `workspace-members`, `workspace-templates`, `projects`, `project-members`, `alerts` | `https://api.cp.us.honeyhive.ai` | `HH_CONTROL_PLANE_URL` | `--control-plane-url` |
 
 ```sh
 export HH_DATA_PLANE_URL=https://honeyhive.example.com
@@ -114,6 +126,12 @@ honeyhive datasets list
 honeyhive --data-plane-url https://honeyhive.example.com datasets list
 honeyhive --control-plane-url https://cp.honeyhive.example.com projects get --project-id ...
 ```
+
+> **`roles` and member commands (self-hosted only):** the `roles`, `org-members`, `workspace-members` and `project-members` commands answer only on a self-hosted deployment, so set `HH_CONTROL_PLANE_URL` or `--control-plane-url` to its control plane. The member commands also answer 404 on a deployment that enables an SSO group scheme.
+
+> **Member roles:** `org-members update`, `workspace-members update` and `project-members update` take the roles as a JSON array, which replaces the member's roles at that scope: `honeyhive org-members update --org-id <org_id> --user-id <user_id> --role-names '["OrgAdmin"]'`.
+
+> **Manifest files:** `roles update`, `org-templates update` and `workspace-templates update` take the manifest as a string, so pass a file's contents with shell substitution: `honeyhive org-templates update --org-id <org_id> --yaml-content "$(cat templates.yaml)"`.
 
 > **Deprecated aliases:** the `--base-url` flag and the `HH_API_URL` environment variable are still accepted for the data plane URL but will be removed in the next major version. The `--base-url` flag logs a deprecation warning to stderr; the `HH_API_URL` environment variable logs one via the SDK. Migrate to `--data-plane-url` / `HH_DATA_PLANE_URL`. Neither alias applies to the control plane URL.
 
