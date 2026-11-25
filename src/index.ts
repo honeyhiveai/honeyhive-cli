@@ -10,8 +10,8 @@ program
   .name('honeyhive')
   .description('HoneyHive CLI')
   .version(CLI_VERSION)
-  .option('--project-api-key <key>', 'Project API key (overrides HH_PROJECT_API_KEY env var)')
-  .option('--api-key <key>', '(Deprecated, use --project-api-key) Project API key')
+  .option('--project-api-key <key>', 'Classic API key (overrides HH_PROJECT_API_KEY env var)')
+  .option('--api-key <key>', '(Deprecated, use --project-api-key) Classic API key')
   .option(
     '--ingestion-api-key <key>',
     'Ingestion API key for sending traces and events (overrides HH_INGESTION_API_KEY env var)',

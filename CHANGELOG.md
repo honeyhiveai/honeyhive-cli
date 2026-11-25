@@ -1,5 +1,16 @@
 # CLI Changelog
 
+## [1.11.0] - 2026-11-25
+
+### What's New
+- Added `--project-id` to `metrics list`. With `--project-id`, the command calls the project-scoped route and authenticates with a data plane API key (`--data-plane-api-key` / `HH_DATA_PLANE_API_KEY`). Without it, the command calls the legacy route with the classic API key, the same as before.
+
+### Fixes & Improvements
+- The key set by `--project-api-key` / `HH_PROJECT_API_KEY` is now called the classic API key in help text and missing-key errors. In `--verbose` output, its line now starts `Classic API key:` instead of `Project API key:`. The flag and environment variable names are unchanged.
+
+### Compatibility & Deprecations
+- Calling `metrics list` without `--project-id` is deprecated and prints a deprecation warning to stderr. `--project-id` becomes required in the next major version. Pass it with a data plane API key.
+
 ## [1.10.0] - 2026-11-18
 
 ### What's New

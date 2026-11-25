@@ -37,7 +37,7 @@ const SUPPORTED_FILE_EXTENSIONS = new Set<string>(['.json', '.jsonc', '.yaml', '
 const DATA_PLANE_KEY_SOURCES: Readonly<
   Record<DataPlaneApiKeyKind, { noun: string; flag: string; envVar: string; remedy?: string }>
 > = {
-  project: { noun: 'project API key', flag: '--project-api-key', envVar: 'HH_PROJECT_API_KEY' },
+  project: { noun: 'classic API key', flag: '--project-api-key', envVar: 'HH_PROJECT_API_KEY' },
   ingestion: {
     noun: 'ingestion API key',
     flag: '--ingestion-api-key',

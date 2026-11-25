@@ -18,6 +18,10 @@ export function metricsCommand(): Command {
   cmd
     .command('list')
     .description('List all metrics')
+    .option(
+      '--project-id <value>',
+      'The unique identifier of the project whose metrics are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.',
+    )
     .option('--type <value>', 'Filter by metric type')
     .option('--id <value>', 'Filter by specific metric ID')
     .option(
@@ -34,12 +38,17 @@ export function metricsCommand(): Command {
     )
     .action(async (opts: Record<string, unknown>, command: Command) => {
       const FIELD_FLAG_PAIRS = [
+        ['--project-id', 'projectId'],
         ['--type', 'type'],
         ['--id', 'id'],
       ] as const;
       const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose metrics are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "type": {
       "type": "string",
       "description": "Filter by metric type"
@@ -52,6 +61,7 @@ export function metricsCommand(): Command {
   "additionalProperties": false
 }`;
       const KEBAB_TO_SPEC = {
+        'project-id': 'project_id',
         type: 'type',
         id: 'id',
       } as const;
@@ -70,11 +80,12 @@ export function metricsCommand(): Command {
         request = readRequestFile(opts.filename) as Parameters<typeof client.metrics.list>[0];
       } else {
         request = {
+          ...(opts.projectId !== undefined && { project_id: opts.projectId }),
           ...(opts.type !== undefined && { type: opts.type }),
           ...(opts.id !== undefined && { id: opts.id }),
         } as Parameters<typeof client.metrics.list>[0];
       }
-      const result = await client.metrics.list(request);
+      const result = await client.metrics.list(request, {});
       if (result !== undefined) {
         process.stdout.write(JSON.stringify(result, null, 2) + '\n');
       }

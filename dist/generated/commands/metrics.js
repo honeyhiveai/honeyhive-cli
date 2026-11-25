@@ -6,6 +6,7 @@ export function metricsCommand() {
     cmd
         .command('list')
         .description('List all metrics')
+        .option('--project-id <value>', 'The unique identifier of the project whose metrics are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key.')
         .option('--type <value>', 'Filter by metric type')
         .option('--id <value>', 'Filter by specific metric ID')
         .option('--show-file-schema', 'Print the JSON Schema for the request body (the shape --filename accepts) and exit. Cannot be combined with other command-specific flags.')
@@ -13,12 +14,17 @@ export function metricsCommand() {
         .option('-f, --filename <path>', 'Read all arguments from a JSON-C or YAML file (.json/.jsonc/.yaml/.yml). Cannot be combined with other command-specific flags.')
         .action(async (opts, command) => {
         const FIELD_FLAG_PAIRS = [
+            ['--project-id', 'projectId'],
             ['--type', 'type'],
             ['--id', 'id'],
         ];
         const FILE_SCHEMA_JSON = `{
   "type": "object",
   "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "The unique identifier of the project whose metrics are listed. Omitting it is deprecated, and it becomes required in the next major version. Pass it with a data plane API key."
+    },
     "type": {
       "type": "string",
       "description": "Filter by metric type"
@@ -31,6 +37,7 @@ export function metricsCommand() {
   "additionalProperties": false
 }`;
         const KEBAB_TO_SPEC = {
+            'project-id': 'project_id',
             type: 'type',
             id: 'id',
         };
@@ -48,11 +55,12 @@ export function metricsCommand() {
         }
         else {
             request = {
+                ...(opts.projectId !== undefined && { project_id: opts.projectId }),
                 ...(opts.type !== undefined && { type: opts.type }),
                 ...(opts.id !== undefined && { id: opts.id }),
             };
         }
-        const result = await client.metrics.list(request);
+        const result = await client.metrics.list(request, {});
         if (result !== undefined) {
             process.stdout.write(JSON.stringify(result, null, 2) + '\n');
         }

@@ -26,7 +26,7 @@ The install script downloads the linux-x64 or linux-arm64 binary from the corres
 
 <!-- install-script-start -->
 ```sh
-curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.10.0/install.sh | sh
+curl -fsSL https://github.com/honeyhiveai/honeyhive-cli/releases/download/v1.11.0/install.sh | sh
 ```
 <!-- install-script-end -->
 
@@ -47,9 +47,9 @@ Both HoneyHive APIs authenticate requests using an API key sent as a Bearer toke
 
 Configure the credentials needed by the commands you run. See [API Keys](https://docs.honeyhive.ai/v2/workspace/api-keys) to create them in the HoneyHive app.
 
-> **Compatibility:** the ingestion commands still accept a project API key, so a shell that exports only `HH_PROJECT_API_KEY` keeps working. New setups should give ingestion its own key.
+> **Compatibility:** the ingestion commands still accept a classic API key, so a shell that exports only `HH_PROJECT_API_KEY` keeps working. New setups should give ingestion its own key.
 
-The CLI checks the configured typed keys when it creates the client for a command's plane. A wrong key type or incomplete value is rejected, even if that command does not use the key, with an error naming its flag or environment variable. A command with no usable credential stops before sending a request, naming the key it needs. The classic project-key option forwards its value without checking its format.
+The CLI checks the configured typed keys when it creates the client for a command's plane. A wrong key type or incomplete value is rejected, even if that command does not use the key, with an error naming its flag or environment variable. A command with no usable credential stops before sending a request, naming the key it needs. The classic-key option forwards its value without checking its format.
 
 ### Data plane API key
 
@@ -63,7 +63,7 @@ honeyhive charts list --project-id "$PROJECT_ID"
 
 Copy the project ID and data plane URL from **Settings > Project > API Keys > Data Plane**. Set `HH_DATA_PLANE_URL` if the URL differs from the default. You can also pass the key with `honeyhive --data-plane-api-key "$MY_DATA_PLANE_KEY" charts list --project-id "$PROJECT_ID"`.
 
-For commands with both legacy and scoped routes, `--project-id` selects the scoped route and data plane key. Without it, the command selects the legacy route and project key, even if a data plane key is configured. Omitting `--project-id` from such a command is deprecated. A project key cannot substitute for a data plane key on the scoped route. See the [credential matrix](https://docs.honeyhive.ai/v2/workspace/api-keys#using-a-data-plane-key).
+For commands with both legacy and scoped routes, `--project-id` selects the scoped route and data plane key. Without it, the command selects the legacy route and classic key, even if a data plane key is configured. Omitting `--project-id` from such a command is deprecated. A classic key cannot substitute for a data plane key on the scoped route. See the [credential matrix](https://docs.honeyhive.ai/v2/workspace/api-keys#using-a-data-plane-key).
 
 ### Evaluators
 
@@ -107,7 +107,7 @@ honeyhive --data-plane-api-key "$MY_DATA_PLANE_KEY" charts list --project-id "$P
 honeyhive --control-plane-api-key "$MY_HONEYHIVE_CP_KEY" projects get --project-id ...
 ```
 
-> **Deprecated aliases:** the `--api-key` flag and the `HH_API_KEY` environment variable are still accepted for the project API key but will be removed in the next major version. The `--api-key` flag logs a deprecation warning to stderr; the `HH_API_KEY` environment variable logs one via the SDK. Migrate to `--project-api-key` / `HH_PROJECT_API_KEY`. Neither alias applies to the control plane key.
+> **Deprecated aliases:** the `--api-key` flag and the `HH_API_KEY` environment variable are still accepted for the classic API key but will be removed in the next major version. The `--api-key` flag logs a deprecation warning to stderr; the `HH_API_KEY` environment variable logs one via the SDK. Migrate to `--project-api-key` / `HH_PROJECT_API_KEY`. Neither alias applies to the control plane key.
 
 ## API URLs
 
@@ -142,7 +142,7 @@ Pass `--verbose` (or set `HH_VERBOSE=true`) to log the resolved URL for the API 
 ```sh
 honeyhive --verbose datasets list
 # Data plane URL: https://api.dp1.us.honeyhive.ai
-# Project API key: hh_****XXXX
+# Classic API key: hh_****XXXX
 # Ingestion API key: (none)
 # Data plane API key: (none)
 # Package: @honeyhive/cli vX.Y.Z
@@ -155,7 +155,7 @@ honeyhive --verbose projects get --project-id ...
 
 Output is written to stderr and only fires once per invocation. An explicit `--verbose` flag matches the precedence of the other flags. Data plane commands log all three data plane credential slots, including `(none)` for unset keys. Control plane commands log only the control plane URL and key.
 
-Keys are masked. A classic project API key shows a recognized prefix and the last 4 characters. Ingestion and fine-grained keys show their prefix and key id with the secret replaced by `******`: `hh_ingst_<key id>_******`, `hh_fgdp_<key id>_******`, or `hh_fgcp_<key id>_******`. These match the masked forms shown in the HoneyHive app. A typed key with a missing or malformed key id is replaced entirely with asterisks.
+Keys are masked. A classic API key shows a recognized prefix and the last 4 characters. Ingestion and fine-grained keys show their prefix and key id with the secret replaced by `******`: `hh_ingst_<key id>_******`, `hh_fgdp_<key id>_******`, or `hh_fgcp_<key id>_******`. These match the masked forms shown in the HoneyHive app. A typed key with a missing or malformed key id is replaced entirely with asterisks.
 
 ## Schema introspection
 
